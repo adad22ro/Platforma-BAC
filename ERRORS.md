@@ -60,3 +60,36 @@
 **Soluție:** Testare în fereastră Incognito pentru a simula un utilizator neautentificat
 
 ---
+
+## #011 — `null value in column "email"` la insert
+**Data:** 2026-06-26  
+**Context:** Webhook dădea 500 "Database error" cu `23502 not-null constraint` pe `email`  
+**Cauză:** Se testa cu payload-ul **sample** de la Clerk (user "John Doe", fără email real). Coloana `email` e `NOT NULL` (corect). Sample-ul nu are email → violare constrângere.  
+**Soluție:** Testare cu eveniment real (înregistrare cont nou cu email real), nu cu sample-ul din tab-ul Testing
+
+---
+
+## #010 — `permission denied for table users` (cod 42501) pentru service_role
+**Data:** 2026-06-26  
+**Context:** Webhook dădea 500 "Database error"; log: `42501 permission denied for table users`  
+**Cauză:** Rolul `service_role` nu avea privilegii pe tabelul `users` (grant-urile nu s-au aplicat la crearea tabelului). Cheia era corectă — Postgres pune rolul curent în hint, iar hint-ul arăta `service_role`, confirmând autentificarea corectă.  
+**Soluție:** Supabase → SQL Editor → `GRANT INSERT, SELECT, UPDATE, DELETE ON public.users TO service_role;`
+
+---
+
+## #009 — Două proiecte Vercel duplicate pe același repo
+**Data:** 2026-06-26  
+**Context:** Modificările de setări (ex: Framework Preset) păreau că nu se aplică; build-uri duble la fiecare push  
+**Cauză:** Existau două proiecte Vercel conectate la același repo: `platforma-bac` (deține domeniul `platforma-bac.vercel.app`) și `platforma-bac-nq6x` (duplicat). Se modifica setarea într-unul, dar domeniul era servit de celălalt.  
+**Soluție:** Identificare proiect care deține domeniul de producție (Settings → Domains), configurare doar a aceluia, ștergere proiect duplicat
+
+---
+
+## #008 — API routes returnează 404 (Vercel) deși funcționează local
+**Data:** 2026-06-26  
+**Context:** `/api/webhooks/clerk` dădea 404 (pagina stilizată Vercel `NOT_FOUND`) pe producție, deși local răspundea corect (POST 400, GET 405). Build-ul dura doar ~27s fără loguri.  
+**Cauză:** Pe Vercel, **Framework Preset** era setat la **"Other"** (probabil pierdut la mutarea proiectului din folderul vechi). Vercel rula `next build` dar publica doar output-ul static din `public/`, fără să creeze funcțiile serverless. Toate rutele dinamice (`ƒ` — API + pagini SSR) dădeau 404, doar paginile statice (`○`) funcționau.  
+**Diagnostic cheie:** 404-ul *stilizat de Vercel* (nu pagina 404 a Next.js) = cererea nu ajunge deloc la aplicația Next.js.  
+**Soluție:** Vercel → Settings → Build and Deployment → Framework Settings → **Framework Preset = Next.js** → Save → Redeploy fără cache
+
+---
