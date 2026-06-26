@@ -14,8 +14,20 @@ Acest fișier conține contextul complet de business și tehnic stabilit pentru 
 
 ### Cod nou
 - **Explică întotdeauna codul scris** — după fiecare bloc de cod, oferă o explicație scurtă în română: ce face, de ce e structurat așa, ce ar trebui să știe cineva care îl vede prima dată.
-- **Nu instala pachete noi** (`npm install`, `pip install` etc.) fără să anunți mai întâi utilizatorul ce pachet vrei să adaugi și de ce. Așteaptă confirmarea.
+- **La erori, explică cauza înainte de fix** — nu corecta codul fără să explici de ce a apărut eroarea. Scopul e să înveți, nu doar să meargă.
+- **Scrie cod în bucăți mici, nu în blocuri mari** — o funcționalitate pe rând, verificată că merge înainte de a trece la următoarea. Blocurile mari sunt greu de depanat.
+- **Verifică că aplicația pornește după fiecare modificare importantă** — nu declara că "ar trebui să meargă" fără să confirmi.
+- **Nu instala pachete noi** (`npm install` etc.) fără să anunți mai întâi utilizatorul ce pachet vrei să adaugi și de ce. Așteaptă confirmarea.
 - **Nu șterge și nu suprascrie fișiere existente** fără confirmare explicită din partea utilizatorului. Dacă vrei să înlocuiești ceva, arată mai întâi ce vrei să schimbi și de ce.
+
+### Bază de date
+- **Nicio modificare de schemă DB fără să documentezi impactul** — dacă schimbi un tabel (adaugi/ștergi coloane, modifici tipuri), menționează explicit ce alte părți ale aplicației sunt afectate și care trebuie actualizate.
+- **Migrările DB se scriu întotdeauna în cod** — nu se modifică schema direct în Supabase dashboard fără să existe și un fișier de migrare în proiect. Altfel Bogdan nu poate replica schimbarea și baza de date devine inconsistentă între membri.
+
+### Securitate
+- **Nicio rută API fără verificare de autentificare** — la fiecare rută API nouă, verifică dacă e protejată. Dacă utilizatorul uită, reamintește-i activ înainte de a continua.
+- **Datele trimise de utilizator se validează întotdeauna** — niciodată date brute din formular sau request direct în baza de date. Validează tipul, lungimea și formatul înainte de orice operație DB.
+- **Nicio cheie API sau secret în cod** — dacă observi un secret hardcodat în cod, oprește-te și cere utilizatorului să îl mute în `.env.local`.
 
 ### Documentație (`docs/`)
 - **La fiecare cod nou scris** → actualizează fișierul relevant din `docs/` cu o explicație a ce face acel cod.
