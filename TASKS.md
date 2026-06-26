@@ -48,7 +48,7 @@
 | ✅ | Fișier `.env.example` cu toate variabilele necesare (fără valori reale) | Andrei | `setup-nextjs` | |
 | ✅ | Configurare Supabase — proiect nou, variabile de mediu | Andrei | `setup-supabase` | Cont creat, proiect creat, legat la GitHub, chei în .env.local, client în lib/supabase.ts |
 | ✅ | Configurare Clerk — proiect nou, variabile de mediu | Andrei | `setup-clerk` | Email + Google login, chei în .env.local |
-| ✅ | Integrare Clerk în Next.js (middleware, provider) | Andrei | `setup-clerk` | middleware.ts, ClerkProvider, pagini sign-in/sign-up |
+| ✅ | Integrare Clerk în Next.js (middleware, provider) | Andrei | `setup-clerk` | proxy.ts (Next.js 16), ClerkProvider, pagini sign-in/sign-up |
 | ✅ | Configurare Stripe în mod test — chei API | Andrei | `setup-stripe` | Cont creat, chei sandbox în .env.local, client în lib/stripe.ts |
 | ✅ | Deploy inițial pe Vercel (proiect conectat la GitHub) | Andrei | `setup-vercel` | platforma-bac.vercel.app — deploy automat la merge în main |
 
@@ -66,14 +66,15 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Pagină de înregistrare elev (via Clerk) | ❓ | `auth-cont-elev` | |
-| ⬜ | Pagină de login (via Clerk) | ❓ | `auth-cont-elev` | |
+| ✅ | Pagină de înregistrare elev (via Clerk) | Andrei | `setup-clerk` | Funcțională — `app/sign-up/[[...sign-up]]/page.tsx` |
+| ✅ | Pagină de login (via Clerk) | Andrei | `setup-clerk` | Funcțională — `app/sign-in/[[...sign-in]]/page.tsx` |
+| ✅ | Schema bază de date: tabel `users` (extins față de Clerk) | Andrei | `auth-cont-elev` | Creat în Supabase cu RLS activat |
+| ✅ | Protejare rute (redirect dacă nu e autentificat) | Andrei | `setup-clerk` | `proxy.ts` cu `clerkMiddleware` |
+| 🔄 | Webhook Clerk — sync user în DB la înregistrare | Andrei | `auth-cont-elev` | `app/api/webhooks/clerk/route.ts` creat, endpoint configurat în Clerk, CLERK_WEBHOOK_SIGNING_SECRET în .env.local — de testat |
 | ⬜ | Pagină de profil elev | ❓ | `auth-cont-elev` | |
-| ⬜ | Schema bază de date: tabel `users` (extins față de Clerk) | ❓ | `auth-cont-elev` | |
 | ⬜ | Pagină de upgrade abonament (UI) | ❓ | `auth-cont-elev` | |
 | ⬜ | Integrare Stripe Checkout pentru abonament lunar | ❓ | `auth-cont-elev` | |
 | ⬜ | Webhook Stripe — activare/dezactivare abonament în DB | ❓ | `auth-cont-elev` | |
-| ⬜ | Protejare rute (redirect dacă nu e autentificat) | ❓ | `auth-cont-elev` | |
 
 ---
 
