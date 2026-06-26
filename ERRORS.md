@@ -5,6 +5,15 @@
 
 ---
 
+## #012 — `Invalid API Key provided` la Stripe (pe Vercel)
+**Data:** 2026-06-26  
+**Context:** Cardul Stripe din `/admin` dădea eroare pe producție (local mergea). Valoarea din eroare începea cu `eyJhbGci...` (un JWT).  
+**Cauză:** Pe Vercel, variabila `STRIPE_SECRET_KEY` conținea din greșeală o cheie **Supabase** (JWT), nu cheia Stripe. Cheile Stripe încep cu `sk_test_` / `sk_live_`; cele Supabase sunt JWT-uri (`eyJ...`).  
+**Diagnostic cheie:** prefixul valorii — `eyJ` = Supabase/JWT, `sk_` = Stripe. Panoul `/admin` a prins eroarea înainte să afecteze fluxul real de plată.  
+**Soluție:** Vercel → Environment Variables → `STRIPE_SECRET_KEY` → înlocuire cu Secret key-ul corect din Stripe Dashboard (Developers → API keys) → Redeploy
+
+---
+
 ## #001 — `@clerk/backend: Missing publishableKey`
 **Data:** 2026-06-26  
 **Context:** La pornirea serverului de dev (`npm run dev`)  
