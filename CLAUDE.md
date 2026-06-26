@@ -2,6 +2,40 @@
 
 Acest fișier conține contextul complet de business și tehnic stabilit pentru acest proiect. Claude Code ar trebui să citească acest document înainte de a începe lucrul, ca să respecte deciziile deja luate și să nu propună o arhitectură diferită fără să discute mai întâi.
 
+## Instrucțiuni obligatorii la începutul fiecărei sesiuni
+
+1. **Citește [`TASKS.md`](TASKS.md)** — înainte de orice altceva. Verifică ce sarcini sunt `🔄 În lucru` și nu atinge acele zone fără confirmare.
+2. **Citește ultimele 3-5 intrări din [`DEVLOG.md`](DEVLOG.md)** — ca să știi ce s-a întâmplat recent și ce decizii s-au luat.
+3. **Actualizează `TASKS.md`** imediat ce o sarcină este începută, finalizată sau blocată.
+4. **Actualizează `DEVLOG.md`** la sfârșitul fiecărei sesiuni de lucru cu ce s-a făcut și ce decizii importante s-au luat.
+5. **Actualizează documentația relevantă din `docs/`** după fiecare bucată de cod scrisă sau modificată — vezi regulile de mai jos.
+
+## Reguli obligatorii pe parcursul sesiunii
+
+### Cod nou
+- **Explică întotdeauna codul scris** — după fiecare bloc de cod, oferă o explicație scurtă în română: ce face, de ce e structurat așa, ce ar trebui să știe cineva care îl vede prima dată.
+- **Nu instala pachete noi** (`npm install`, `pip install` etc.) fără să anunți mai întâi utilizatorul ce pachet vrei să adaugi și de ce. Așteaptă confirmarea.
+- **Nu șterge și nu suprascrie fișiere existente** fără confirmare explicită din partea utilizatorului. Dacă vrei să înlocuiești ceva, arată mai întâi ce vrei să schimbi și de ce.
+
+### Documentație (`docs/`)
+- **La fiecare cod nou scris** → actualizează fișierul relevant din `docs/` cu o explicație a ce face acel cod.
+- **La fiecare modificare de cod existent** → actualizează documentația corespunzătoare imediat, în aceeași sesiune. Documentația veche care nu mai reflectă codul real e mai periculoasă decât lipsa documentației.
+- **Fișiere de documentație disponibile:**
+  - [`docs/architecture.md`](docs/architecture.md) — structura generală a proiectului
+  - [`docs/database.md`](docs/database.md) — schema DB, ce face fiecare tabel și coloană
+  - [`docs/auth.md`](docs/auth.md) — cum funcționează autentificarea și rolurile
+  - [`docs/stripe.md`](docs/stripe.md) — cum funcționează plățile și abonamentele
+  - [`docs/components.md`](docs/components.md) — componentele UI principale
+  - [`docs/api.md`](docs/api.md) — toate rutele API, ce primesc și ce returnează
+- **Stilul documentației:** scurt și la obiect, în română, fără jargon inutil. Scrie ca și cum explici unui coleg care nu a văzut codul niciodată.
+
+## Echipa
+
+| Nume | Rol |
+|---|---|
+| **Andrei** | Configurare inițială; rolul pe termen lung se stabilește cu Bogdan |
+| **Bogdan** | Se alătură după configurarea inițială; rol de stabilit împreună |
+
 ## Ce este proiectul
 
 O platformă web (ulterior și mobilă) de pregătire pentru examenul de Bacalaureat, începând cu materia **Limba și Literatura Română**. Este un produs propriu, vândut direct elevilor prin abonament, nu un proiect pentru un client.
