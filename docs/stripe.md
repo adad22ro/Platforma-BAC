@@ -31,4 +31,20 @@ Stripe gestionează plățile și abonamentele recurente. Noi nu stocăm date de
 
 ---
 
+## Conexiunea la Stripe
+
+Fișier: `lib/stripe.ts`
+
+Exportă un client `stripe` de server creat cu cheia secretă. Se importă doar în cod de server (route handlers, server actions):
+
+```ts
+import { stripe } from '@/lib/stripe'
+```
+
+Pentru browser (redirect la pagina de plată) se folosește `@stripe/stripe-js` cu cheia publică `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. Aceasta e sigură pentru browser — nu poate face operații sensibile.
+
+**Regulă:** niciodată `STRIPE_SECRET_KEY` în cod de browser.
+
+---
+
 *De completat în Săptămânile 3-4.*
