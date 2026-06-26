@@ -1,0 +1,55 @@
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { Card, Stat, Empty, ErrorBox } from "./ui";
+
+type UserRow = {
+  clerk_id: string | null;
+  email: string | null;
+  full_name: string | null;
+  role: string | null;
+  subscription_status: string | null;
+  created_at: string | null;
+};
+
+export async function SupabaseCard() {
+  try {
+    const { data, error, count } = await supabaseAdmin
+      .from("users")
+      .select("clerk_id, email, full_name, role, subscription_status, created_at", {
+        count: "exact",
+      })
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error) throw error;
+
+    const rows = (data ?? []) as UserRow[];
+
+    return (
+      <Card title="Supabase — Tabel users" subtitle={`${count ?? 0} randuri`}>
+        {rows.length === 0 ? (
+          <Empty text="Tabelul users e gol." />
+        ) : (
+          <div>
+            {rows.map((r) => (
+              <Stat
+                key={r.clerk_id ?? r.email ?? Math.random()}
+                label={r.email ?? r.full_name ?? r.clerk_id ?? "—"}
+                value={
+                  <span className="text-zinc-500">
+                    {r.role ?? "?"} · {r.subscription_status ?? "?"}
+                  </span>
+                }
+              />
+            ))}
+          </div>
+        )}
+      </Card>
+    );
+  } catch (error) {
+    return (
+      <Card title="Supabase — Tabel users">
+        <ErrorBox error={error} />
+      </Card>
+    );
+  }
+}

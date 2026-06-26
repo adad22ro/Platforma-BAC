@@ -1,6 +1,7 @@
 import { verifyWebhook } from '@clerk/nextjs/webhooks'
 import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { logError } from '@/lib/log-error'
 
 export async function POST(req: NextRequest) {
   let evt
@@ -8,6 +9,9 @@ export async function POST(req: NextRequest) {
     evt = await verifyWebhook(req)
   } catch (err) {
     console.error('Clerk webhook verification failed:', err)
+    await logError('clerk-webhook', 'Verification failed', {
+      error: err instanceof Error ? err.message : String(err),
+    })
     return new Response('Verification failed', { status: 400 })
   }
 
@@ -25,6 +29,12 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('Supabase insert error:', error)
+      await logError('clerk-webhook', 'Supabase insert error', {
+        type: evt.type,
+        clerk_id: id,
+        code: error.code,
+        message: error.message,
+      })
       return new Response('Database error', { status: 500 })
     }
   }
