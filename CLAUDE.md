@@ -29,6 +29,19 @@ Acest fișier conține contextul complet de business și tehnic stabilit pentru 
 - **Datele trimise de utilizator se validează întotdeauna** — niciodată date brute din formular sau request direct în baza de date. Validează tipul, lungimea și formatul înainte de orice operație DB.
 - **Nicio cheie API sau secret în cod** — dacă observi un secret hardcodat în cod, oprește-te și cere utilizatorului să îl mute în `.env.local`.
 
+### Reguli noi pe parcurs
+
+Pe măsură ce proiectul evoluează și apar situații noi (deploy, erori Stripe, backup DB, testare etc.), Claude Code trebuie să:
+1. **Identifice când o situație recurentă nu are o regulă clară** — de exemplu, prima dată când apare o eroare de deploy sau o problemă de securitate neacoperită.
+2. **Propună utilizatorului o regulă nouă** — formulată scurt și clar, explicând de ce e utilă.
+3. **La confirmare, creeze un fișier dedicat în `docs/rules/`** cu regula respectivă și să adauge o referință către el în acest CLAUDE.md.
+
+Fișierele din `docs/rules/` sunt citite și respectate la fel ca regulile din acest fișier. Exemple de fișiere care vor apărea pe parcurs:
+- `docs/rules/deploy.md` — proceduri de deploy și rollback pe Vercel
+- `docs/rules/stripe-errors.md` — cum se gestionează erorile de plată
+- `docs/rules/testing.md` — când și cum se scriu teste
+- `docs/rules/db-backup.md` — proceduri de backup și restaurare DB
+
 ### Documentație (`docs/`)
 - **La fiecare cod nou scris** → actualizează fișierul relevant din `docs/` cu o explicație a ce face acel cod.
 - **La fiecare modificare de cod existent** → actualizează documentația corespunzătoare imediat, în aceeași sesiune. Documentația veche care nu mai reflectă codul real e mai periculoasă decât lipsa documentației.
