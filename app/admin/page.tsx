@@ -6,6 +6,7 @@ import { VercelCard } from "./_components/vercel-card";
 import { VercelLogsCard } from "./_components/vercel-logs-card";
 import { SyncCard } from "./_components/sync-card";
 import { ErrorLogsCard } from "./_components/error-logs-card";
+import { ConfigCard } from "./_components/config-card";
 
 // Dashboard intern de monitorizare — agrega date din Clerk, Supabase, Stripe, Vercel.
 // Acces restrictionat prin requireAdmin() (allowlist de email-uri).
@@ -44,6 +45,7 @@ export default async function AdminPage() {
             Debug & Loguri
           </h2>
           <div className="grid grid-cols-1 gap-4">
+            <ConfigCard />
             <ErrorLogsCard />
             <VercelLogsCard />
           </div>
