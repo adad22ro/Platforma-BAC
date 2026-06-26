@@ -1,23 +1,20 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/api/"];
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/webhooks(.*)",
+]);
 
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-  if (isPublic) return NextResponse.next();
-  // Protectie rute private — verificare sesiune Clerk via cookie
-  const sessionCookie =
-    request.cookies.get("__session") ||
-    request.cookies.get("__client_uat") ||
-    request.cookies.has("__clerk_db_jwt");
-  if (!sessionCookie) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+export default clerkMiddleware(async (auth, request) => {
+  if (!isPublicRoute(request)) {
+    await auth.protect();
   }
-  return NextResponse.next();
-}
+});
 
 export const config = {
-  matcher: ["/((?!_next|.*\\..*).*)"],
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
 };
