@@ -47,8 +47,8 @@
 | ✅ | Configurare `.gitignore` (`.env`, `node_modules` etc.) | Andrei | `setup-nextjs` | Generat automat de create-next-app, verificat |
 | ✅ | Fișier `.env.example` cu toate variabilele necesare (fără valori reale) | Andrei | `setup-nextjs` | |
 | ✅ | Configurare Supabase — proiect nou, variabile de mediu | Andrei | `setup-supabase` | Cont creat, proiect creat, legat la GitHub, chei în .env.local, client în lib/supabase.ts |
-| ⬜ | Configurare Clerk — proiect nou, variabile de mediu | Andrei | `setup-clerk` | |
-| ⬜ | Integrare Clerk în Next.js (middleware, provider) | Andrei | `setup-clerk` | |
+| ✅ | Configurare Clerk — proiect nou, variabile de mediu | Andrei | `setup-clerk` | Email + Google login, chei în .env.local |
+| ✅ | Integrare Clerk în Next.js (middleware, provider) | Andrei | `setup-clerk` | middleware.ts, ClerkProvider, pagini sign-in/sign-up |
 | ⬜ | Configurare Stripe în mod test — chei API | Andrei | `setup-stripe` | |
 | ⬜ | Deploy inițial pe Vercel (proiect conectat la GitHub) | Andrei | `setup-vercel` | |
 
