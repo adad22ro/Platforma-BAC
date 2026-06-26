@@ -43,9 +43,9 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Creare proiect Next.js (`npx create-next-app`) | Andrei | `setup-nextjs` | |
-| ⬜ | Configurare `.gitignore` (`.env`, `node_modules` etc.) | Andrei | `setup-nextjs` | Primul lucru după `create-next-app` |
-| ⬜ | Fișier `.env.example` cu toate variabilele necesare (fără valori reale) | Andrei | `setup-nextjs` | |
+| ✅ | Creare proiect Next.js (`npx create-next-app`) | Andrei | `setup-nextjs` | Next.js 16, React 19, TypeScript, Tailwind, ESLint |
+| ✅ | Configurare `.gitignore` (`.env`, `node_modules` etc.) | Andrei | `setup-nextjs` | Generat automat de create-next-app, verificat |
+| ✅ | Fișier `.env.example` cu toate variabilele necesare (fără valori reale) | Andrei | `setup-nextjs` | |
 | ⬜ | Configurare Supabase — proiect nou, variabile de mediu | Andrei | `setup-supabase` | |
 | ⬜ | Configurare Clerk — proiect nou, variabile de mediu | Andrei | `setup-clerk` | |
 | ⬜ | Integrare Clerk în Next.js (middleware, provider) | Andrei | `setup-clerk` | |
