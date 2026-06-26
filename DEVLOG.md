@@ -6,6 +6,29 @@
 
 ---
 
+## 2026-06-26 — Andrei (Sesiunea 3)
+
+**Ce s-a făcut:**
+- Verificat că setup-ul Clerk din sesiunea anterioară e complet funcțional (sign-in/sign-up merg, proxy.ts corect)
+- Descoperit că în Next.js 16 fișierul middleware se numește `proxy.ts` (nu `middleware.ts` ca în versiunile anterioare)
+- Creat tabel `users` în Supabase cu RLS activat (câmpuri: id, clerk_id, email, full_name, role, subscription_status, subscription_end_date)
+- Creat `lib/supabase-admin.ts` — client Supabase cu service_role key pentru operații server-side
+- Creat `app/api/webhooks/clerk/route.ts` — webhook handler pentru sync users (user.created, user.updated, user.deleted)
+- Actualizat `proxy.ts` să facă ruta `/api/webhooks/(.*)` publică
+- Configurat endpoint webhook în Clerk dashboard cu localtunnel
+- Adăugat `CLERK_WEBHOOK_SIGNING_SECRET` în `.env.local`
+- Mutat proiectul pe SSD pentru performanță mai bună (Turbopack era lent pe HDD)
+
+**Decizii luate:**
+- Folosim `supabase-admin.ts` (service role) în webhook, nu clientul anon — pentru a ocoli RLS
+- Webhook-ul gestionează și ștergerea userilor din DB la `user.deleted`
+
+**Probleme deschise / Next steps:**
+- De verificat că webhook-ul funcționează (test: înregistrare user nou → apare în tabelul `users`)
+- Urmează: pagină profil elev, pagină upgrade abonament, Stripe Checkout
+
+---
+
 ## 2026-06-26 — Andrei (Sesiunea 2)
 
 **Ce s-a făcut:**
