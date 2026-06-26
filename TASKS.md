@@ -50,7 +50,7 @@
 | ✅ | Configurare Clerk — proiect nou, variabile de mediu | Andrei | `setup-clerk` | Email + Google login, chei în .env.local |
 | ✅ | Integrare Clerk în Next.js (middleware, provider) | Andrei | `setup-clerk` | middleware.ts, ClerkProvider, pagini sign-in/sign-up |
 | ✅ | Configurare Stripe în mod test — chei API | Andrei | `setup-stripe` | Cont creat, chei sandbox în .env.local, client în lib/stripe.ts |
-| ⬜ | Deploy inițial pe Vercel (proiect conectat la GitHub) | Andrei | `setup-vercel` | |
+| ✅ | Deploy inițial pe Vercel (proiect conectat la GitHub) | Andrei | `setup-vercel` | platforma-bac.vercel.app — deploy automat la merge în main |
 
 ### Design de bază
 
