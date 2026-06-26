@@ -23,4 +23,18 @@ Relații: cu ce alte tabele e legat și cum
 
 ---
 
+## Conexiunea la Supabase
+
+Fișier: `lib/supabase.ts`
+
+Exportă un client `supabase` creat cu URL-ul și cheia publică (`anon`) din variabilele de mediu. Se importă în orice fișier care are nevoie să citească sau să scrie date:
+
+```ts
+import { supabase } from '@/lib/supabase'
+```
+
+Cheia `anon` e sigură pentru browser — are acces limitat, controlat prin regulile RLS (Row Level Security) definite în Supabase. Cheia `service_role` (acces total, fără restricții RLS) se folosește doar în cod de server și niciodată în browser.
+
+---
+
 *Niciun tabel creat încă — se actualizează în Săptămânile 3-4.*

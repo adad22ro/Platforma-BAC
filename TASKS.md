@@ -46,7 +46,7 @@
 | ✅ | Creare proiect Next.js (`npx create-next-app`) | Andrei | `setup-nextjs` | Next.js 16, React 19, TypeScript, Tailwind, ESLint |
 | ✅ | Configurare `.gitignore` (`.env`, `node_modules` etc.) | Andrei | `setup-nextjs` | Generat automat de create-next-app, verificat |
 | ✅ | Fișier `.env.example` cu toate variabilele necesare (fără valori reale) | Andrei | `setup-nextjs` | |
-| ⬜ | Configurare Supabase — proiect nou, variabile de mediu | Andrei | `setup-supabase` | |
+| ✅ | Configurare Supabase — proiect nou, variabile de mediu | Andrei | `setup-supabase` | Cont creat, proiect creat, legat la GitHub, chei în .env.local, client în lib/supabase.ts |
 | ⬜ | Configurare Clerk — proiect nou, variabile de mediu | Andrei | `setup-clerk` | |
 | ⬜ | Integrare Clerk în Next.js (middleware, provider) | Andrei | `setup-clerk` | |
 | ⬜ | Configurare Stripe în mod test — chei API | Andrei | `setup-stripe` | |
