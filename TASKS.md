@@ -9,19 +9,19 @@
 
 ## Echipă
 
-| Nume | Rol curent |
+| Nume | Rol |
 |---|---|
-| **Andrei** | Configurare inițială proiect (Săpt. 1-2); rolul pe termen lung se stabilește ulterior |
-| **Bogdan** | Se alătură după configurarea inițială; rol de stabilit împreună |
+| **Andrei** | **Backend** — bază de date, API routes, webhook-uri, integrări (Clerk/Supabase/Stripe), infrastructură, panou de monitorizare |
+| **Bogdan** | **Frontend** — UI/design, layout, pagini elev/profesor, formulare, librărie de componente |
 
 ---
 
 ## Stare generală
 
 - **Faza curentă:** Faza 1 — MVP
-- **Săptămâna curentă:** 1-2 (Configurare proiect)
-- **Ultima actualizare:** 2026-06-26
-- **Ramură activă pe `main`:** commit inițial
+- **Săptămâna curentă:** 3-4 (Autentificare cont elev — în curs) → urmează 5-6 (conținut + panel profesor)
+- **Ultima actualizare:** 2026-06-28
+- **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
 
@@ -56,9 +56,9 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Alegere și configurare librărie UI (ex: Tailwind CSS + shadcn/ui) | Andrei | `setup-ui` | De discutat cu Bogdan înainte |
-| ⬜ | Layout de bază al aplicației (header, sidebar, footer) | Andrei | `setup-ui` | |
-| ⬜ | Pagină de start / landing page placeholder | Andrei | `setup-ui` | |
+| ⬜ | Alegere și configurare librărie UI (ex: Tailwind CSS + shadcn/ui) | Bogdan | `setup-ui` | Recomandare: shadcn/ui (vezi DEVLOG) |
+| ⬜ | Layout de bază al aplicației (header, sidebar, footer) | Bogdan | `setup-ui` | |
+| ⬜ | Pagină de start / landing page placeholder | Bogdan | `setup-ui` | |
 
 ---
 
@@ -70,11 +70,11 @@
 | ✅ | Pagină de login (via Clerk) | Andrei | `setup-clerk` | Funcțională — `app/sign-in/[[...sign-in]]/page.tsx` |
 | ✅ | Schema bază de date: tabel `users` (extins față de Clerk) | Andrei | `auth-cont-elev` | Creat în Supabase cu RLS activat |
 | ✅ | Protejare rute (redirect dacă nu e autentificat) | Andrei | `setup-clerk` | `proxy.ts` cu `clerkMiddleware` |
-| 🔄 | Webhook Clerk — sync user în DB la înregistrare | Andrei | `auth-cont-elev` | `app/api/webhooks/clerk/route.ts` creat, endpoint configurat în Clerk, CLERK_WEBHOOK_SIGNING_SECRET în .env.local — de testat |
-| ⬜ | Pagină de profil elev | ❓ | `auth-cont-elev` | |
-| ⬜ | Pagină de upgrade abonament (UI) | ❓ | `auth-cont-elev` | |
-| ⬜ | Integrare Stripe Checkout pentru abonament lunar | ❓ | `auth-cont-elev` | |
-| ⬜ | Webhook Stripe — activare/dezactivare abonament în DB | ❓ | `auth-cont-elev` | |
+| ✅ | Webhook Clerk — sync user în DB la înregistrare | Andrei | `auth-cont-elev` | Confirmat end-to-end (user real → tabel `users`); erori logate în `error_logs` |
+| ⬜ | Pagină de profil elev | Bogdan | `auth-cont-elev` | |
+| ⬜ | Pagină de upgrade abonament (UI) | Bogdan | `auth-cont-elev` | |
+| ⬜ | Integrare Stripe Checkout pentru abonament lunar | Andrei | `auth-cont-elev` | |
+| ⬜ | Webhook Stripe — activare/dezactivare abonament în DB | Andrei | `auth-cont-elev` | |
 
 ---
 
@@ -82,14 +82,14 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Schema DB: tabele `chapters`, `lessons` | ❓ | `panel-profesor-capitole` | |
-| ⬜ | Date placeholder: 3 capitole, 2-3 lecții per capitol | ❓ | `panel-profesor-capitole` | NU inventăm structura reală BAC |
-| ⬜ | Pagină listă capitole (vedere elev) | ❓ | `panel-profesor-capitole` | |
-| ⬜ | Pagină lecție (text + embed video) | ❓ | `panel-profesor-capitole` | |
-| ⬜ | Autentificare profesor (rol distinct în Clerk/Supabase) | ❓ | `panel-profesor-capitole` | |
-| ⬜ | Panel profesor — formular "Capitol nou" | ❓ | `panel-profesor-capitole` | |
-| ⬜ | Panel profesor — formular "Lecție nouă" cu editor text | ❓ | `panel-profesor-capitole` | |
-| ⬜ | API routes pentru CRUD capitole și lecții | ❓ | `panel-profesor-capitole` | |
+| ⬜ | Schema DB: tabele `chapters`, `lessons` | Andrei | `panel-profesor-capitole` | |
+| ⬜ | Date placeholder: 3 capitole, 2-3 lecții per capitol | Andrei | `panel-profesor-capitole` | NU inventăm structura reală BAC |
+| ⬜ | Pagină listă capitole (vedere elev) | Bogdan | `panel-profesor-capitole` | |
+| ⬜ | Pagină lecție (text + embed video) | Bogdan | `panel-profesor-capitole` | |
+| ⬜ | Autentificare profesor (rol distinct în Clerk/Supabase) | Andrei | `panel-profesor-capitole` | |
+| ⬜ | Panel profesor — formular "Capitol nou" | Bogdan | `panel-profesor-capitole` | |
+| ⬜ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `panel-profesor-capitole` | |
+| ⬜ | API routes pentru CRUD capitole și lecții | Andrei | `panel-profesor-capitole` | |
 
 ---
 
@@ -97,13 +97,13 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Schema DB: tabele `questions`, `answers`, `student_progress` | ❓ | `teste-progres` | |
-| ⬜ | Date placeholder: 5-10 întrebări grilă per capitol | ❓ | `teste-progres` | |
-| ⬜ | Pagină test per capitol (UI grilă) | ❓ | `teste-progres` | |
-| ⬜ | Logică corectare automată + afișare scor | ❓ | `teste-progres` | |
-| ⬜ | Statistici simple de progres per capitol (UI) | ❓ | `teste-progres` | |
-| ⬜ | Panel profesor — formular "Întrebare test" | ❓ | `teste-progres` | |
-| ⬜ | API routes pentru CRUD întrebări | ❓ | `teste-progres` | |
+| ⬜ | Schema DB: tabele `questions`, `answers`, `student_progress` | Andrei | `teste-progres` | |
+| ⬜ | Date placeholder: 5-10 întrebări grilă per capitol | Andrei | `teste-progres` | |
+| ⬜ | Pagină test per capitol (UI grilă) | Bogdan | `teste-progres` | |
+| ⬜ | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | Logică/API: Andrei · afișare: Bogdan |
+| ⬜ | Statistici simple de progres per capitol (UI) | Bogdan | `teste-progres` | |
+| ⬜ | Panel profesor — formular "Întrebare test" | Bogdan | `teste-progres` | |
+| ⬜ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | |
 
 ---
 
@@ -111,14 +111,14 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Schema DB: tabel `tickets` | ❓ | `sistem-tichete-mentorat` | |
-| ⬜ | Buton "Nu am înțeles" în pagina de lecție/test (cu context automat) | ❓ | `sistem-tichete-mentorat` | |
-| ⬜ | Mesaj așteptare afișat elevului (ex: "Răspuns în 24h") | ❓ | `sistem-tichete-mentorat` | |
-| ⬜ | API route — creare tichet | ❓ | `sistem-tichete-mentorat` | |
-| ⬜ | Interfață profesor — listă tichete organizate pe capitol | ❓ | `sistem-tichete-mentorat` | |
-| ⬜ | Funcționalitate răspuns profesor la tichet | ❓ | `sistem-tichete-mentorat` | |
-| ⬜ | Notificare email elev la primirea răspunsului | ❓ | `sistem-tichete-mentorat` | |
-| ⬜ | Pagină elev — vizualizare răspuns primit | ❓ | `sistem-tichete-mentorat` | |
+| ⬜ | Schema DB: tabel `tickets` | Andrei | `sistem-tichete-mentorat` | |
+| ⬜ | Buton "Nu am înțeles" în pagina de lecție/test (cu context automat) | Bogdan | `sistem-tichete-mentorat` | |
+| ⬜ | Mesaj așteptare afișat elevului (ex: "Răspuns în 24h") | Bogdan | `sistem-tichete-mentorat` | |
+| ⬜ | API route — creare tichet | Andrei | `sistem-tichete-mentorat` | |
+| ⬜ | Interfață profesor — listă tichete organizate pe capitol | Bogdan | `sistem-tichete-mentorat` | |
+| ⬜ | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `sistem-tichete-mentorat` | API: Andrei · UI: Bogdan |
+| ⬜ | Notificare email elev la primirea răspunsului | Andrei | `sistem-tichete-mentorat` | |
+| ⬜ | Pagină elev — vizualizare răspuns primit | Bogdan | `sistem-tichete-mentorat` | |
 
 ---
 
@@ -139,7 +139,6 @@
 |---|---|---|
 | Structura reală de capitole BAC | Profesorul partener nu este disponibil încă | Profesorul partener |
 | Conținut real lecții | Idem | Profesorul partener |
-| Împărțirea sarcinilor din Săpt. 3-12 | Rolurile Andrei/Bogdan nu sunt stabilite încă | Andrei + Bogdan |
 
 ---
 
