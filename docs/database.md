@@ -17,10 +17,22 @@ webhook-ul Clerk (`app/api/webhooks/clerk/route.ts`) la `user.created` /
 | email | text | Email principal (NOT NULL) |
 | full_name | text | Nume complet |
 | role | text | `student` / `teacher` (default `student`) |
-| subscription_status | text | `free` / `premium` (default `free`) |
+| subscription_status | text | `free` / `active` / `cancelled` (default `free`) — CHECK constraint |
+| stripe_customer_id | text | ID-ul clientului în Stripe (setat la prima plată) |
+| subscription_end_date | timestamptz | Sfârșitul perioadei plătite curente |
 | created_at | timestamptz | Data creării |
 
 Relații: `clerk_id` corespunde utilizatorului din Clerk (sursa de adevăr pentru auth).
+`stripe_customer_id` leagă userul de abonamentul din Stripe; actualizat de
+webhook-ul Stripe (`app/api/webhooks/stripe/route.ts`) la
+`checkout.session.completed` / `customer.subscription.updated` / `.deleted`.
+
+> **Migrare** (coloane adăugate pentru abonamente Stripe):
+> ```sql
+> ALTER TABLE public.users
+>   ADD COLUMN IF NOT EXISTS stripe_customer_id text,
+>   ADD COLUMN IF NOT EXISTS subscription_end_date timestamptz;
+> ```
 
 > **Notă privilegii:** după creare, rolul `service_role` a avut nevoie de grant
 > explicit (altfel insert-ul din webhook dădea `42501 permission denied`):

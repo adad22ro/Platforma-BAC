@@ -1,28 +1,52 @@
 # Plăți și abonamente
 
-> Actualizat la: 2026-06-26
+> Actualizat la: 2026-06-29
 > Serviciu: Stripe
 
 ## Cum funcționează
 
 Stripe gestionează plățile și abonamentele recurente. Noi nu stocăm date de card — Stripe se ocupă de securitate PCI.
 
-## Flux abonament (planificat)
+## Flux abonament (implementat)
 
 ```
-1. Elevul apasă "Abonează-te" → redirecționat la Stripe Checkout
-2. Completează datele de card pe pagina Stripe (nu pe site-ul nostru)
-3. Stripe confirmă plata → trimite un webhook către aplicația noastră
-4. Aplicația primește webhook-ul → marchează elevul ca abonat în Supabase
-5. Elevul are acces la tot conținutul
+1. Elevul ajunge la /upgrade (din butonul "Upgrade" sau direct după
+   înregistrare cu ?plan=premium) → POST /api/checkout
+2. /api/checkout creează o Stripe Checkout Session (mode: subscription)
+   și întoarce { url }; pagina redirectează browserul acolo
+3. Elevul completează cardul pe pagina Stripe (nu pe site-ul nostru)
+4. Stripe confirmă plata → trimite webhook la /api/webhooks/stripe
+5. Webhook-ul setează subscription_status = active în Supabase
+   (+ stripe_customer_id, subscription_end_date)
 ```
+
+### Alegerea planului la înregistrare
+
+Pagina de prețuri (UI: Bogdan) trimite:
+- „Premium" → `/sign-up?plan=premium` → după sign-up `forceRedirectUrl=/upgrade` → checkout
+- „Gratuit" → `/sign-up` → `forceRedirectUrl=/dashboard` (rămâne `free`)
+
+Userii noi pornesc `free` (default DB, setat la `user.created` prin webhook-ul Clerk).
+
+## Legarea sesiunii de user
+
+`/api/checkout` pune `client_reference_id` + `metadata.clerk_id` pe sesiune.
+Webhook-ul caută userul după `stripe_customer_id`, cu fallback pe `clerk_id`
+din metadata (la prima plată, când `stripe_customer_id` încă nu e salvat).
 
 ## Webhook-uri Stripe folosite
 
 | Eveniment | Ce face aplicația |
 |---|---|
-| `checkout.session.completed` | Activează abonamentul în DB |
-| `customer.subscription.deleted` | Dezactivează abonamentul în DB |
+| `checkout.session.completed` | `subscription_status = active` + salvează `stripe_customer_id` |
+| `customer.subscription.updated` | `active` dacă statusul Stripe e `active`/`trialing`, altfel `cancelled` |
+| `customer.subscription.deleted` | `subscription_status = cancelled` |
+
+> **Atenție (API `2026-06-24.dahlia`):** `current_period_end` este per-item, nu pe
+> obiectul `Subscription`. Codul îl citește defensiv din ambele locuri (`getPeriodEnd`).
+
+> **Valori `subscription_status`:** `free` / `active` / `cancelled` — trebuie să fie
+> identice între cod și CHECK constraint-ul din DB (vezi `ERRORS.md` #013).
 
 ## Prețuri
 
@@ -47,4 +71,26 @@ Pentru browser (redirect la pagina de plată) se folosește `@stripe/stripe-js` 
 
 ---
 
-*De completat în Săptămânile 3-4.*
+## Configurare
+
+Variabile de mediu necesare (`.env.local` local, Vercel pe producție):
+
+| Variabilă | De unde |
+|---|---|
+| `STRIPE_SECRET_KEY` | Stripe Dashboard → Developers → API keys (`sk_test_…`) |
+| `STRIPE_PRICE_ID_MONTHLY` | Produsul abonament → Price ID (`price_…`) |
+| `STRIPE_WEBHOOK_SECRET` | local: din `stripe listen`; producție: din endpoint-ul webhook din dashboard (`whsec_…`) |
+| `NEXT_PUBLIC_APP_URL` | URL-ul aplicației (pentru success/cancel) |
+
+## Testare locală (Stripe CLI)
+
+```bash
+# terminal 1
+npm run dev
+# terminal 2 — forwarding (dă whsec_ pentru .env.local; repornește dev după ce-l pui)
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+# terminal 3 — declanșare (cu un clerk_id real din tabelul users)
+stripe trigger checkout.session.completed --add checkout_session:client_reference_id=user_XXX
+```
+
+Verifică în Supabase / `npm run debug` că userul a trecut pe `active`.
