@@ -20,7 +20,7 @@
 
 - **Faza curentă:** Faza 1 — MVP
 - **Săptămâna curentă:** 3-4 (Autentificare cont elev — în curs) → urmează 5-6 (conținut + panel profesor)
-- **Ultima actualizare:** 2026-06-28
+- **Ultima actualizare:** 2026-06-29
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -72,9 +72,13 @@
 | ✅ | Protejare rute (redirect dacă nu e autentificat) | Andrei | `setup-clerk` | `proxy.ts` cu `clerkMiddleware` |
 | ✅ | Webhook Clerk — sync user în DB la înregistrare | Andrei | `auth-cont-elev` | Confirmat end-to-end (user real → tabel `users`); erori logate în `error_logs` |
 | ⬜ | Pagină de profil elev | Bogdan | `auth-cont-elev` | |
-| ⬜ | Pagină de upgrade abonament (UI) | Bogdan | `auth-cont-elev` | |
-| ⬜ | Integrare Stripe Checkout pentru abonament lunar | Andrei | `auth-cont-elev` | |
-| ⬜ | Webhook Stripe — activare/dezactivare abonament în DB | Andrei | `auth-cont-elev` | |
+| ⬜ | Pagină de upgrade abonament (UI) | Bogdan | `auth-cont-elev` | Buton „Upgrade" → link la `/upgrade` (logica de checkout există). |
+| ⬜ | Pagină de prețuri (carduri Free/Premium) | Bogdan | `auth-cont-elev` | „Premium" → `/sign-up?plan=premium` · „Gratuit" → `/sign-up`. |
+| ⬜ | Pagină `/dashboard` | Bogdan | `auth-cont-elev` | Aici aterizează sign-up-ul (free) și succesul Stripe; momentan 404. |
+| ✅ | Integrare Stripe Checkout pentru abonament lunar | Andrei | `auth-cont-elev` | `app/api/checkout/route.ts` — creează Checkout Session, întoarce `url`. |
+| ✅ | Webhook Stripe — activare/dezactivare abonament în DB | Andrei | `auth-cont-elev` | `app/api/webhooks/stripe/route.ts` — testat E2E cu Stripe CLI (`subscription_status` → `active`/`cancelled`). |
+| ✅ | Pagină `/upgrade` (pornește checkout + redirect Stripe) | Andrei | `auth-cont-elev` | `app/upgrade/page.tsx` — reutilizată de butonul „Upgrade" și de fluxul premium-la-înregistrare. |
+| ✅ | Alegere plan la înregistrare (`?plan=premium`) | Andrei | `auth-cont-elev` | `app/sign-up` citește `?plan=` → `forceRedirectUrl` (`/upgrade` vs `/dashboard`). |
 
 ---
 

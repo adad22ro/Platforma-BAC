@@ -5,6 +5,20 @@
 
 ---
 
+## #013 — `23514` violates check constraint `users_subscription_status_check`
+**Data:** 2026-06-29  
+**Context:** Webhook-ul Stripe (`checkout.session.completed`) întorcea `200` dar nu actualiza userul pe abonament. În `error_logs` apărea `code 23514` — check constraint.  
+**Cauză:** Nepotrivire între valorile `subscription_status` trimise de cod și cele permise de CHECK constraint-ul din DB. Constraint-ul real permite `'free' / 'active' / 'cancelled'`, dar codul trimitea `'premium'`.  
+**Diagnostic cheie:** Webhook care dă `200` fără efect = handler-ul iese devreme SAU update-ul e respins silențios (eroarea e logată dar nu propagată). Un breadcrumb temporar în `error_logs` care loghează `fields` exacte a confirmat valoarea trimisă. Atenție și la cache-ul `.next`: după editarea unui route handler, dev server-ul poate servi versiunea veche — `Remove-Item -Recurse -Force .next` + restart.  
+**Soluție:** Aliniat codul la valorile constraint-ului (`active`/`cancelled`, semantică Stripe) și fixat constraint-ul definitiv:
+```sql
+alter table public.users drop constraint if exists users_subscription_status_check;
+alter table public.users add constraint users_subscription_status_check
+  check (subscription_status in ('free', 'active', 'cancelled'));
+```
+
+---
+
 ## #012 — `Invalid API Key provided` la Stripe (pe Vercel)
 **Data:** 2026-06-26  
 **Context:** Cardul Stripe din `/admin` dădea eroare pe producție (local mergea). Valoarea din eroare începea cu `eyJhbGci...` (un JWT).  
