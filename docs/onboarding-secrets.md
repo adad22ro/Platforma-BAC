@@ -61,3 +61,39 @@ Nicio trimitere manuală de fișiere.
   din dashboard-ul dotenv-vault.
 
 > Vezi și `docs/stripe.md` (variabilele Stripe) și `.env.example` (lista completă).
+
+---
+
+## Mesaj gata de trimis unui coleg nou
+
+> **Setup secrete (o singură dată):**
+>
+> ```bash
+> # 1. Ia codul la zi (conține .env.vault criptat)
+> git pull
+>
+> # 2. Decriptează secretele în .env.local (cu cheia trimisă separat, securizat)
+> npx dotenv-vault@latest decrypt "<DOTENV_KEY>" > .env.local
+>
+> # 3. Pornește aplicația
+> npm run dev
+> ```
+>
+> Când un secret se schimbă: doar `git pull` + repeți pasul 2. Fără fișiere trimise manual.
+> `.env.local` și cheia nu intră niciodată în Git.
+
+`DOTENV_KEY`-ul se trimite **separat**, pe canal securizat (Signal / mesaj privat / manager de parole) — niciodată în acest fișier, în Git, email sau chat public.
+
+---
+
+## Pentru asistentul AI (Claude) și viitoarele sesiuni
+
+- Secretele NU sunt în Git în clar. Sursa de adevăr locală e `.env.local` (gitignored),
+  obținut prin decriptarea `.env.vault` cu `DOTENV_KEY` (dotenv-vault).
+- **Nu** sugera trimiterea `.env.local` prin email/chat și **nu** scrie valori reale de
+  secrete sau `DOTENV_KEY` în niciun fișier comis.
+- Pe Vercel, variabilele se gestionează direct în dashboard / prin `vercel env` — nu prin
+  `DOTENV_KEY`. Producția nu folosește dotenv-vault.
+- La rotirea cheii (`npx dotenv-vault rotatekey development`): `.env.vault` trebuie
+  re-criptat (`push development .env.local`), re-comis și cheia nouă redistribuită;
+  altfel decriptarea eșuează cu `DECRYPTION_FAILED`.
