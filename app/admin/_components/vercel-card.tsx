@@ -19,12 +19,20 @@ function stateColor(state?: string): string {
 }
 
 export async function VercelCard() {
+  let deployments;
   try {
-    const deployments = await getDeployments(6);
-
+    deployments = await getDeployments(6);
+  } catch (error) {
     return (
-      <Card title="Vercel — Deploy-uri" subtitle={`ultimele ${deployments.length}`}>
-        {deployments.length === 0 ? (
+      <Card title="Vercel — Deploy-uri">
+        <ErrorBox error={error} />
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Vercel — Deploy-uri" subtitle={`ultimele ${deployments.length}`}>
+      {deployments.length === 0 ? (
           <Empty text="Niciun deploy gasit." />
         ) : (
           <div className="space-y-2">
@@ -53,14 +61,7 @@ export async function VercelCard() {
               );
             })}
           </div>
-        )}
-      </Card>
-    );
-  } catch (error) {
-    return (
-      <Card title="Vercel — Deploy-uri">
-        <ErrorBox error={error} />
-      </Card>
-    );
-  }
+      )}
+    </Card>
+  );
 }

@@ -10,6 +10,7 @@ type LogRow = {
 };
 
 export async function ErrorLogsCard() {
+  let rows: LogRow[];
   try {
     const { data, error } = await supabaseAdmin
       .from("error_logs")
@@ -18,14 +19,21 @@ export async function ErrorLogsCard() {
       .limit(15);
 
     if (error) throw error;
-    const rows = (data ?? []) as LogRow[];
-
+    rows = (data ?? []) as LogRow[];
+  } catch (error) {
     return (
-      <Card
-        title="Loguri de erori (aplicatie)"
-        subtitle={`ultimele ${rows.length}`}
-      >
-        {rows.length === 0 ? (
+      <Card title="Loguri de erori (aplicatie)">
+        <ErrorBox error={error} />
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      title="Loguri de erori (aplicatie)"
+      subtitle={`ultimele ${rows.length}`}
+    >
+      {rows.length === 0 ? (
           <Empty text="Nicio eroare inregistrata. 🎉" />
         ) : (
           <div className="space-y-2">
@@ -51,16 +59,9 @@ export async function ErrorLogsCard() {
                   </pre>
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    );
-  } catch (error) {
-    return (
-      <Card title="Loguri de erori (aplicatie)">
-        <ErrorBox error={error} />
-      </Card>
-    );
-  }
+          ))}
+        </div>
+      )}
+    </Card>
+  );
 }
