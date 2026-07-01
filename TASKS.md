@@ -130,6 +130,7 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
+| ✅ | Teste automate pe logica de plăți (Vitest) + CI (GitHub Actions) | Andrei | `tests-payments-ci` | 12 teste pe checkout + webhook (mock-uite); CI `lint`+`test` pe push/PR. Detalii în `docs/testing.md` |
 | ⬜ | Testare internă cu 10-20 elevi reali | Andrei + Bogdan | — | |
 | ⬜ | Colectare și prioritizare feedback | Andrei + Bogdan | — | |
 | ⬜ | Remediere bug-uri critice | Andrei + Bogdan | `bugfix-*` | Branch separat per bug |

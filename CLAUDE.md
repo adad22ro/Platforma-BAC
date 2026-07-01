@@ -11,6 +11,11 @@
 - Nu scrie niciodată valori reale de secrete sau `DOTENV_KEY` într-un fișier comis și nu sugera trimiterea `.env.local` prin email/chat.
 - Pe Vercel, variabilele se gestionează în dashboard / prin `vercel env` (nu prin dotenv-vault).
 
+# Teste și CI
+
+- Logica de plăți (checkout + webhook Stripe) e acoperită de teste Vitest: `npm test` (sau `npm run test:watch`). Rulează fără secrete — dependențele externe sunt mock-uite.
+- CI (GitHub Actions) rulează `lint` + `test` la fiecare push/PR pe `main`; nu strica build-ul verde. La modificări în rutele de plăți, adaugă/actualizează testele. Detalii în `docs/testing.md`.
+
 # Unelte de debug
 
 - Pentru o imagine consolidată a stării celor 4 platforme (Clerk, Supabase, Stripe, Vercel) și a erorilor aplicației, rulează `npm run debug`. Util la depanare.
