@@ -25,6 +25,12 @@ export default async function AdminPage() {
           <p className="mt-1 text-sm text-zinc-500">
             Conectat ca {adminEmail}
           </p>
+          <a
+            href="/admin/content"
+            className="mt-2 inline-block text-sm text-blue-600 underline"
+          >
+            → Test API conținut (capitole/lecții)
+          </a>
         </header>
 
         <section className="mb-10">
