@@ -6,6 +6,22 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 11)
+
+**Ce s-a făcut (Supabase CLI):**
+- **CLI configurat** — `supabase init` (config.toml comis), `login` + `link` la proiectul de producție (`ymupksngisqzlpqklntq`)
+- **`npm run db:types` funcțional** — a scos la iveală **drift** între baseline-ul scris de mână și prod: `users.updated_at` lipsea, `clerk_id` e NOT NULL (era nullable), `id` fără default (app-ul îl setează explicit). `types/database.ts` = acum generat din schema reală; baseline aliniat
+- **Producția marcată „migrare aplicată"** — `supabase migration repair --status applied 20260701120000`; `migration list` arată Local = Remote (în sync). `db push` viitor aplică doar migrări noi
+- Notă: `supabase db dump` (baseline perfect) necesită Docker Desktop — indisponibil; baseline-ul rămâne best-effort aliniat cu tipurile generate
+
+**Decizii luate:**
+- `migration repair` (nu `db push`) pe baseline — schema există deja în prod; înregistrăm versiunea fără să rulăm SQL peste ea
+- Comenzile care scriu în DB prod le rulează omul (Andrei), nu agentul — guardrail
+
+**Flux de schemă de acum:** fișier nou în `supabase/migrations/` → `npx supabase db push` → `npm run db:types` → commit.
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 10)
 
 **Ce s-a făcut (Tier 3 — igienă de echipă):**
