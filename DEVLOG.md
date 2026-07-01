@@ -6,6 +6,25 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 7)
+
+**Ce s-a făcut:**
+- **Teste Vitest pe logica de bani** — `npm test` (+ `test:watch`); Vitest 3, config `vitest.config.mts` (env node, alias `@`)
+- `tests/stripe-webhook.test.ts` (8 teste): semnătură invalidă → 400 + alertă critică, duplicat (`23505`) → 200 fără reprocesare, `checkout.session.completed` → `active` + `stripe_customer_id` (match pe `clerk_id`), `subscription.updated` activ→`active` / `past_due`→`cancelled`, `subscription.deleted` → `cancelled`, eroare în handler → eliberare claim + 500 + alertă, eroare update DB → alertă critică
+- `tests/checkout.test.ts` (4 teste): nelogat → 401, lipsă `STRIPE_PRICE_ID_MONTHLY` → 500 + log, succes → `{ url }` cu sesiune legată de userul Clerk, Stripe aruncă → 500 + alertă critică
+- Toate dependențele (Stripe/Supabase/Clerk/logError) mock-uite — testele rulează fără servicii reale sau secrete
+- **CI GitHub Actions** (`.github/workflows/ci.yml`) — `lint` + `test` la push/PR pe `main` (Node 24)
+
+**Decizii luate:**
+- Testat prin rutele reale (`POST`) cu dependențe mock-uite, nu funcții extrase — acoperă fluxul real fără a rescrie codul de producție
+- CI fără secrete reale (mock-uri) — rulează pe orice PR, inclusiv de la Bogdan
+
+**Probleme deschise / Next steps:**
+- Rămân amânate (până există useri/frontend): `/api/health`, Sentry, teste E2E
+- Migrare `processed_events` + `DISCORD_ALERT_WEBHOOK_URL` — de confirmat că sunt aplicate în prod
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 6)
 
 **Ce s-a făcut:**
