@@ -13,7 +13,9 @@
 - Mock flexibil pentru query builder-ul Supabase (lanț chainable, rezultat per-tabel, verifică `.eq('published', true)`); `getCurrentAppUser` mock-uit, `isTeacher`/`canAccessPremium` reale
 - Total teste: **37** (16 → 37). lint + typecheck + build verzi. Docs: `docs/testing.md`
 
-**Next steps (din setul convenit):** #3 `/api/health`, #4 security review pe plăți/auth/conținut
+**#3 — `/api/health`:** rută publică (`proxy.ts`) care verifică Supabase (critic → 503) + Stripe (informativ → 200 „degraded"). Răspuns `{ status, checks, timestamp }`, no-cache. Testată (`tests/health.test.ts`, 3 teste → total **40**). Docs: `monitoring.md`. De legat la un uptime monitor extern când apar useri.
+
+**Next step:** #4 security review pe plăți/auth/conținut
 
 ---
 

@@ -34,10 +34,20 @@ Stripe poate livra același eveniment de mai multe ori. Webhook-ul „revendică
 fără reprocesare. La eroare, claim-ul e șters ca retry-ul Stripe să funcționeze.
 Detalii: `docs/stripe.md`, `docs/database.md`.
 
+### 4. Sondă de sănătate (`/api/health`)
+Rută publică (`GET /api/health`, vezi `proxy.ts`) pentru monitorizare uptime.
+Verifică conexiunile:
+- **Supabase** (critic) — dacă e jos → `503`, `status: "down"`
+- **Stripe** (informativ) — dacă e jos dar DB e ok → `200`, `status: "degraded"`
+
+Răspuns: `{ status, checks: { database, stripe }, timestamp }`. Nu se cache-uiește.
+Leag-o la un uptime monitor (UptimeRobot/BetterStack) care alertează pe `!= 200`.
+Testată în `tests/health.test.ts`.
+
 ## Amânat intenționat (prematur la stadiul actual)
 
-- **`/api/health` + uptime monitor** (UptimeRobot/BetterStack) — valoare când există
-  useri care depind de uptime.
+- **Uptime monitor extern** (UptimeRobot/BetterStack) legat la `/api/health` — de
+  configurat când există useri care depind de uptime (endpoint-ul e deja gata).
 - **Sentry** — captură automată de excepții; merită când crește traficul.
 - **Teste E2E (Playwright), load testing** — după ce se stabilizează frontend-ul.
 
