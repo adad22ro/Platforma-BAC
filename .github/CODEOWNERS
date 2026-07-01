@@ -7,11 +7,8 @@
 *                       @adad22ro
 
 # ─── Frontend (Bogdan) ───────────────────────────────────────
-# Decomentează și pune handle-ul real al lui Bogdan (ex: @bogdan-x) ca să fie
-# cerut automat la review pe zonele de UI. Îl găsești în repo → Settings →
-# Collaborators. Până atunci, @adad22ro rămâne owner și pe aceste căi.
-# /app/           @bogdan-handle
-# /components/    @bogdan-handle
+/app/                   @DumnieGOD
+/components/             @DumnieGOD
 
 # ─── Backend / infra (rămân la Andrei explicit) ──────────────
 /app/api/               @adad22ro
