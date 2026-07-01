@@ -1,0 +1,17 @@
+# CODEOWNERS — cine e cerut automat la review pe fiecare zonă.
+# Ultima regulă care se potrivește câștigă. Handle-urile trebuie să aibă acces la repo,
+# altfel GitHub ignoră regula.
+# Docs: https://docs.github.com/articles/about-code-owners
+
+# Owner implicit pentru tot (backend + infra).
+*                       @adad22ro
+
+# ─── Frontend (Bogdan) ───────────────────────────────────────
+/app/                   @DumnieGOD
+/components/             @DumnieGOD
+
+# ─── Backend / infra (rămân la Andrei explicit) ──────────────
+/app/api/               @adad22ro
+/lib/                   @adad22ro
+/supabase/              @adad22ro
+/.github/               @adad22ro

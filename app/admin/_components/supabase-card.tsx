@@ -1,15 +1,13 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Database } from "@/types/database";
 import { Card, Stat, Empty, ErrorBox } from "./ui";
 import { RoleToggle } from "./role-toggle";
 
-type UserRow = {
-  clerk_id: string | null;
-  email: string | null;
-  full_name: string | null;
-  role: string | null;
-  subscription_status: string | null;
-  created_at: string | null;
-};
+// Subsetul de coloane citite, derivat din tipurile generate (fără drift).
+type UserRow = Pick<
+  Database["public"]["Tables"]["users"]["Row"],
+  "clerk_id" | "email" | "full_name" | "role" | "subscription_status" | "created_at"
+>;
 
 export async function SupabaseCard() {
   let rows: UserRow[];
@@ -25,7 +23,7 @@ export async function SupabaseCard() {
 
     if (res.error) throw res.error;
 
-    rows = (res.data ?? []) as UserRow[];
+    rows = res.data ?? [];
     count = res.count ?? 0;
   } catch (error) {
     return (
