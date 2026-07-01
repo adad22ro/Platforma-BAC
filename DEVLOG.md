@@ -14,10 +14,13 @@
 - `tests/checkout.test.ts` (4 teste): nelogat → 401, lipsă `STRIPE_PRICE_ID_MONTHLY` → 500 + log, succes → `{ url }` cu sesiune legată de userul Clerk, Stripe aruncă → 500 + alertă critică
 - Toate dependențele (Stripe/Supabase/Clerk/logError) mock-uite — testele rulează fără servicii reale sau secrete
 - **CI GitHub Actions** (`.github/workflows/ci.yml`) — `lint` + `test` la push/PR pe `main` (Node 24)
+- **Fix 26 erori lint pre-existente** în `/admin/_components/*` (expuse de primul CI): `react-hooks/error-boundaries` (JSX în try/catch) + `react-hooks/purity` (`Math.random` în key). Refactor fără schimbări funcționale — vezi `ERRORS.md` #014
+- **Documentație:** `docs/testing.md` (nou), legat în `architecture.md`; secțiune „Teste și CI" în `CLAUDE.md`; rând nou în `TASKS.md`
 
 **Decizii luate:**
 - Testat prin rutele reale (`POST`) cu dependențe mock-uite, nu funcții extrase — acoperă fluxul real fără a rescrie codul de producție
 - CI fără secrete reale (mock-uri) — rulează pe orice PR, inclusiv de la Bogdan
+- CI rulează `lint` pe tot proiectul (nu doar cod nou) — a scos la iveală datorie veche, dar ține bara sus pentru toți
 
 **Probleme deschise / Next steps:**
 - Rămân amânate (până există useri/frontend): `/api/health`, Sentry, teste E2E
