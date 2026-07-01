@@ -20,7 +20,7 @@
 
 - **Faza curentă:** Faza 1 — MVP
 - **Săptămâna curentă:** 3-4 (Autentificare cont elev — în curs) → urmează 5-6 (conținut + panel profesor)
-- **Ultima actualizare:** 2026-06-29
+- **Ultima actualizare:** 2026-07-01
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -86,14 +86,14 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Schema DB: tabele `chapters`, `lessons` | Andrei | `panel-profesor-capitole` | |
-| ⬜ | Date placeholder: 3 capitole, 2-3 lecții per capitol | Andrei | `panel-profesor-capitole` | NU inventăm structura reală BAC |
-| ⬜ | Pagină listă capitole (vedere elev) | Bogdan | `panel-profesor-capitole` | |
-| ⬜ | Pagină lecție (text + embed video) | Bogdan | `panel-profesor-capitole` | |
-| ⬜ | Autentificare profesor (rol distinct în Clerk/Supabase) | Andrei | `panel-profesor-capitole` | |
-| ⬜ | Panel profesor — formular "Capitol nou" | Bogdan | `panel-profesor-capitole` | |
-| ⬜ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `panel-profesor-capitole` | |
-| ⬜ | API routes pentru CRUD capitole și lecții | Andrei | `panel-profesor-capitole` | |
+| ✅ | Schema DB: tabele `chapters`, `lessons` | Andrei | `panel-profesor-capitole` | RLS activat; SQL în `docs/database.md` |
+| ✅ | Date placeholder: 3 capitole, 2-3 lecții per capitol | Andrei | `panel-profesor-capitole` | `npm run seed:content` (generic, NU structura reală BAC) |
+| ⬜ | Pagină listă capitole (vedere elev) | Bogdan | `panel-profesor-capitole` | Consumă `GET /api/chapters` |
+| ⬜ | Pagină lecție (text + embed video) | Bogdan | `panel-profesor-capitole` | `GET /api/lessons/[id]`; tratează `402 premium_required` |
+| ✅ | Autentificare profesor (rol distinct în Clerk/Supabase) | Andrei | `panel-profesor-capitole` | `users.role`; promovare din `/admin` (buton) via `POST /api/admin/set-role` |
+| ⬜ | Panel profesor — formular "Capitol nou" | Bogdan | `panel-profesor-capitole` | `POST /api/chapters` |
+| ⬜ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `panel-profesor-capitole` | `POST /api/lessons` |
+| ✅ | API routes pentru CRUD capitole și lecții | Andrei | `panel-profesor-capitole` | `/api/chapters`, `/api/lessons` (+ `[id]`); detalii în `docs/api.md` |
 
 ---
 
