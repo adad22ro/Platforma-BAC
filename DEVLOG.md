@@ -6,6 +6,23 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 12)
+
+**Ce s-a făcut (rezolvat cele 7 PR-uri Dependabot):**
+- Dependabot (activat în S10) a deschis 7 PR-uri la prima rulare. Rezolvate local, dintr-o dată (fără merge individual pe fiecare — landează în `main` odată cu branch-ul, Dependabot își închide singur PR-urile)
+- **Aplicate (6):** grup minor/patch (`@clerk/nextjs` 7.5.11, `@supabase/supabase-js` 2.110.0, `react`/`react-dom` 19.2.7, `tailwindcss` 4.3.2); `@types/node` 26; `vitest` 4.1.9; `typescript` 6.0.3; GitHub Actions `checkout@v7` + `setup-node@v6`
+- **Blocat (1): `eslint` 9→10.** Incompatibil cu `eslint-plugin-react` adus de `eslint-config-next@16.2.9` (folosește `context.getFilename()`, eliminat în ESLint 10 → crash la lint). Ținut pe `eslint@9.39.4`; adăugat `ignore` pe major-ul de eslint în `dependabot.yml` (de reevaluat când `eslint-config-next` suportă ESLint 10)
+- Verificat integral: **lint · typecheck · test (16/16) · build** — toate verzi cu major-urile aplicate
+
+**Decizii luate:**
+- Major-urile Dependabot NU se merge-uiesc orbește — testate local împreună; eslint 10 e exemplul de „peer dep zice OK, dar în practică crapă"
+- Rezolvare prin branch local (nu 7 merge-uri separate) — un singur set de verificări, istoric curat
+
+**Probleme deschise / Next steps:**
+- Când `eslint-config-next` suportă ESLint 10, scoate `ignore`-ul din `dependabot.yml` și bump
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 11)
 
 **Ce s-a făcut (Supabase CLI):**

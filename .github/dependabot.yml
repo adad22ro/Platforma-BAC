@@ -17,6 +17,12 @@ updates:
           - "patch"
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # ESLint 10 e incompatibil cu eslint-plugin-react adus de eslint-config-next
+      # 16.2.9 (folosește context.getFilename() eliminat în ESLint 10). Blocăm
+      # major-ul până când eslint-config-next îl suportă. Vezi DEVLOG (S12).
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
 
   # Acțiunile din workflow-urile GitHub (ex: actions/checkout, setup-node)
   - package-ecosystem: "github-actions"
