@@ -12,9 +12,11 @@ Platforma BAC este o aplicație web construită cu **Next.js** (React), găzduit
 /
 ├── app/                  # Rutele Next.js (App Router)
 ├── components/           # Componente React reutilizabile
-├── lib/                  # Funcții utilitare, clienți pentru servicii externe
-├── tests/                # Teste Vitest (logica de plăți) — vezi docs/testing.md
-├── .github/workflows/    # CI (GitHub Actions): lint + test la push/PR pe main
+├── lib/                  # Funcții utilitare, clienți pentru servicii externe (inclusiv env.ts)
+├── instrumentation.ts    # Rulează la boot: validează variabilele de mediu (lib/env.ts)
+├── tests/                # Teste Vitest (plăți + validare env) — vezi docs/testing.md
+├── .github/workflows/    # CI (GitHub Actions): lint + typecheck + test la push/PR pe main
+├── .githooks/            # Hook Git pre-push (aceleași verificări local)
 ├── docs/                 # Documentație tehnică (acest folder)
 ├── CLAUDE.md             # Instrucțiuni pentru Claude Code
 ├── TASKS.md              # Lista de sarcini și responsabili

@@ -14,7 +14,12 @@
 # Teste și CI
 
 - Logica de plăți (checkout + webhook Stripe) e acoperită de teste Vitest: `npm test` (sau `npm run test:watch`). Rulează fără secrete — dependențele externe sunt mock-uite.
-- CI (GitHub Actions) rulează `lint` + `test` la fiecare push/PR pe `main`; nu strica build-ul verde. La modificări în rutele de plăți, adaugă/actualizează testele. Detalii în `docs/testing.md`.
+- CI (GitHub Actions) rulează `lint` + `typecheck` (`tsc --noEmit`) + `test` la fiecare push/PR pe `main`; nu strica build-ul verde. La modificări în rutele de plăți, adaugă/actualizează testele. Detalii în `docs/testing.md`.
+- Un **hook Git pre-push** (`.githooks/pre-push`, activat automat prin `prepare`) rulează aceleași verificări local înainte de push. Dacă e nevoie să sari peste: `git push --no-verify`.
+
+# Variabile de mediu — validare la boot
+
+- Toate variabilele server sunt validate o dată la pornire în `instrumentation.ts` → `lib/env.ts` (schema Zod). Dacă lipsește/e invalidă una obligatorie, serverul crapă imediat cu mesaj clar (fail-fast). Când adaugi o variabilă nouă, actualizează schema din `lib/env.ts` și `.env.example`.
 
 # Unelte de debug
 

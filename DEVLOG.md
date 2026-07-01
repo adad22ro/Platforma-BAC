@@ -6,6 +6,22 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 8)
+
+**Ce s-a făcut (unelte de developer, ca să ușureze munca viitoare):**
+- **Validare env la boot** — `lib/env.ts` (schema Zod pt. toate variabilele server) + `instrumentation.ts` (`register()` rulează `validateEnv()` la pornire, doar runtime Node). Dacă lipsește/e invalidă una obligatorie, serverul crapă imediat cu mesaj clar și agregat. Atacă clasa de erori „variabilă lipsă descoperită târziu" (ERRORS #004, secrete lipsă). `zod` adăugat ca dep directă. Test: `tests/env.test.ts`
+- **Hook Git pre-push** — `.githooks/pre-push` rulează `lint` + `typecheck` + `test` local înainte de push (nu mai vezi CI roșu după push). Activat automat prin scriptul `prepare` (`git config core.hooksPath .githooks`). `.gitattributes` forțează LF pe `.githooks/**` (shebang pe Windows). Skip: `git push --no-verify`
+- **Typecheck în CI** — pas nou `npm run typecheck` (`tsc --noEmit`) în workflow; prinde erorile de tip la PR, nu la build-ul Vercel
+
+**Decizii luate:**
+- Validare la boot prin `instrumentation.ts` (nu în fiecare rută) — zero atingeri pe call-site-uri sau teste, un singur punct de adevăr
+- Hook fără Husky — `core.hooksPath` + folder versionat `.githooks/`, zero dependențe noi
+
+**Probleme deschise / Next steps:**
+- Urmează (Tier 2, discutat): folder de migrări DB reproductibile + tipuri Supabase generate (scapă de cast-urile `as UserRow`)
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 7)
 
 **Ce s-a făcut:**
