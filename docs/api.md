@@ -1,6 +1,6 @@
 # Rute API
 
-> Actualizat la: 2026-06-29
+> Actualizat la: 2026-07-01
 
 ## Cum sunt organizate
 
@@ -108,3 +108,13 @@ Cine o apelează: butonul de promovare din panoul `/admin`.
 ### POST /api/webhooks/clerk
 Scop: sincronizează userii Clerk în tabelul `users` (`user.created` / `updated` / `deleted`).
 Detalii în `docs/auth.md` și `docs/database.md`. Rută publică, verificată cu `CLERK_WEBHOOK_SIGNING_SECRET`.
+
+### GET /api/health
+Scop: sondă de sănătate pentru monitorizare uptime. Rută publică (fără login).
+
+Response:
+- 200: `{ status: "ok" | "degraded", checks: { database, stripe }, timestamp }`
+- 503: `{ status: "down", ... }` — Supabase inaccesibil (critic)
+
+`database` e critic (jos → 503); `stripe` e informativ (jos, dar DB ok → 200 „degraded").
+Rezultatul e cache-uit ~15s. Detalii în `docs/monitoring.md`.

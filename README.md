@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Platformă BAC
 
-## Getting Started
+Platformă educațională pentru pregătirea la BAC — lecții și teste, cu abonament lunar
+premium. Echipă de 2: backend (Andrei) + frontend (Bogdan).
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, React 19, TypeScript) — ⚠️ middleware-ul se numește `proxy.ts`, nu `middleware.ts`
+- **Clerk** — autentificare (email + Google)
+- **Supabase** — PostgreSQL (users, conținut, loguri)
+- **Stripe** — abonamente recurente
+- **Vercel** — hosting + deploy automat din `main`
+
+## Setup rapid
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install            # instalează deps + activează hook-ul pre-push
+# obține .env.local (vezi docs/onboarding-secrets.md — dotenv-vault)
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variabilele de mediu sunt validate la pornire (`lib/env.ts`) — dacă lipsește una
+obligatorie, serverul crapă cu mesaj clar.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripturi
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comandă | Ce face |
+|---|---|
+| `npm run dev` / `build` / `start` | Next.js |
+| `npm run lint` · `typecheck` · `test` | verificări (rulate și de CI + hook pre-push) |
+| `npm run debug` | raport consolidat Clerk/Supabase/Stripe/Vercel |
+| `npm run seed:content` | date demo (capitole + lecții) |
+| `npm run db:types` | regenerează tipurile Supabase (necesită `supabase link`) |
 
-## Learn More
+## Colaborare
 
-To learn more about Next.js, take a look at the following resources:
+- **Niciodată commit direct pe `main`** — branch + PR. CI (lint + typecheck + test)
+  trebuie verde înainte de merge.
+- Actualizează `DEVLOG.md` (la final de sesiune) și `TASKS.md` (status).
+- La fiecare eroare rezolvată → intrare în `ERRORS.md`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentație (`docs/`)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Fișier | Despre |
+|---|---|
+| [architecture.md](docs/architecture.md) | structura proiectului, servicii, flux |
+| [auth.md](docs/auth.md) | autentificare, roluri, protejarea rutelor |
+| [database.md](docs/database.md) | tabele (schema în `supabase/migrations/`) |
+| [api.md](docs/api.md) | rutele API + gating premium |
+| [stripe.md](docs/stripe.md) | plăți și abonamente |
+| [monitoring.md](docs/monitoring.md) | erori, alerte, idempotență, `/api/health` |
+| [admin.md](docs/admin.md) | panoul `/admin` |
+| [testing.md](docs/testing.md) | teste + CI + hook pre-push |
+| [onboarding-secrets.md](docs/onboarding-secrets.md) | cum obții `.env.local` |
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Instrucțiuni pentru agenți: `CLAUDE.md` + `AGENTS.md`.
