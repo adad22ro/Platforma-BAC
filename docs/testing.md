@@ -32,6 +32,23 @@ npm run test:watch  # re-ruleaza la fiecare modificare (dev)
 | Eroare în handler | eliberează claim-ul de idempotență (`delete`), `500` + alertă `critical` |
 | Eroare la update DB | alertă `critical` (bani scriși în tăcere) |
 
+### `tests/content-api.test.ts` + `tests/current-user.test.ts` — conținut & autorizare
+
+Logica ce păzește conținutul plătit ([`lib/current-user.ts`](../lib/current-user.ts) +
+rutele `chapters`/`lessons`):
+
+| Scenariu | Așteptare |
+|---|---|
+| `GET /api/chapters` ca elev | filtrează `published=true`; profesor vede și draft |
+| `POST /api/chapters` / `lessons` non-profesor | `403` |
+| `POST` fără câmpuri obligatorii | `400`; lecție cu `chapter_id` inexistent (FK 23503) → `400` |
+| `GET /api/lessons/[id]` lecție nepublicată (elev) | `404` |
+| capitol premium + elev fără abonament | `402 premium_required`; cu abonament activ → `200`; capitol free → `200` |
+| profesor | vede orice, inclusiv nepublicat |
+| `GET /api/chapters/[id]/lessons` | gating premium + filtrare lecții pe `published` pentru elev |
+
+`isTeacher` / `canAccessPremium` / `getCurrentAppUser` testate direct în `current-user.test.ts`.
+
 ### `tests/env.test.ts` — [`lib/env.ts`](../lib/env.ts)
 
 Validarea variabilelor de mediu (schema Zod, rulată la boot din `instrumentation.ts`):

@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 13)
+
+**Ce s-a făcut (#1 din setul teste/health/security — teste pe conținut + gating):**
+- **21 teste noi** pe logica ce păzește conținutul plătit (era netestată): `tests/content-api.test.ts` (rute chapters/lessons — filtrare `published`, scriere doar `teacher` → 403, validări → 400, FK 23503, gating premium → 402/200) + `tests/current-user.test.ts` (`isTeacher`/`canAccessPremium`/`getCurrentAppUser`)
+- Mock flexibil pentru query builder-ul Supabase (lanț chainable, rezultat per-tabel, verifică `.eq('published', true)`); `getCurrentAppUser` mock-uit, `isTeacher`/`canAccessPremium` reale
+- Total teste: **37** (16 → 37). lint + typecheck + build verzi. Docs: `docs/testing.md`
+
+**Next steps (din setul convenit):** #3 `/api/health`, #4 security review pe plăți/auth/conținut
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 12)
 
 **Ce s-a făcut (rezolvat cele 7 PR-uri Dependabot):**
