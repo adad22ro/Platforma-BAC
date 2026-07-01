@@ -36,10 +36,12 @@ export async function POST() {
     return Response.json({ url: session.url })
   } catch (err) {
     console.error('Stripe checkout error:', err)
-    await logError('stripe-checkout', 'Crearea sesiunii a esuat', {
-      clerk_id: userId,
-      error: err instanceof Error ? err.message : String(err),
-    })
+    await logError(
+      'stripe-checkout',
+      'Crearea sesiunii a esuat',
+      { clerk_id: userId, error: err instanceof Error ? err.message : String(err) },
+      'critical'
+    )
     return new Response('Eroare la crearea sesiunii de plata', { status: 500 })
   }
 }

@@ -6,6 +6,27 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 6)
+
+**Ce s-a făcut:**
+- Validat **plata reală în producție** (card `4242…`): user → `active` cu `stripe_customer_id` și `subscription_end_date` (o lună) — fluxul complet confirmat cap-coadă
+- **Idempotență webhook Stripe** — tabel `processed_events`; `event.id` revendicat înainte de procesare, duplicatele primesc `200` fără reprocesare, claim eliberat la eroare (retry Stripe funcțional)
+- **Alerte instant pe Discord** — `logError` acceptă `severity`; erorile critice (verificare/scriere DB/handler webhook, checkout eșuat) trimit alertă dacă `DISCORD_ALERT_WEBHOOK_URL` e setat
+- **Acces `/admin` pentru Bogdan** — `ADMIN_EMAILS` (Andrei + Bogdan), local + Vercel (prod & preview)
+- **Partajare secrete via dotenv-vault** — `.env.vault` în Git, cheie rotită după expunere; ghid `docs/onboarding-secrets.md`
+- Documentație: `docs/monitoring.md` (nou), actualizat `stripe/api/database`, `.env.example` (`DISCORD_ALERT_WEBHOOK_URL`), `CLAUDE.md`
+
+**Decizii luate:**
+- Monitorizare țintită acum doar pe zona plăți/webhook (bani, deja live); `/api/health`, Sentry, E2E — amânate până există useri/frontend (fără rework din amânare)
+- `critical` rezervat pentru bani/acces stricat în tăcere; restul erorilor rămân `error` (zgomot redus)
+
+**Probleme deschise / Next steps:**
+- De rulat migrarea `processed_events` în Supabase (SQL în `docs/database.md`)
+- De setat `DISCORD_ALERT_WEBHOOK_URL` (local + Vercel) ca alertele să fie active
+- Teste Vitest pe logica webhook/checkout + CI (GitHub Actions) — următorul pas de robustețe
+
+---
+
 ## 2026-06-29 — Andrei (Sesiunea 5)
 
 **Ce s-a făcut:**

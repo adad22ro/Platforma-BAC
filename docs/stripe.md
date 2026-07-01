@@ -48,6 +48,15 @@ din metadata (la prima plată, când `stripe_customer_id` încă nu e salvat).
 > **Valori `subscription_status`:** `free` / `active` / `cancelled` — trebuie să fie
 > identice între cod și CHECK constraint-ul din DB (vezi `ERRORS.md` #013).
 
+### Idempotență și alerte
+
+- **Idempotență:** fiecare `event.id` e „revendicat" în tabelul `processed_events`
+  înainte de procesare. Dacă evenimentul a mai fost procesat → răspuns `200` imediat,
+  fără reprocesare. La eroare în handler, claim-ul e șters ca Stripe să poată reîncerca.
+- **Alerte:** erorile critice (verificare semnătură, scriere DB, handler) apelează
+  `logError(..., 'critical')`, care trimite o alertă instant pe Discord dacă
+  `DISCORD_ALERT_WEBHOOK_URL` e setat. Vezi `docs/monitoring.md`.
+
 ## Prețuri
 
 - Abonament lunar: 60-90 RON (preț final de testat cu utilizatori reali)

@@ -64,6 +64,27 @@ create table if not exists public.error_logs (
 grant insert, select on public.error_logs to service_role;
 ```
 
+### processed_events
+Scop: idempotență pentru webhook-ul Stripe. Stripe poate livra același eveniment
+de mai multe ori (retry-uri); înregistrăm `event.id` ca să nu-l reprocesăm. Vezi
+`app/api/webhooks/stripe/route.ts` și `docs/stripe.md`.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| event_id | text | ID-ul evenimentului Stripe (PK — unicitatea dă dedup-ul) |
+| type | text | Tipul evenimentului (ex: `checkout.session.completed`) |
+| processed_at | timestamptz | Data procesării (default `now()`) |
+
+SQL de creare:
+```sql
+create table if not exists public.processed_events (
+  event_id text primary key,
+  type text,
+  processed_at timestamptz not null default now()
+);
+grant insert, select, delete on public.processed_events to service_role;
+```
+
 ---
 
 ## Conexiunea la Supabase
@@ -83,4 +104,4 @@ Pentru operațiuni de server (webhook, panou admin) se folosește clientul admin
 
 ---
 
-> Actualizat la: 2026-06-26 — tabelele `users` și `error_logs` create.
+> Actualizat la: 2026-07-01 — adăugat `processed_events` (idempotență webhook Stripe).
