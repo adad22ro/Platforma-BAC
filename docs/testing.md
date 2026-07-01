@@ -32,6 +32,12 @@ npm run test:watch  # re-ruleaza la fiecare modificare (dev)
 | Eroare în handler | eliberează claim-ul de idempotență (`delete`), `500` + alertă `critical` |
 | Eroare la update DB | alertă `critical` (bani scriși în tăcere) |
 
+### `tests/env.test.ts` — [`lib/env.ts`](../lib/env.ts)
+
+Validarea variabilelor de mediu (schema Zod, rulată la boot din `instrumentation.ts`):
+trece cu setul complet, aruncă la variabilă obligatorie lipsă sau URL invalid,
+acceptă lipsa celor opționale (Discord/Vercel/ADMIN_EMAILS).
+
 ### `tests/checkout.test.ts` — [`app/api/checkout/route.ts`](../app/api/checkout/route.ts)
 
 | Scenariu | Așteptare |
@@ -46,12 +52,23 @@ npm run test:watch  # re-ruleaza la fiecare modificare (dev)
 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) rulează la fiecare **push** și **pull request** către `main`:
 
 ```
-npm ci  →  npm run lint  →  npm test
+npm ci  →  npm run lint  →  npm run typecheck  →  npm test
 ```
 
 - Node 24, cache npm.
 - Fără secrete: mock-urile fac testele deterministe, deci CI merge pe orice PR (inclusiv de la Bogdan).
-- Dacă lint-ul sau testele pică, PR-ul devine roșu → se prinde regresia înainte de merge.
+- Dacă lint-ul, typecheck-ul sau testele pică, PR-ul devine roșu → se prinde regresia înainte de merge.
+
+## Hook pre-push (local)
+
+[`.githooks/pre-push`](../.githooks/pre-push) rulează aceleași verificări ca CI
+(`lint` + `typecheck` + `test`) **înainte** de push, ca să nu vezi CI roșu după.
+E activat automat: scriptul `prepare` din `package.json` setează
+`git config core.hooksPath .githooks` la `npm install`.
+
+- Sari peste (rar, când chiar știi ce faci): `git push --no-verify`.
+- Dacă hook-ul nu se declanșează, rulează o dată `npm install` (sau manual
+  `git config core.hooksPath .githooks`).
 
 > Notă: `npm run lint` verifică **tot** proiectul. Prima rulare CI a expus datorie
 > de lint pre-existentă în `/admin` — vezi [ERRORS.md](../ERRORS.md) #014.

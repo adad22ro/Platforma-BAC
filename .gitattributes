@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Git hooks trebuie sa aiba mereu terminatii LF (altfel shebang-ul #!/bin/sh
+# se strica pe Windows cu CRLF).
+.githooks/** text eol=lf
