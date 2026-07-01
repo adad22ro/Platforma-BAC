@@ -36,11 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
-# supabase CLI (fisiere locale generate de `supabase init/link`)
-# Pastram supabase/migrations/ si supabase/README.md; ignoram restul.
-/supabase/.temp/
-/supabase/.branches/
-/supabase/config.toml
+# supabase CLI: fisierele locale (.temp/.branches/env) sunt ignorate de
+# supabase/.gitignore (generat de `supabase init`). config.toml + migrations/
+# se comit (config versionat, fara secrete).
 
 # typescript
 *.tsbuildinfo
