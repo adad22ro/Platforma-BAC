@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "debug": "node --env-file=.env.local scripts/debug.mjs"
+    "debug": "node --env-file=.env.local scripts/debug.mjs",
+    "seed:content": "node --env-file=.env.local scripts/seed-content.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.9",

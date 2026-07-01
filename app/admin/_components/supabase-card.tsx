@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { Card, Stat, Empty, ErrorBox } from "./ui";
+import { RoleToggle } from "./role-toggle";
 
 type UserRow = {
   clerk_id: string | null;
@@ -35,8 +36,9 @@ export async function SupabaseCard() {
                 key={r.clerk_id ?? r.email ?? Math.random()}
                 label={r.email ?? r.full_name ?? r.clerk_id ?? "—"}
                 value={
-                  <span className="text-zinc-500">
-                    {r.role ?? "?"} · {r.subscription_status ?? "?"}
+                  <span className="flex items-center gap-2 text-zinc-500">
+                    <RoleToggle clerkId={r.clerk_id} role={r.role} />
+                    <span>· {r.subscription_status ?? "?"}</span>
                   </span>
                 }
               />

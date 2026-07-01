@@ -85,6 +85,69 @@ create table if not exists public.processed_events (
 grant insert, select, delete on public.processed_events to service_role;
 ```
 
+### chapters
+Scop: capitolele de conținut. Gestionate de profesori din panelul lor; citite de elevi.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| title | text | Titlul capitolului (NOT NULL) |
+| description | text | Descriere scurtă |
+| order_index | int | Ordinea de afișare (NOT NULL default 0) |
+| is_free | boolean | Preview gratuit; default `false` (capitolele sunt premium implicit) |
+| published | boolean | Draft vs. publicat; default `false` |
+| created_at | timestamptz | default `now()` |
+
+### lessons
+Scop: lecțiile dintr-un capitol (text + video embed).
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| chapter_id | uuid | FK → `chapters(id)` ON DELETE CASCADE |
+| title | text | Titlul lecției (NOT NULL) |
+| content | text | Corpul lecției (text/markdown) |
+| video_url | text | Link video embed |
+| order_index | int | Ordinea în capitol (NOT NULL default 0) |
+| published | boolean | Draft vs. publicat; default `false` |
+| created_at | timestamptz | default `now()` |
+
+Model de acces: RLS activat, fără politici pentru `anon` (deny), grant la `service_role`
+— autorizarea se face în API routes (citire filtrată după `published`/`is_free`/abonament;
+scriere doar `role = teacher`), la fel ca pentru `users`.
+
+SQL de creare:
+```sql
+create table if not exists public.chapters (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  order_index int not null default 0,
+  is_free boolean not null default false,
+  published boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.lessons (
+  id uuid primary key default gen_random_uuid(),
+  chapter_id uuid not null references public.chapters(id) on delete cascade,
+  title text not null,
+  content text,
+  video_url text,
+  order_index int not null default 0,
+  published boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table public.chapters enable row level security;
+alter table public.lessons enable row level security;
+
+grant select, insert, update, delete on public.chapters to service_role;
+grant select, insert, update, delete on public.lessons to service_role;
+
+create index if not exists lessons_chapter_id_idx on public.lessons (chapter_id);
+```
+
 ---
 
 ## Conexiunea la Supabase
