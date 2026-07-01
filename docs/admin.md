@@ -1,6 +1,6 @@
 # Panou de monitorizare & debug
 
-> Actualizat la: 2026-06-26
+> Actualizat la: 2026-07-01
 
 Unelte interne pentru a urmări starea celor 4 platforme (Clerk, Supabase, Stripe,
 Vercel) și erorile aplicației — fără a sări dintr-un tab în altul.
@@ -30,7 +30,9 @@ Controlat de `lib/admin.ts` → funcția `requireAdmin()`:
 - **Sincronizare Clerk ↔ Supabase** — compară numărul de utilizatori; alert roșu
   dacă diferă (semn că un webhook a eșuat).
 - **Clerk** — ultimii utilizatori + total.
-- **Supabase** — rândurile din `users`.
+- **Supabase** — rândurile din `users`. Fiecare user are un buton de **promovare rol**
+  (student ↔ teacher) → apelează `POST /api/admin/set-role` (doar admini). Așa dai
+  cuiva rol de profesor fără SQL manual.
 - **Stripe** — clienți + abonamente.
 - **Vercel** — ultimele deploy-uri cu starea lor.
 
@@ -39,6 +41,15 @@ Controlat de `lib/admin.ts` → funcția `requireAdmin()`:
 - **Vercel — Loguri build** — logurile ultimului deploy eșuat (sau cel mai recent).
 
 Fiecare card își izolează erorile (dacă o platformă pică, restul se afișează normal).
+
+### Banc de test conținut (`/admin/content`)
+Link din header-ul `/admin`. Unealtă internă de dezvoltare (nu UI de produs) care
+exercită API-ul de capitole/lecții cu sesiune Clerk reală: listare, creare/editare/
+ștergere, toggle `published`/`is_free`, încărcare lecții și afișarea răspunsului brut
+(inclusiv `402 premium_required`, `403` la scriere fără rol `teacher`).
+
+> Scrierea cere rol `teacher` — promovează-te întâi din cardul Supabase (buton de rol).
+> Detalii despre rute în `docs/api.md`.
 
 ---
 
@@ -61,9 +72,13 @@ tuturor platformelor într-un singur loc. Util și pentru asistentul AI la depan
 
 ## 3. Logarea erorilor în cod
 
-Helper: `lib/log-error.ts` → `logError(source, message, context?)`.
+Helper: `lib/log-error.ts` → `logError(source, message, context?, severity?)`.
 Scrie în tabelul `error_logs` din Supabase. Nu aruncă erori el însuși (dacă scrierea
 eșuează, doar afișează în consolă), ca să nu strice fluxul apelantului.
+
+Cu `severity = 'critical'` trimite în plus o **alertă instant pe Discord** (dacă
+`DISCORD_ALERT_WEBHOOK_URL` e setat) — folosit pentru erori de plăți/webhook. Detalii
+în `docs/monitoring.md`.
 
 Exemplu (din webhook-ul Clerk):
 ```ts
@@ -84,6 +99,7 @@ Pe lângă cheile existente (Clerk, Supabase, Stripe), monitorizarea folosește:
 | Variabilă | Obligatorie | Descriere |
 |---|---|---|
 | `ADMIN_EMAILS` | recomandat | Email-uri cu acces la `/admin` (virgulă) |
+| `DISCORD_ALERT_WEBHOOK_URL` | opțional | Alerte instant la erori critice (vezi `docs/monitoring.md`) |
 | `VERCEL_API_TOKEN` | pentru cardul Vercel | Token din vercel.com/account/tokens |
 | `VERCEL_TEAM_ID` | opțional | Doar dacă proiectul e într-o echipă Vercel |
 | `VERCEL_PROJECT_NAME` | opțional | Default: `platforma-bac` |
