@@ -6,6 +6,18 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 14)
+
+**Ce s-a făcut (sincronizare documentație după tot ce s-a livrat):**
+- **`docs/auth.md`** rescris — era încă „roluri planificate" / `elev`/`profesor` / „de completat Săpt 3-4". Acum: roluri reale (`student`/`teacher`, sursă `users.role`), sync via webhook Clerk, gating premium (`canAccessPremium` + `end_date`), protejare rute (`proxy.ts` + rute publice + allowlist admin)
+- **`README.md`** — din boilerplate `create-next-app` în README real: stack, setup, scripturi, reguli de colaborare, index de documentație
+- **`docs/api.md`** — adăugat `GET /api/health`; data actualizată
+- **`TASKS.md`** — stare generală actualizată (backend Săpt 3-6 complet); rânduri noi: teste (43), `/api/health`, security review
+
+**Notă proces:** lucrat pe branch `docs-sync-s13` (nu direct pe `main`)
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 13)
 
 **Ce s-a făcut (#1 din setul teste/health/security — teste pe conținut + gating):**

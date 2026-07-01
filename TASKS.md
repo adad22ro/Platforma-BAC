@@ -19,7 +19,8 @@
 ## Stare generală
 
 - **Faza curentă:** Faza 1 — MVP
-- **Săptămâna curentă:** 3-4 (Autentificare cont elev — în curs) → urmează 5-6 (conținut + panel profesor)
+- **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
+- **Bottleneck:** frontend (Bogdan) — API-urile, tipurile și uneltele sunt gata de consumat
 - **Ultima actualizare:** 2026-07-01
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
@@ -130,7 +131,9 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ✅ | Teste automate pe logica de plăți (Vitest) + CI (GitHub Actions) | Andrei | `tests-payments-ci` | 12 teste pe checkout + webhook (mock-uite); CI `lint`+`test` pe push/PR. Detalii în `docs/testing.md` |
+| ✅ | Teste automate (Vitest) + CI (GitHub Actions) | Andrei | `tests-payments-ci`, `tests-content-authz` | 43 teste: plăți, env, conținut + gating premium, health; CI `lint`+`typecheck`+`test` pe push/PR + hook pre-push. Detalii în `docs/testing.md` |
+| ✅ | Endpoint `/api/health` pentru monitorizare uptime | Andrei | `tests-content-authz` | Verifică Supabase (503 dacă e jos) + Stripe. `docs/monitoring.md` |
+| ✅ | Security review pe plăți/auth/conținut + hardening | Andrei | `tests-content-authz` | Cod curat; aplicat: cache health, gating pe `end_date`, `primaryEmailAddress` admin |
 | ⬜ | Testare internă cu 10-20 elevi reali | Andrei + Bogdan | — | |
 | ⬜ | Colectare și prioritizare feedback | Andrei + Bogdan | — | |
 | ⬜ | Remediere bug-uri critice | Andrei + Bogdan | `bugfix-*` | Branch separat per bug |
