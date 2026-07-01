@@ -1,7 +1,13 @@
 # Baza de date
 
-> Actualizat la: 2026-06-26
+> Actualizat la: 2026-07-01
 > Serviciu: Supabase (PostgreSQL)
+
+> **Sursa de adevăr pentru schemă = [`supabase/migrations/`](../supabase/migrations)**
+> (fișiere SQL versionate). Acest document descrie tabelele pe înțelesul oamenilor;
+> DDL-ul canonic și cum se aplică migrările sunt în [supabase/README.md](../supabase/README.md).
+> Tipurile TypeScript ale tabelelor: [`types/database.ts`](../types/database.ts)
+> (regenerabile cu `npm run db:types`).
 
 ## Tabele
 
@@ -168,3 +174,4 @@ Pentru operațiuni de server (webhook, panou admin) se folosește clientul admin
 ---
 
 > Actualizat la: 2026-07-01 — adăugat `processed_events` (idempotență webhook Stripe).
+> Schema mutată în migrări versionate (`supabase/migrations/`) + tipuri generate (`types/database.ts`).

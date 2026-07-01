@@ -1,13 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Database } from "@/types/database";
 import { Card, Empty, ErrorBox } from "./ui";
 
-type LogRow = {
-  id: string;
-  source: string | null;
-  message: string | null;
-  context: Record<string, unknown> | null;
-  created_at: string | null;
-};
+type LogRow = Database["public"]["Tables"]["error_logs"]["Row"];
 
 export async function ErrorLogsCard() {
   let rows: LogRow[];
@@ -19,7 +14,7 @@ export async function ErrorLogsCard() {
       .limit(15);
 
     if (error) throw error;
-    rows = (data ?? []) as LogRow[];
+    rows = data ?? [];
   } catch (error) {
     return (
       <Card title="Loguri de erori (aplicatie)">

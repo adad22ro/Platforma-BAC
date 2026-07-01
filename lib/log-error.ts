@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Json } from "@/types/database";
 
 type Severity = "error" | "critical";
 
@@ -19,7 +20,7 @@ export async function logError(
     await supabaseAdmin.from("error_logs").insert({
       source,
       message,
-      context: context ?? null,
+      context: (context ?? null) as Json,
     });
   } catch (e) {
     console.error("logError a esuat:", e);

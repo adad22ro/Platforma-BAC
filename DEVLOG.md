@@ -6,6 +6,24 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 9)
+
+**Ce s-a făcut (Tier 2 unelte — schema DB reproductibilă + tipuri):**
+- **Migrări versionate** — folder `supabase/migrations/` cu `20260701120000_baseline.sql`: schema completă a producției ca „squash" idempotent (`if not exists` / `drop ... if exists`), sigur de rulat peste baza existentă. Schema nu mai trăiește ca SQL în proză prin `docs/database.md` (acum descriptiv) — sursa de adevăr e folderul de migrări. Ghid: `supabase/README.md`
+- **Tipuri Supabase** — `types/database.ts` (format compatibil `supabase gen types`) cablat în ambii clienți (`createClient<Database>`). Query-urile sunt acum tipate; eliminat cast-urile `as UserRow` / `as LogRow` din cardurile `/admin` (tipurile derivate din schema generată, fără drift)
+- **Ajustări cerute de tipare** (bug-uri latente prinse de tipuri): `update()` în `chapters/[id]` și `lessons/[id]` tipat cu `...['Update']`; `context` în `log-error` cast la `Json`
+- **Script `npm run db:types`** (regenerare via `npx supabase ... --linked`); `.gitignore` pentru fișierele locale ale CLI-ului; docs actualizate (`database.md`, `architecture.md`)
+
+**Decizii luate:**
+- Adoptare migrări pe bază existentă = un baseline idempotent (squash), nu reconstituirea istoricului real — mai onest și sigur. Migrările viitoare = fișiere noi, cu timestamp mai mare
+- Tipuri scrise de mână acum (corecte față de schemă) + script de regenerare — beneficiul e imediat, fără să blocheze pe setup-ul CLI (login + link, doar la nevoie)
+
+**Probleme deschise / Next steps:**
+- Setup unic Supabase CLI (`init` + `link`) rămâne opțional, doar dacă vrei `db push` / `db:types` automat
+- Tier 3 (rămas din discuție): PR template + CODEOWNERS, Dependabot
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 8)
 
 **Ce s-a făcut (unelte de developer, ca să ușureze munca viitoare):**

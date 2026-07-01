@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import type { Database } from '@/types/database'
 import { getCurrentAppUser, isTeacher, canAccessPremium } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
 
@@ -41,9 +42,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (!isTeacher(user)) return new Response('Forbidden', { status: 403 })
 
   const body = await req.json().catch(() => ({}))
-  const fields: Record<string, unknown> = {}
+  const fields: Database['public']['Tables']['lessons']['Update'] = {}
   for (const k of ['title', 'content', 'video_url', 'order_index', 'published'] as const) {
-    if (k in body) fields[k] = body[k]
+    if (k in body) (fields as Record<string, unknown>)[k] = body[k]
   }
   if (Object.keys(fields).length === 0) {
     return new Response('Bad request: nothing to update', { status: 400 })
