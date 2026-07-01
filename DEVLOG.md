@@ -6,6 +6,19 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 10)
+
+**Ce s-a făcut (Tier 3 — igienă de echipă):**
+- **PR template** (`.github/pull_request_template.md`) — checklist cu convențiile proiectului (branch nu pe `main`, lint/typecheck/test, DEVLOG/TASKS/ERRORS, env în `lib/env.ts`, migrări DB)
+- **Dependabot** (`.github/dependabot.yml`) — PR-uri săptămânale de update npm (minor/patch grupate) + github-actions; CI le validează
+- **CODEOWNERS** (`.github/CODEOWNERS`) — `@adad22ro` owner global + explicit pe backend/infra; secțiunea de frontend (Bogdan) pregătită, comentată — de decomentat cu handle-ul lui real când e disponibil
+
+**Probleme deschise / Next steps:**
+- Adaugă handle-ul GitHub al lui Bogdan în CODEOWNERS (repo → Settings → Collaborators)
+- Planul de tooling e complet (Tier 1-3). Bottleneck-ul real rămâne frontend-ul (Bogdan)
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 9)
 
 **Ce s-a făcut (Tier 2 unelte — schema DB reproductibilă + tipuri):**
