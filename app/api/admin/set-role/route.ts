@@ -7,8 +7,8 @@ import { logError } from '@/lib/log-error'
 // Apelat din panoul /admin (butonul de promovare).
 export async function POST(req: Request) {
   const user = await currentUser()
-  const email = user?.emailAddresses[0]?.emailAddress?.toLowerCase() ?? ''
-  if (!user || !getAdminEmails().includes(email)) {
+  const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? ''
+  if (!user || !email || !getAdminEmails().includes(email)) {
     return new Response('Forbidden', { status: 403 })
   }
 

@@ -15,7 +15,13 @@
 
 **#3 — `/api/health`:** rută publică (`proxy.ts`) care verifică Supabase (critic → 503) + Stripe (informativ → 200 „degraded"). Răspuns `{ status, checks, timestamp }`, no-cache. Testată (`tests/health.test.ts`, 3 teste → total **40**). Docs: `monitoring.md`. De legat la un uptime monitor extern când apar useri.
 
-**Next step:** #4 security review pe plăți/auth/conținut
+**#4 — security review pe plăți/auth/conținut:** cod curat, fără vulnerabilități critice. Aplicat hardening + aliniat gating-ul la modelul de produs:
+- **#1** `/api/health` public amplifica apeluri externe → cache scurt (15s) al rezultatului
+- **#2** gating premium ignora `subscription_end_date` → `canAccessPremium` cere acum și `end_date` în viitor (apărare în adâncime, webhook de anulare pierdut); adăugat `subscription_end_date` în `AppUser` + select
+- **#3** allowlist admin folosea `emailAddresses[0]` → acum `primaryEmailAddress` (`set-role` + `admin.ts`)
+- **Model produs (clarificat de Andrei):** userul free vede **lista completă** de capitole + lecții (titluri); conținutul e blocat. `GET /api/chapters/[id]/lessons` nu mai dă `402` pe listă — întoarce titlurile cu `content`/`video_url` = null + `locked: true`; paywall-ul real (mesaj + buton) e pe `GET /api/lessons/[id]` (`402`). Docs: `api.md`
+- Note necorectate (prioritate mică): fără rate limiting pe checkout/scrieri; `error_logs.context` poate stoca PII (admin-only)
+- Teste actualizate: **43** total. lint + typecheck + build verzi
 
 ---
 

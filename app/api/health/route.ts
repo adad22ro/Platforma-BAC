@@ -28,22 +28,36 @@ async function checkStripe(): Promise<boolean> {
   }
 }
 
+// Cache scurt: ruta e publica si fiecare hit face apeluri externe (Stripe + DB).
+// Cache-uim rezultatul cateva secunde ca un uptime monitor (sau spam) sa nu
+// amplifice apelurile catre servicii externe.
+const CACHE_TTL_MS = 15_000;
+let cache: { body: unknown; httpOk: boolean; at: number } | null = null;
+
+// Doar pentru teste — resetează cache-ul între cazuri.
+export function __resetHealthCache() {
+  cache = null;
+}
+
 export async function GET() {
+  if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
+    return Response.json(cache.body, { status: cache.httpOk ? 200 : 503 });
+  }
+
   const [database, stripeOk] = await Promise.all([checkDatabase(), checkStripe()]);
 
   // DB jos => down (503). DB ok dar Stripe jos => degraded (200, dar semnalat).
   const httpOk = database;
   const status = !database ? "down" : stripeOk ? "ok" : "degraded";
-
-  return Response.json(
-    {
-      status,
-      checks: {
-        database: database ? "ok" : "down",
-        stripe: stripeOk ? "ok" : "down",
-      },
-      timestamp: new Date().toISOString(),
+  const body = {
+    status,
+    checks: {
+      database: database ? "ok" : "down",
+      stripe: stripeOk ? "ok" : "down",
     },
-    { status: httpOk ? 200 : 503 }
-  );
+    timestamp: new Date().toISOString(),
+  };
+
+  cache = { body, httpOk, at: Date.now() };
+  return Response.json(body, { status: httpOk ? 200 : 503 });
 }

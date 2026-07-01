@@ -19,10 +19,10 @@ export async function requireAdmin(): Promise<string> {
   const user = await currentUser();
   if (!user) redirect("/sign-in");
 
-  const email = user.emailAddresses[0]?.emailAddress?.toLowerCase() ?? "";
+  const email = user.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
   const admins = getAdminEmails();
 
-  if (!admins.includes(email)) {
+  if (!email || !admins.includes(email)) {
     redirect("/");
   }
   return email;

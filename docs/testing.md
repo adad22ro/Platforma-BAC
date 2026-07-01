@@ -43,9 +43,9 @@ rutele `chapters`/`lessons`):
 | `POST /api/chapters` / `lessons` non-profesor | `403` |
 | `POST` fără câmpuri obligatorii | `400`; lecție cu `chapter_id` inexistent (FK 23503) → `400` |
 | `GET /api/lessons/[id]` lecție nepublicată (elev) | `404` |
-| capitol premium + elev fără abonament | `402 premium_required`; cu abonament activ → `200`; capitol free → `200` |
+| `GET /api/lessons/[id]` capitol premium + elev fără abonament | `402 premium_required`; cu abonament activ → `200`; capitol free → `200` |
 | profesor | vede orice, inclusiv nepublicat |
-| `GET /api/chapters/[id]/lessons` | gating premium + filtrare lecții pe `published` pentru elev |
+| `GET /api/chapters/[id]/lessons` (listă) | elev vede titlurile (200); la capitol premium fără acces `content`/`video_url` = null + `locked: true`; filtrare pe `published` |
 
 `isTeacher` / `canAccessPremium` / `getCurrentAppUser` testate direct în `current-user.test.ts`.
 

@@ -21,10 +21,13 @@ vi.mock("@/lib/supabase-admin", () => ({
 import { getCurrentAppUser, isTeacher, canAccessPremium } from "@/lib/current-user";
 import type { AppUser } from "@/lib/current-user";
 
-const teacher: AppUser = { clerk_id: "t", role: "teacher", subscription_status: "free" };
-const studentFree: AppUser = { clerk_id: "s", role: "student", subscription_status: "free" };
-const studentActive: AppUser = { clerk_id: "s", role: "student", subscription_status: "active" };
-const studentCancelled: AppUser = { clerk_id: "s", role: "student", subscription_status: "cancelled" };
+const teacher: AppUser = { clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
+const studentFree: AppUser = { clerk_id: "s", role: "student", subscription_status: "free", subscription_end_date: null };
+const studentActive: AppUser = { clerk_id: "s", role: "student", subscription_status: "active", subscription_end_date: null };
+const studentCancelled: AppUser = { clerk_id: "s", role: "student", subscription_status: "cancelled", subscription_end_date: null };
+
+const future = new Date(Date.now() + 86_400_000).toISOString();
+const past = new Date(Date.now() - 86_400_000).toISOString();
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -46,6 +49,14 @@ describe("canAccessPremium", () => {
     expect(canAccessPremium(studentFree)).toBe(false);
     expect(canAccessPremium(studentCancelled)).toBe(false);
     expect(canAccessPremium(null)).toBe(false);
+  });
+
+  it("aparare in adancime pe subscription_end_date", () => {
+    // activ + data in viitor => acces; activ + data trecuta => blocat (webhook pierdut)
+    expect(canAccessPremium({ ...studentActive, subscription_end_date: future })).toBe(true);
+    expect(canAccessPremium({ ...studentActive, subscription_end_date: past })).toBe(false);
+    // activ + fara data => permitem (nu blocam un platitor din cauza datei lipsa)
+    expect(canAccessPremium({ ...studentActive, subscription_end_date: null })).toBe(true);
   });
 });
 

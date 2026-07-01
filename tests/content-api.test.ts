@@ -51,9 +51,9 @@ import { POST as lessonsPOST } from "@/app/api/lessons/route";
 import { GET as lessonByIdGET } from "@/app/api/lessons/[id]/route";
 import { GET as chapterLessonsGET } from "@/app/api/chapters/[id]/lessons/route";
 
-const teacher: AppUser = { clerk_id: "t", role: "teacher", subscription_status: "free" };
-const studentFree: AppUser = { clerk_id: "s", role: "student", subscription_status: "free" };
-const studentActive: AppUser = { clerk_id: "s", role: "student", subscription_status: "active" };
+const teacher: AppUser = { clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
+const studentFree: AppUser = { clerk_id: "s", role: "student", subscription_status: "free", subscription_end_date: null };
+const studentActive: AppUser = { clerk_id: "s", role: "student", subscription_status: "active", subscription_end_date: null };
 
 function jsonReq(body: unknown) {
   return new Request("http://x", { method: "POST", body: JSON.stringify(body) });
@@ -175,29 +175,71 @@ describe("GET /api/lessons/[id] — gating", () => {
   });
 });
 
-describe("GET /api/chapters/[id]/lessons — gating + filtrare", () => {
-  it("elev fara abonament: capitol premium -> 402", async () => {
+describe("GET /api/chapters/[id]/lessons — lista vizibila + gating pe continut", () => {
+  it("elev fara abonament, capitol premium: 200, titluri vizibile, continut ascuns + locked", async () => {
     h.state.user = studentFree;
     h.state.results.chapters = { data: { id: "c1", is_free: false, published: true }, error: null };
-    const res = await chapterLessonsGET({} as never, ctx("c1"));
-    expect(res.status).toBe(402);
-  });
-
-  it("elev, capitol free: 200 + filtreaza lectiile pe published", async () => {
-    h.state.user = studentFree;
-    h.state.results.chapters = { data: { id: "c1", is_free: true, published: true }, error: null };
-    h.state.results.lessons = { data: [], error: null };
+    h.state.results.lessons = {
+      data: [{ id: "l1", chapter_id: "c1", title: "Lectia 1", content: "SECRET", video_url: "https://v", order_index: 0, published: true }],
+      error: null,
+    };
     const res = await chapterLessonsGET({} as never, ctx("c1"));
     expect(res.status).toBe(200);
+    const { lessons } = await res.json();
+    expect(lessons[0].title).toBe("Lectia 1"); // titlul se vede
+    expect(lessons[0].locked).toBe(true);
+    expect(lessons[0].content).toBeNull(); // continutul NU se scurge
+    expect(lessons[0].video_url).toBeNull();
+    // filtrare pe published pentru elev
     expect(eqCalls("lessons")).toContainEqual(["eq", "published", true]);
   });
 
-  it("profesor: 200 fara filtrare pe published", async () => {
-    h.state.user = teacher;
-    h.state.results.chapters = { data: { id: "c1", is_free: false, published: false }, error: null };
-    h.state.results.lessons = { data: [], error: null };
+  it("elev cu abonament, capitol premium: 200, continut vizibil, locked=false", async () => {
+    h.state.user = studentActive;
+    h.state.results.chapters = { data: { id: "c1", is_free: false, published: true }, error: null };
+    h.state.results.lessons = {
+      data: [{ id: "l1", chapter_id: "c1", title: "Lectia 1", content: "SECRET", video_url: "https://v", order_index: 0, published: true }],
+      error: null,
+    };
+    const res = await chapterLessonsGET({} as never, ctx("c1"));
+    const { lessons } = await res.json();
+    expect(lessons[0].locked).toBe(false);
+    expect(lessons[0].content).toBe("SECRET");
+  });
+
+  it("elev, capitol free: 200 continut vizibil + filtreaza pe published", async () => {
+    h.state.user = studentFree;
+    h.state.results.chapters = { data: { id: "c1", is_free: true, published: true }, error: null };
+    h.state.results.lessons = {
+      data: [{ id: "l1", chapter_id: "c1", title: "L", content: "liber", video_url: null, order_index: 0, published: true }],
+      error: null,
+    };
     const res = await chapterLessonsGET({} as never, ctx("c1"));
     expect(res.status).toBe(200);
+    const { lessons } = await res.json();
+    expect(lessons[0].locked).toBe(false);
+    expect(lessons[0].content).toBe("liber");
+    expect(eqCalls("lessons")).toContainEqual(["eq", "published", true]);
+  });
+
+  it("elev: capitol nepublicat -> 404", async () => {
+    h.state.user = studentFree;
+    h.state.results.chapters = { data: { id: "c1", is_free: true, published: false }, error: null };
+    const res = await chapterLessonsGET({} as never, ctx("c1"));
+    expect(res.status).toBe(404);
+  });
+
+  it("profesor: 200 fara filtrare pe published, continut vizibil", async () => {
+    h.state.user = teacher;
+    h.state.results.chapters = { data: { id: "c1", is_free: false, published: false }, error: null };
+    h.state.results.lessons = {
+      data: [{ id: "l1", chapter_id: "c1", title: "L", content: "x", video_url: null, order_index: 0, published: false }],
+      error: null,
+    };
+    const res = await chapterLessonsGET({} as never, ctx("c1"));
+    expect(res.status).toBe(200);
+    const { lessons } = await res.json();
+    expect(lessons[0].locked).toBe(false);
     expect(eqCalls("lessons")).not.toContainEqual(["eq", "published", true]);
   });
 });

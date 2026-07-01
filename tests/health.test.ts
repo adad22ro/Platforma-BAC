@@ -23,10 +23,11 @@ vi.mock("@/lib/stripe", () => ({
   },
 }));
 
-import { GET } from "@/app/api/health/route";
+import { GET, __resetHealthCache } from "@/app/api/health/route";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  __resetHealthCache(); // altfel rezultatul cache-uit ar contamina cazurile
   h.dbError = null;
   h.stripeThrows = false;
 });
