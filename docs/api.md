@@ -74,14 +74,22 @@ pentru `role = teacher`; **citirea** e filtrată după `published` / `is_free` /
 | `/api/chapters/[id]` | GET | un capitol | elev: doar publicat |
 | `/api/chapters/[id]` | PATCH | actualizează | teacher |
 | `/api/chapters/[id]` | DELETE | șterge (cascade lecții) | teacher |
-| `/api/chapters/[id]/lessons` | GET | lecțiile capitolului | elev: publicate + acces (free/abonament) |
+| `/api/chapters/[id]/lessons` | GET | lecțiile capitolului (titluri) | elev: publicate — vezi gating |
 | `/api/lessons` | POST | creează lecție | teacher |
-| `/api/lessons/[id]` | GET | o lecție | elev: publicat + acces |
+| `/api/lessons/[id]` | GET | o lecție (conținut) | elev: publicat + acces |
 | `/api/lessons/[id]` | PATCH | actualizează | teacher |
 | `/api/lessons/[id]` | DELETE | șterge | teacher |
 
-Gating premium: capitol cu `is_free = false` și elev fără abonament activ →
-răspuns **`402`** `{ error: "premium_required" }` (frontend-ul afișează prompt de upgrade).
+**Gating premium (model produs):** userul free vede **lista completă** de capitole și
+lecții (titluri). Conținutul (text/video/teste) e blocat:
+- `GET /api/chapters/[id]/lessons` — la capitol premium fără acces, întoarce lista de
+  titluri cu `content`/`video_url` = `null` și `locked: true` pe fiecare lecție (titlurile
+  se văd, conținutul nu se scurge). `200`.
+- `GET /api/lessons/[id]` — la conținutul unei lecții premium fără acces → **`402`**
+  `{ error: "premium_required" }`. Aici frontend-ul afișează mesajul + butonul de upgrade.
+
+„Acces" = capitol `is_free = true` **sau** abonament `active` (și `subscription_end_date`
+în viitor, dacă e setat — apărare în adâncime).
 
 Date placeholder: `npm run seed:content` (3 capitole + lecții demo, idempotent).
 

@@ -20,11 +20,6 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const teacher = isTeacher(user)
   if (!teacher && !chapter.published) return new Response('Not found', { status: 404 })
 
-  // Gating premium: capitol platit + fara abonament activ -> cere upgrade.
-  if (!teacher && !chapter.is_free && !canAccessPremium(user)) {
-    return Response.json({ error: 'premium_required' }, { status: 402 })
-  }
-
   let query = supabaseAdmin
     .from('lessons')
     .select('id, chapter_id, title, content, video_url, order_index, published')
@@ -38,5 +33,17 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     await logError('lessons', 'GET by chapter error', { code: error.code, message: error.message, id })
     return new Response('Database error', { status: 500 })
   }
-  return Response.json({ lessons: data })
+
+  // Gating premium: userul free vede lista de titluri, dar la capitol platit fara
+  // acces continutul (text/video) e ascuns si lectia e marcata `locked`. Paywall-ul
+  // real (mesaj + buton upgrade) e pe GET /api/lessons/[id].
+  const locked = !teacher && !chapter.is_free && !canAccessPremium(user)
+  const lessons = (data ?? []).map((l) => ({
+    ...l,
+    content: locked ? null : l.content,
+    video_url: locked ? null : l.video_url,
+    locked,
+  }))
+
+  return Response.json({ lessons })
 }
