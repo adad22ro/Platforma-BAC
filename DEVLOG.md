@@ -15,6 +15,9 @@
 - **Acces `/admin` pentru Bogdan** — `ADMIN_EMAILS` (Andrei + Bogdan), local + Vercel (prod & preview)
 - **Partajare secrete via dotenv-vault** — `.env.vault` în Git, cheie rotită după expunere; ghid `docs/onboarding-secrets.md`
 - Documentație: `docs/monitoring.md` (nou), actualizat `stripe/api/database`, `.env.example` (`DISCORD_ALERT_WEBHOOK_URL`), `CLAUDE.md`
+- **Conținut (Săpt. 5-6):** schema `chapters`/`lessons` (RLS, cascade), API CRUD (`/api/chapters`, `/api/lessons` + `[id]`) cu autorizare pe rol și gating premium (`402`), `lib/current-user.ts`, `npm run seed:content` (date placeholder)
+- **Rol profesor:** `users.role` sursă de adevăr; promovare din `/admin` (`POST /api/admin/set-role` + buton), fără cont separat/cod de invitație
+- **Banc de test intern `/admin/content`** — exercită CRUD-ul cu sesiune reală (unealtă de dev, nu UI de produs)
 
 **Decizii luate:**
 - Monitorizare țintită acum doar pe zona plăți/webhook (bani, deja live); `/api/health`, Sentry, E2E — amânate până există useri/frontend (fără rework din amânare)
