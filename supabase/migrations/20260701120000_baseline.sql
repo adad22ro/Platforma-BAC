@@ -10,16 +10,20 @@
 -- ─────────────────────────────────────────────────────────────
 -- users — oglindește utilizatorii din Clerk (populat de webhook-ul Clerk)
 -- ─────────────────────────────────────────────────────────────
+-- Notă: `id` nu are default — aplicația îl setează explicit (crypto.randomUUID()
+-- în webhook-ul Clerk). `clerk_id` e NOT NULL. Reflectă schema reală din producție
+-- (confirmat prin tipurile generate — types/database.ts).
 create table if not exists public.users (
-  id uuid primary key default gen_random_uuid(),
-  clerk_id text,
+  id uuid primary key,
+  clerk_id text not null,
   email text not null,
   full_name text,
   role text not null default 'student',
   subscription_status text not null default 'free',
   stripe_customer_id text,
   subscription_end_date timestamptz,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 -- Coloanele Stripe au fost adăugate ulterior; le păstrăm idempotent pentru

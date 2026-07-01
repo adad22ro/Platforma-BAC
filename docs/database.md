@@ -26,7 +26,11 @@ webhook-ul Clerk (`app/api/webhooks/clerk/route.ts`) la `user.created` /
 | subscription_status | text | `free` / `active` / `cancelled` (default `free`) — CHECK constraint |
 | stripe_customer_id | text | ID-ul clientului în Stripe (setat la prima plată) |
 | subscription_end_date | timestamptz | Sfârșitul perioadei plătite curente |
-| created_at | timestamptz | Data creării |
+| created_at | timestamptz | Data creării (default `now()`) |
+| updated_at | timestamptz | Ultima actualizare (default `now()`) |
+
+> `id` nu are default — aplicația îl setează explicit (`crypto.randomUUID()` în
+> webhook-ul Clerk); `clerk_id` e NOT NULL. (Confirmat prin `types/database.ts`.)
 
 Relații: `clerk_id` corespunde utilizatorului din Clerk (sursa de adevăr pentru auth).
 `stripe_customer_id` leagă userul de abonamentul din Stripe; actualizat de

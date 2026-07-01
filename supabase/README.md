@@ -48,3 +48,12 @@ npm run db:types     # necesită `supabase link` făcut o dată (vezi mai sus)
 
 > Dacă modifici schema manual (fără CLI), actualizează și `types/database.ts` de mână,
 > ca tipurile să rămână sincronizate cu baza reală.
+
+## Note
+
+- **Baseline-ul e best-effort.** A fost scris ca să reflecte producția existentă și
+  aliniat cu tipurile generate (`types/database.ts`), sursa de adevăr pentru shape-ul
+  tabelelor. Un dump perfect (`supabase db dump`) necesită Docker Desktop.
+- Producția a fost marcată drept „migrare aplicată" (`supabase migration repair
+  --status applied 20260701120000`), ca `db push` să aplice doar migrările **noi**,
+  nu baseline-ul peste schema existentă.
