@@ -5,6 +5,15 @@
 
 ---
 
+## #014 — CI pică pe `npm run lint` (26 erori `react-hooks` în `/admin`)
+**Data:** 2026-07-01  
+**Context:** Primul workflow CI (GitHub Actions, `lint` + `test`) a eșuat după 25s. Testele treceau; pasul de lint raporta 26 erori — toate în componentele panoului `/admin/_components/*`, cod pre-existent. Local nimeni nu observase, fiindcă nu exista CI, iar `next build` nu blochează pe aceste reguli.  
+**Cauză:** Reguli noi din `eslint-config-next` 16: `react-hooks/error-boundaries` (25) — JSX construit în interiorul unui `try/catch` (erorile de randare nu sunt prinse de `try/catch`, doar de un error boundary); `react-hooks/purity` (1) — `Math.random()` folosit ca `key`.  
+**Diagnostic cheie:** Eroare de CI care nu apare local = reprodu exact pașii workflow-ului (`npm run lint`) în terminal; `npx eslint . -f json` grupat pe `ruleId` arată repede tiparul.  
+**Soluție:** Refactor uniform al Server Components: doar fetch-ul rămâne în `try` (rezultatul captat în variabile, eroarea întoarsă din `catch`), iar JSX-ul se randează **după** bloc. `Math.random()` → indexul din `.map()` ca fallback pentru `key`. Fără schimbări funcționale.
+
+---
+
 ## #013 — `23514` violates check constraint `users_subscription_status_check`
 **Data:** 2026-06-29  
 **Context:** Webhook-ul Stripe (`checkout.session.completed`) întorcea `200` dar nu actualiza userul pe abonament. În `error_logs` apărea `code 23514` — check constraint.  
