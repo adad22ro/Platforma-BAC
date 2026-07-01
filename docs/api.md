@@ -58,6 +58,9 @@ Response:
 Evenimente tratate: `checkout.session.completed`, `customer.subscription.updated`,
 `customer.subscription.deleted` (detalii în `docs/stripe.md`).
 
+Idempotent (dedup prin `processed_events`) și cu alerte critice pe Discord la
+eșec — vezi `docs/monitoring.md`.
+
 ### POST /api/webhooks/clerk
 Scop: sincronizează userii Clerk în tabelul `users` (`user.created` / `updated` / `deleted`).
 Detalii în `docs/auth.md` și `docs/database.md`. Rută publică, verificată cu `CLERK_WEBHOOK_SIGNING_SECRET`.

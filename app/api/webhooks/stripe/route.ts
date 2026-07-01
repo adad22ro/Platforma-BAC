@@ -37,11 +37,12 @@ async function updateUserSubscription(
   const { error } = await query
   if (error) {
     console.error('Supabase update error (stripe):', error)
-    await logError('stripe-webhook', 'Supabase update error', {
-      code: error.code,
-      message: error.message,
-      ...match,
-    })
+    await logError(
+      'stripe-webhook',
+      'Supabase update error',
+      { code: error.code, message: error.message, ...match },
+      'critical'
+    )
   }
 }
 
@@ -55,10 +56,31 @@ export async function POST(req: NextRequest) {
     event = await stripe.webhooks.constructEventAsync(body, sig!, secret!)
   } catch (err) {
     console.error('Stripe webhook verification failed:', err)
-    await logError('stripe-webhook', 'Verification failed', {
-      error: err instanceof Error ? err.message : String(err),
-    })
+    await logError(
+      'stripe-webhook',
+      'Verification failed',
+      { error: err instanceof Error ? err.message : String(err) },
+      'critical'
+    )
     return new Response('Verification failed', { status: 400 })
+  }
+
+  // Idempotenta: Stripe poate livra acelasi eveniment de mai multe ori (retry-uri).
+  // "Revendicam" event.id printr-un insert; daca exista deja (23505), l-am procesat.
+  const { error: claimErr } = await supabaseAdmin
+    .from('processed_events')
+    .insert({ event_id: event.id, type: event.type })
+  if (claimErr) {
+    if (claimErr.code === '23505') {
+      return new Response('Duplicate ignored', { status: 200 })
+    }
+    // Alta eroare la revendicare: logam, dar continuam procesarea (nu blocam plata).
+    console.error('processed_events insert error:', claimErr)
+    await logError('stripe-webhook', 'processed_events insert error', {
+      code: claimErr.code,
+      message: claimErr.message,
+      event_id: event.id,
+    })
   }
 
   try {
@@ -115,10 +137,14 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error('Stripe webhook handler error:', err)
-    await logError('stripe-webhook', 'Handler error', {
-      type: event.type,
-      error: err instanceof Error ? err.message : String(err),
-    })
+    // Eliberam claim-ul de idempotenta ca Stripe sa poata reincerca evenimentul.
+    await supabaseAdmin.from('processed_events').delete().eq('event_id', event.id)
+    await logError(
+      'stripe-webhook',
+      'Handler error',
+      { type: event.type, error: err instanceof Error ? err.message : String(err) },
+      'critical'
+    )
     return new Response('Handler error', { status: 500 })
   }
 

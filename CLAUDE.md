@@ -15,3 +15,4 @@
 
 - Pentru o imagine consolidată a stării celor 4 platforme (Clerk, Supabase, Stripe, Vercel) și a erorilor aplicației, rulează `npm run debug`. Util la depanare.
 - Panoul `/admin` și tabelul `error_logs` oferă aceleași date vizual. Detalii complete în `docs/admin.md`.
+- Erorile critice (plăți/webhook) trimit alertă instant pe Discord prin `logError(..., 'critical')`; webhook-ul Stripe e idempotent (`processed_events`). Detalii în `docs/monitoring.md`.
