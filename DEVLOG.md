@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-07-01 — Andrei (Sesiunea 15)
+
+**Ce s-a făcut (curs-manual intern):**
+- Generat un **curs-manual** non-tehnic al proiectului (Artifact 🎓) din codul real, folosind unealta reutilizabilă `docs/_curs-prompt.md` + `docs/_curs-template.html` (mutate din rădăcină în `docs/`)
+- **Găzduire privată în app:** planul Claude e Pro (fără share de artifact), deci cursul e servit la **`/admin/curs`**, gated pe `ADMIN_EMAILS` (Andrei + Bogdan) — vizibil doar lor, nu public. `app/admin/curs/curs.html` (HTML standalone) servit de `app/admin/curs/route.ts` (`requireAdmin`), inclus în bundle prin `outputFileTracingIncludes`. Link din panoul `/admin`
+- Document viu: la schimbări notabile, actualizezi `curs.html` (redeploy) și/sau republici Artifact-ul la același URL
+
+**Notă proces:** branch `docs-curs-manual`. lint + typecheck + test (43) + build verzi.
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 14)
 
 **Ce s-a făcut (sincronizare documentație după tot ce s-a livrat):**

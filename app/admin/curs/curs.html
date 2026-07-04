@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Platformă BAC — cum funcționează tot</title>
+<style>
+  :root {
+    --ground: #f6f7f9; --surface: #ffffff; --surface-2: #eef1f5; --ink: #1b2432;
+    --muted: #5c6779; --faint: #8a94a4; --line: #e2e6ec; --line-strong: #cdd4de;
+    --accent: #3a54d6; --accent-ink: #2c40a8; --accent-soft: #eaeeff;
+    --good: #1f8a4c; --good-soft: #e5f4ea; --danger: #cc3355; --danger-soft: #fbe8ee;
+    --warn: #b3781a; --warn-soft: #f8efdd;
+    --shadow: 0 1px 2px rgba(20,30,50,.04), 0 8px 24px rgba(20,30,50,.06);
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0d1014; --surface: #161a21; --surface-2: #1e242d; --ink: #e7eaf0;
+      --muted: #9aa4b3; --faint: #6b7686; --line: #262d37; --line-strong: #333c48;
+      --accent: #7d94ff; --accent-ink: #a9b9ff; --accent-soft: #1a2138;
+      --good: #4cc47e; --good-soft: #14261b; --danger: #f2758f; --danger-soft: #2a1620;
+      --warn: #d8a24a; --warn-soft: #2a2113;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0d1014; --surface: #161a21; --surface-2: #1e242d; --ink: #e7eaf0;
+    --muted: #9aa4b3; --faint: #6b7686; --line: #262d37; --line-strong: #333c48;
+    --accent: #7d94ff; --accent-ink: #a9b9ff; --accent-soft: #1a2138;
+    --good: #4cc47e; --good-soft: #14261b; --danger: #f2758f; --danger-soft: #2a1620;
+    --warn: #d8a24a; --warn-soft: #2a2113;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"] {
+    --ground: #f6f7f9; --surface: #ffffff; --surface-2: #eef1f5; --ink: #1b2432;
+    --muted: #5c6779; --faint: #8a94a4; --line: #e2e6ec; --line-strong: #cdd4de;
+    --accent: #3a54d6; --accent-ink: #2c40a8; --accent-soft: #eaeeff;
+    --good: #1f8a4c; --good-soft: #e5f4ea; --danger: #cc3355; --danger-soft: #fbe8ee;
+    --warn: #b3781a; --warn-soft: #f8efdd;
+    --shadow: 0 1px 2px rgba(20,30,50,.04), 0 8px 24px rgba(20,30,50,.06);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans);
+    line-height: 1.65; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  .layout { display: grid; grid-template-columns: 1fr; max-width: 1180px; margin: 0 auto; }
+  @media (min-width: 960px) { .layout { grid-template-columns: 260px minmax(0, 1fr); gap: 48px; } }
+
+  aside { border-right: 1px solid var(--line); padding: 32px 20px; }
+  @media (min-width: 960px) { aside { position: sticky; top: 0; height: 100vh; overflow-y: auto; } }
+  .brand { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .brand-title { font-size: 19px; font-weight: 750; margin: 8px 0 24px; letter-spacing: -.02em; line-height: 1.25; }
+  nav ol { list-style: none; margin: 0; padding: 0; }
+  nav a { display: flex; gap: 10px; align-items: baseline; text-decoration: none; color: var(--muted); font-size: 13.5px; padding: 6px 8px; border-radius: 7px; transition: background .15s, color .15s; }
+  nav a:hover { background: var(--surface-2); color: var(--ink); }
+  nav a .num { font-family: var(--mono); font-size: 11px; color: var(--faint); min-width: 20px; }
+  nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  main { padding: 40px 24px 120px; min-width: 0; }
+  @media (min-width: 960px) { main { padding: 64px 32px 140px; } }
+
+  .hero { margin-bottom: 64px; }
+  .hero .eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .hero h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin: 14px 0 18px; text-wrap: balance; max-width: 16ch; }
+  .hero p.lead { font-size: 18px; color: var(--muted); max-width: 60ch; margin: 0; }
+
+  section.chapter { margin-bottom: 72px; scroll-margin-top: 24px; max-width: 72ch; }
+  .chapter-head { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid var(--line); }
+  .chapter-num { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--surface); background: var(--accent); border-radius: 8px; padding: 4px 10px; letter-spacing: .04em; flex-shrink: 0; }
+  .chapter-head h2 { font-size: clamp(23px, 3.4vw, 30px); letter-spacing: -.02em; font-weight: 780; margin: 0; text-wrap: balance; }
+
+  h3 { font-size: 19px; letter-spacing: -.01em; margin: 38px 0 10px; font-weight: 700; }
+  p { margin: 14px 0; }
+  strong { font-weight: 680; color: var(--ink); }
+  a.inline { color: var(--accent-ink); }
+  code { font-family: var(--mono); font-size: .88em; background: var(--surface-2); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); }
+
+  .box { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 18px 20px; margin: 22px 0; box-shadow: var(--shadow); }
+  .box .label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+  .box p { margin: 6px 0 0; }
+  .box.analogy { border-left: 3px solid var(--accent); }
+  .box.analogy .label { color: var(--accent); }
+  .box.key { border-left: 3px solid var(--good); background: var(--good-soft); }
+  .box.key .label { color: var(--good); }
+  .box.warn { border-left: 3px solid var(--warn); background: var(--warn-soft); }
+  .box.warn .label { color: var(--warn); }
+
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.6; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; overflow-x: auto; margin: 18px 0; }
+  pre code { background: none; border: none; padding: 0; font-size: inherit; }
+  .cmt { color: var(--faint); }
+  .kw { color: var(--accent-ink); font-weight: 600; }
+
+  .stack { display: flex; flex-direction: column; gap: 10px; margin: 24px 0; }
+  .stack .layer { border: 1px solid var(--line-strong); border-radius: 10px; padding: 14px 16px; background: var(--surface); box-shadow: var(--shadow); }
+  .stack .layer .l-name { font-weight: 700; font-size: 15px; }
+  .stack .layer .l-tech { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .stack .layer .l-desc { font-size: 14px; color: var(--muted); margin-top: 3px; }
+  .stack .arrow { text-align: center; color: var(--faint); font-size: 18px; line-height: .5; }
+
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 24px 0; }
+  .flow .step { display: grid; grid-template-columns: 34px 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+  .flow .step:last-child { border-bottom: none; }
+  .flow .step .dot { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--surface); background: var(--ink); border-radius: 50%; width: 30px; height: 30px; display: grid; place-items: center; }
+  .flow .step .s-body strong { display: block; margin-bottom: 2px; }
+  .flow .step .s-body span { font-size: 14px; color: var(--muted); }
+  .flow .step .s-body .file { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+
+  .tag { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: .03em; white-space: nowrap; }
+  .tag.done { background: var(--good-soft); color: var(--good); }
+  .tag.next { background: var(--accent-soft); color: var(--accent-ink); }
+  .tag.later { background: var(--surface-2); color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+
+  ul.clean { margin: 14px 0; padding-left: 22px; }
+  ul.clean li { margin: 7px 0; }
+
+  footer { max-width: 72ch; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--line); color: var(--faint); font-size: 13.5px; }
+
+  .toggle { position: fixed; top: 16px; right: 16px; z-index: 20; font-family: var(--mono); font-size: 12px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); border-radius: 20px; padding: 7px 13px; cursor: pointer; box-shadow: var(--shadow); }
+  .toggle:hover { color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  html { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+
+<button class="toggle" id="themeToggle" aria-label="Comută tema">◐ temă</button>
+
+<div class="layout">
+  <aside>
+    <div class="brand">Manual de proiect · intern</div>
+    <div class="brand-title">Platformă BAC — cum funcționează tot</div>
+    <nav aria-label="Cuprins">
+      <ol>
+        <li><a href="#intro"><span class="num">00</span> Ce e și pentru cine</a></li>
+        <li><a href="#vocabular"><span class="num">01</span> Vocabular de bază</a></li>
+        <li><a href="#straturi"><span class="num">02</span> Arhitectura pe straturi</a></li>
+        <li><a href="#nextjs"><span class="num">03</span> Next.js — scheletul</a></li>
+        <li><a href="#clerk"><span class="num">04</span> Clerk — autentificarea</a></li>
+        <li><a href="#supabase"><span class="num">05</span> Supabase — baza de date</a></li>
+        <li><a href="#stripe"><span class="num">06</span> Stripe — plățile</a></li>
+        <li><a href="#vercel"><span class="num">07</span> Vercel — găzduirea</a></li>
+        <li><a href="#flux"><span class="num">08</span> Un flux real, pas cu pas</a></li>
+        <li><a href="#robustete"><span class="num">09</span> Ca să nu se strice</a></li>
+        <li><a href="#securitate"><span class="num">10</span> Securitate</a></li>
+        <li><a href="#roadmap"><span class="num">11</span> Ce urmează</a></li>
+        <li><a href="#glosar"><span class="num">12</span> Glosar</a></li>
+      </ol>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <div class="eyebrow">Manual de proiect · actualizat iul. 2026</div>
+      <h1>Platforma BAC, explicată de la zero.</h1>
+      <p class="lead">O platformă unde elevii învață pentru bacalaureat: citesc lecții,
+        dau teste, iar accesul complet se deschide printr-un abonament lunar. Pagina asta
+        explică, fără jargon, ce tehnologii o compun și cum se leagă între ele — ancorat
+        în codul real al proiectului.</p>
+    </div>
+
+    <section class="chapter" id="intro">
+      <div class="chapter-head"><span class="chapter-num">00</span><h2>Ce e și pentru cine e pagina</h2></div>
+      <p><strong>Platforma BAC</strong> este o aplicație web (funcționează în browser, fără
+        instalare). Un elev își face cont, vede lista de capitole și lecții, iar conținutul
+        premium (textul lecțiilor, video, teste) se deblochează cu un abonament lunar plătit
+        cu cardul. Un profesor poate adăuga și edita conținutul.</p>
+      <p>Echipa e formată din două persoane: <strong>Andrei</strong> se ocupă de „culise"
+        (backend: bază de date, plăți, securitate) și <strong>Bogdan</strong> de partea
+        vizuală (frontend: paginile pe care le vede elevul).</p>
+      <div class="box key">
+        <span class="label">✓ Ideea de reținut</span>
+        <p>Aplicația nu construiește totul de la zero. Se sprijină pe patru servicii
+          specializate — <strong>Clerk</strong> (conturi), <strong>Supabase</strong> (bază
+          de date), <strong>Stripe</strong> (plăți), <strong>Vercel</strong> (găzduire) —
+          și le coase împreună. Manualul explică pe fiecare pe rând.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="vocabular">
+      <div class="chapter-head"><span class="chapter-num">01</span><h2>Vocabular de bază</h2></div>
+      <p>Câțiva termeni care revin peste tot. Îi definim o dată, ca restul să curgă ușor.</p>
+      <table>
+        <thead><tr><th>Termen</th><th>Ce înseamnă, pe scurt</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Frontend</strong></td><td>Ce vede și atinge utilizatorul: paginile, butoanele, formularele. „Vitrina".</td></tr>
+          <tr><td><strong>Backend</strong></td><td>Ce se întâmplă în spate: baza de date, verificările, plățile. „Bucătăria".</td></tr>
+          <tr><td><strong>Server / Client</strong></td><td>Clientul = browserul elevului. Serverul = calculatorul din cloud care răspunde cererilor.</td></tr>
+          <tr><td><strong>API</strong></td><td>O „recepție" prin care programele își cer date unul altuia, într-un format fix.</td></tr>
+          <tr><td><strong>Bază de date</strong></td><td>Un caiet-tabel uriaș unde se rețin userii, capitolele, lecțiile, plățile.</td></tr>
+          <tr><td><strong>Deploy</strong></td><td>Publicarea aplicației pe internet, ca s-o poată accesa oricine.</td></tr>
+          <tr><td><strong>Variabilă de mediu</strong></td><td>O setare secretă (parole, chei) ținută separat de cod, niciodată în Git.</td></tr>
+          <tr><td><strong>Webhook</strong></td><td>Un „telefon" pe care un serviciu extern îl dă aplicației când se întâmplă ceva (ex: „s-a făcut o plată").</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="chapter" id="straturi">
+      <div class="chapter-head"><span class="chapter-num">02</span><h2>Arhitectura pe straturi</h2></div>
+      <p>Când un elev deschide platforma, o cerere trece prin mai multe straturi. De sus
+        (ce vede omul) până jos (unde se țin datele):</p>
+      <div class="stack">
+        <div class="layer"><span class="l-name">Browserul elevului</span> · <span class="l-tech">HTML / React</span><div class="l-desc">Paginile pe care le vede și pe care apasă.</div></div>
+        <div class="arrow">↓</div>
+        <div class="layer"><span class="l-name">Aplicația</span> · <span class="l-tech">Next.js pe Vercel</span><div class="l-desc">Scheletul care servește paginile și rulează logica (rutele „/api/...").</div></div>
+        <div class="arrow">↓</div>
+        <div class="layer"><span class="l-name">Serviciile specializate</span> · <span class="l-tech">Clerk · Stripe</span><div class="l-desc">Conturi și plăți — treabă delicată, lăsată pe mâini de specialiști.</div></div>
+        <div class="arrow">↓</div>
+        <div class="layer"><span class="l-name">Baza de date</span> · <span class="l-tech">Supabase (PostgreSQL)</span><div class="l-desc">Memoria de lungă durată: useri, capitole, lecții, abonamente.</div></div>
+      </div>
+      <div class="box analogy">
+        <span class="label">◆ Analogie</span>
+        <p>E ca un restaurant: clientul (browserul) comandă de la ospătar (Next.js), care
+          merge la bucătărie și la furnizori (serviciile), iar totul se notează în registrul
+          casei (baza de date).</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="nextjs">
+      <div class="chapter-head"><span class="chapter-num">03</span><h2>Next.js — scheletul aplicației</h2></div>
+      <p><strong>Next.js</strong> este cadrul (framework-ul) în care e scrisă aplicația. El
+        decide cum arată paginile, cum se numesc adresele și cum rulează codul de server.
+        Proiectul folosește versiunea <strong>16</strong>, cu React 19 și TypeScript.</p>
+      <div class="box analogy">
+        <span class="label">◆ Analogie</span>
+        <p>Dacă a construi o aplicație de la zero e ca a ridica o casă cărămidă cu cărămidă,
+          Next.js e casa la roșu, cu structura și instalațiile gata — tu doar amenajezi camerele.</p>
+      </div>
+      <p><strong>În proiect:</strong> fiecare folder din <code>app/</code> devine o adresă.
+        <code>app/api/checkout/route.ts</code> devine adresa <code>/api/checkout</code>. Un
+        fișier special, <code>proxy.ts</code>, stă „la ușă" și decide cine intră: cere login
+        peste tot, mai puțin pe rutele publice.</p>
+      <pre><code><span class="cmt">// proxy.ts — paznicul aplicației (rulează înaintea fiecărei cereri)</span>
+<span class="kw">const</span> isPublicRoute = createRouteMatcher([
+  <span class="kw">"/sign-in(.*)"</span>, <span class="kw">"/sign-up(.*)"</span>, <span class="kw">"/api/webhooks(.*)"</span>, <span class="kw">"/api/health"</span>,
+]);
+<span class="kw">export default</span> clerkMiddleware(<span class="kw">async</span> (auth, request) => {
+  <span class="kw">if</span> (!isPublicRoute(request)) <span class="kw">await</span> auth.protect(); <span class="cmt">// altfel → login</span>
+});</code></pre>
+      <div class="box warn">
+        <span class="label">▲ Atenție</span>
+        <p>În Next.js 16, fișierul-paznic se numește <code>proxy.ts</code>, nu
+          <code>middleware.ts</code> ca în versiunile mai vechi. E o schimbare care derutează
+          ușor — de aceea proiectul are un fișier <code>AGENTS.md</code> care avertizează.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="clerk">
+      <div class="chapter-head"><span class="chapter-num">04</span><h2>Clerk — autentificarea</h2></div>
+      <p><strong>Clerk</strong> se ocupă de tot ce ține de conturi: înregistrare, login cu
+        email sau Google, parole, sesiuni. Aplicația nu stochează niciodată parole — asta e
+        exact partea grea și riscantă pe care o lăsăm unui specialist.</p>
+      <div class="box analogy">
+        <span class="label">◆ Analogie</span>
+        <p>Clerk e ca serviciul de pază cu bază de legitimații al unei clădiri: verifică cine
+          ești la intrare și îți dă un ecuson. Aplicația se uită doar la ecuson, nu ține ea
+          seiful cu buletine.</p>
+      </div>
+      <p><strong>În proiect:</strong> când cineva își face cont în Clerk, Clerk „ne sună"
+        printr-un webhook, iar noi copiem userul în baza noastră de date (ca să-i putem lega
+        rolul și abonamentul). Codul e în <code>app/api/webhooks/clerk/route.ts</code>.</p>
+      <pre><code><span class="cmt">// La „user nou", verificăm apelul și salvăm userul la noi</span>
+evt = <span class="kw">await</span> verifyWebhook(req);
+<span class="kw">if</span> (evt.type === <span class="kw">'user.created'</span>) {
+  <span class="kw">await</span> supabaseAdmin.from(<span class="kw">'users'</span>).insert({
+    id: crypto.randomUUID(), clerk_id: id, email, full_name,
+  });
+}</code></pre>
+      <div class="box key">
+        <span class="label">✓ Ideea de reținut</span>
+        <p>Clerk e „sursa de adevăr" pentru cine ești. Baza noastră ține o <em>oglindă</em> a
+          userilor, legată prin <code>clerk_id</code>, ca să adauge lucruri proprii (rol,
+          abonament).</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="supabase">
+      <div class="chapter-head"><span class="chapter-num">05</span><h2>Supabase — baza de date</h2></div>
+      <p><strong>Supabase</strong> e baza de date (un PostgreSQL în cloud) — memoria de lungă
+        durată a aplicației. Aici stau tabelele: <code>users</code>, <code>chapters</code>
+        (capitole), <code>lessons</code> (lecții), plus câteva tehnice.</p>
+      <div class="box analogy">
+        <span class="label">◆ Analogie</span>
+        <p>E ca un dulap cu bibliorafturi etichetate: fiecare tabel e un biblioraft, fiecare
+          rând o fișă. Poți cere fișe după criterii („toate capitolele publicate") fără să
+          răscolești tot dulapul.</p>
+      </div>
+      <p><strong>În proiect:</strong> forma tabelelor e ținută în fișiere de „migrare"
+        (<code>supabase/migrations/</code>) — istoricul versionat al bazei — iar din ea se
+        generează automat tipuri TypeScript, ca să nu greșim numele coloanelor. Un exemplu de
+        tabel <code>users</code>:</p>
+      <table>
+        <thead><tr><th>Coloană</th><th>Ce ține</th></tr></thead>
+        <tbody>
+          <tr><td><code>clerk_id</code></td><td>Legătura cu contul din Clerk</td></tr>
+          <tr><td><code>role</code></td><td><code>student</code> sau <code>teacher</code></td></tr>
+          <tr><td><code>subscription_status</code></td><td><code>free</code> / <code>active</code> / <code>cancelled</code></td></tr>
+          <tr><td><code>subscription_end_date</code></td><td>Până când e plătit abonamentul</td></tr>
+        </tbody>
+      </table>
+      <div class="box warn">
+        <span class="label">▲ Atenție</span>
+        <p>Există două „chei" de acces la Supabase: una publică (limitată, sigură pentru
+          browser) și una <code>service_role</code> (acces total). Cheia cu acces total se
+          folosește <strong>doar</strong> pe server, niciodată în browser.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="stripe">
+      <div class="chapter-head"><span class="chapter-num">06</span><h2>Stripe — plățile</h2></div>
+      <p><strong>Stripe</strong> procesează plățile cu cardul și gestionează abonamentul lunar.
+        Ca și la parole, nu vrem să atingem noi datele de card — Stripe se ocupă, iar noi
+        primim doar confirmarea.</p>
+      <div class="box analogy">
+        <span class="label">◆ Analogie</span>
+        <p>Stripe e terminalul POS de la magazin: clientul introduce cardul în aparatul lor
+          securizat, iar casierul (aplicația) primește doar bipul de „aprobat".</p>
+      </div>
+      <p><strong>În proiect, pasul 1</strong> — când elevul apasă „Upgrade", creăm o sesiune
+        de plată și îl trimitem pe pagina securizată Stripe (<code>app/api/checkout/route.ts</code>):</p>
+      <pre><code><span class="kw">const</span> session = <span class="kw">await</span> stripe.checkout.sessions.create({
+  mode: <span class="kw">'subscription'</span>,                    <span class="cmt">// abonament, nu plată unică</span>
+  line_items: [{ price: priceId, quantity: <span class="kw">1</span> }],
+  client_reference_id: userId,               <span class="cmt">// ca să știm pe cine să activăm</span>
+});
+<span class="kw">return</span> Response.json({ url: session.url });    <span class="cmt">// redirect la Stripe</span></code></pre>
+      <p><strong>Pasul 2</strong> — după plată, Stripe „ne sună" printr-un webhook, iar noi
+        activăm abonamentul. Aici e o subtilitate importantă: Stripe poate trimite același
+        mesaj de mai multe ori, așa că ne asigurăm că nu-l procesăm de două ori
+        (<em>idempotență</em>):</p>
+      <pre><code><span class="cmt">// „Revendicăm" evenimentul; dacă a mai fost văzut (cod 23505), îl ignorăm</span>
+<span class="kw">const</span> { error } = <span class="kw">await</span> supabaseAdmin
+  .from(<span class="kw">'processed_events'</span>).insert({ event_id: event.id });
+<span class="kw">if</span> (error?.code === <span class="kw">'23505'</span>)
+  <span class="kw">return new</span> Response(<span class="kw">'Duplicate ignored'</span>, { status: <span class="kw">200</span> });</code></pre>
+      <div class="box key">
+        <span class="label">✓ Ideea de reținut</span>
+        <p>Sunt bani la mijloc, deci codul e „bănos": verifică semnătura mesajului, nu
+          procesează dublurile, și trimite o alertă instant pe Discord dacă ceva critic
+          eșuează. Sursa de adevăr pentru abonament rămâne la noi, în Supabase.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="vercel">
+      <div class="chapter-head"><span class="chapter-num">07</span><h2>Vercel — găzduirea și publicarea</h2></div>
+      <p><strong>Vercel</strong> e locul unde „trăiește" aplicația pe internet. E legat de
+        GitHub (unde stă codul): de fiecare dată când codul aprobat ajunge în ramura
+        principală (<code>main</code>), Vercel îl publică automat.</p>
+      <div class="box analogy">
+        <span class="label">◆ Analogie</span>
+        <p>E ca o tipografie cu bandă rulantă: de câte ori predai un manuscris final, iese
+          singură ediția tipărită și ajunge în librării, fără să miști tu un deget.</p>
+      </div>
+      <p><strong>În proiect:</strong> secretele (chei, parole) nu stau în cod — se
+        configurează separat în Vercel. Iar aplicația își verifică singură, la pornire, că
+        are tot ce-i trebuie (vezi capitolul următor).</p>
+    </section>
+
+    <section class="chapter" id="flux">
+      <div class="chapter-head"><span class="chapter-num">08</span><h2>Un flux real, pas cu pas</h2></div>
+      <p>Să urmărim un traseu complet, așa cum se întâmplă în cod: <strong>un elev se
+        înregistrează, plătește și deschide o lecție premium.</strong></p>
+      <div class="flow">
+        <div class="step"><div class="dot">1</div><div class="s-body"><strong>Se înregistrează</strong><span>Elevul își face cont cu email sau Google. Clerk gestionează tot. </span><span class="file">app/sign-up</span></div></div>
+        <div class="step"><div class="dot">2</div><div class="s-body"><strong>Ajunge la noi în bază</strong><span>Clerk ne anunță printr-un webhook; salvăm userul cu rol implicit „student". </span><span class="file">api/webhooks/clerk</span></div></div>
+        <div class="step"><div class="dot">3</div><div class="s-body"><strong>Apasă „Upgrade"</strong><span>Creăm o sesiune Stripe și îl trimitem la pagina de plată securizată. </span><span class="file">api/checkout</span></div></div>
+        <div class="step"><div class="dot">4</div><div class="s-body"><strong>Plătește</strong><span>Introduce cardul pe Stripe. Stripe ne anunță prin webhook că plata a reușit. </span><span class="file">api/webhooks/stripe</span></div></div>
+        <div class="step"><div class="dot">5</div><div class="s-body"><strong>Se activează abonamentul</strong><span>Marcăm userul ca <code>active</code> în Supabase, cu data până când e plătit.</span></div></div>
+        <div class="step"><div class="dot">6</div><div class="s-body"><strong>Deschide o lecție premium</strong><span>Verificăm accesul; acum are abonament activ → primește conținutul. </span><span class="file">api/lessons/[id]</span></div></div>
+      </div>
+      <p>Regula care decide accesul e o funcție mică și limpede — inima gating-ului premium:</p>
+      <pre><code><span class="kw">function</span> canAccessPremium(user) {
+  <span class="kw">if</span> (user?.subscription_status !== <span class="kw">'active'</span>) <span class="kw">return false</span>;
+  <span class="cmt">// apărare în plus: dacă abonamentul a expirat, blocăm</span>
+  <span class="kw">if</span> (user.subscription_end_date &amp;&amp;
+      <span class="kw">new</span> Date(user.subscription_end_date) &lt;= <span class="kw">new</span> Date()) <span class="kw">return false</span>;
+  <span class="kw">return true</span>;
+}</code></pre>
+      <div class="box key">
+        <span class="label">✓ Ideea de reținut</span>
+        <p>Modelul produsului: userul <strong>free vede lista completă</strong> de capitole și
+          lecții (titlurile), dar când dă click pe conținut primește un mesaj „fă upgrade" cu
+          buton. Titlurile se văd, conținutul plătit nu se scurge.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="robustete">
+      <div class="chapter-head"><span class="chapter-num">09</span><h2>Ca să nu se strice: plasa de siguranță</h2></div>
+      <p>O bună parte din efort nu e „funcții noi", ci unelte care prind greșelile devreme.
+        Sunt ce diferențiază un proiect îngrijit de unul care se sparge pe neașteptate.</p>
+      <h3>Verificarea variabilelor la pornire</h3>
+      <p>Multe erori vin dintr-o setare uitată. Aplicația verifică <em>la boot</em> că are tot
+        ce-i trebuie și, dacă nu, se oprește imediat cu un mesaj clar — nu abia mai târziu,
+        cu o eroare obscură (<code>lib/env.ts</code>):</p>
+      <pre><code><span class="kw">const</span> parsed = schema.safeParse(process.env);
+<span class="kw">if</span> (!parsed.success)
+  <span class="kw">throw new</span> Error(<span class="kw">"Variabile de mediu invalide sau lipsă: ..."</span>);</code></pre>
+      <h3>Teste automate + CI</h3>
+      <p><strong>43 de teste</strong> verifică singure logica de bani și de acces (plăți,
+        gating premium, sănătate). Un „robot" (CI, GitHub Actions) le rulează la fiecare
+        propunere de cod; dacă pică ceva, propunerea devine roșie înainte de a fi acceptată.</p>
+      <div class="box analogy">
+        <span class="label">◆ Analogie</span>
+        <p>Testele sunt ca proba de scufundare a unei bărci înainte de fiecare cursă: dacă ia
+          apă, afli la mal, nu în larg cu pasageri la bord.</p>
+      </div>
+      <h3>Monitorizare</h3>
+      <p>Erorile se scriu într-un jurnal (<code>error_logs</code>), cele critice trimit alertă
+        pe Discord, iar o rută <code>/api/health</code> spune în orice moment dacă serviciile
+        sunt în picioare — utilă pentru un „monitor de uptime".</p>
+    </section>
+
+    <section class="chapter" id="securitate">
+      <div class="chapter-head"><span class="chapter-num">10</span><h2>Securitate</h2></div>
+      <p>Câteva principii aplicate constant, mai ales pe zona de bani și acces:</p>
+      <ul class="clean">
+        <li><strong>Webhook-uri semnate:</strong> mesajele de la Stripe și Clerk sunt verificate criptografic — nu putem fi păcăliți cu un „s-a plătit" fals.</li>
+        <li><strong>Secretele stau afară din cod:</strong> chei și parole doar în variabile de mediu, niciodată în Git.</li>
+        <li><strong>Acces controlat în cod:</strong> scrierea de conținut e doar pentru <code>teacher</code>; conținutul premium cere abonament activ.</li>
+        <li><strong>Panoul de administrare</strong> e limitat la o listă de email-uri anume (allowlist), verificate pe adresa principală.</li>
+        <li><strong>Idempotență la plăți:</strong> același eveniment nu e procesat de două ori, ca să nu se dubleze efectele.</li>
+      </ul>
+      <div class="box key">
+        <span class="label">✓ Ideea de reținut</span>
+        <p>Regula de aur a proiectului: părțile riscante (parole, carduri) nu le atingem noi —
+          le dăm unor specialiști (Clerk, Stripe) și verificăm mereu că mesajele lor sunt
+          autentice.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="roadmap">
+      <div class="chapter-head"><span class="chapter-num">11</span><h2>Ce urmează</h2></div>
+      <p>Unde e proiectul acum și ce vine:</p>
+      <table>
+        <thead><tr><th>Zonă</th><th>Stare</th></tr></thead>
+        <tbody>
+          <tr><td>Conturi, plăți, conținut (backend)</td><td><span class="tag done">✓ FĂCUT</span></td></tr>
+          <tr><td>Teste, CI, monitorizare, securitate</td><td><span class="tag done">✓ FĂCUT</span></td></tr>
+          <tr><td>Paginile pe care le vede elevul (frontend)</td><td><span class="tag next">URMĂTOAREA</span></td></tr>
+          <tr><td>Pagina <code>/dashboard</code> după plată</td><td><span class="tag next">URMĂTOAREA</span></td></tr>
+          <tr><td>Teste-grilă cu punctaj și progres</td><td><span class="tag later">MAI TÂRZIU</span></td></tr>
+          <tr><td>Sistem de întrebări către profesor (tichete)</td><td><span class="tag later">MAI TÂRZIU</span></td></tr>
+        </tbody>
+      </table>
+      <div class="box warn">
+        <span class="label">▲ Atenție</span>
+        <p>„Culisele" (backend) sunt gata și în producție, cu toate API-urile pregătite. Ce
+          urmează cu adevărat e <strong>partea vizuală</strong> — paginile elevului — plus
+          conținutul real de BAC (în așteptarea profesorului partener).</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="glosar">
+      <div class="chapter-head"><span class="chapter-num">12</span><h2>Glosar</h2></div>
+      <table>
+        <thead><tr><th>Termen</th><th>Explicație</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Next.js</strong></td><td>Cadrul în care e scrisă aplicația (pagini + logică de server).</td></tr>
+          <tr><td><strong>React</strong></td><td>Biblioteca cu care se construiesc paginile din „piese" reutilizabile.</td></tr>
+          <tr><td><strong>TypeScript</strong></td><td>Limbajul de programare — JavaScript cu verificări de tip, care prind greșeli devreme.</td></tr>
+          <tr><td><strong>Clerk</strong></td><td>Serviciul de conturi și autentificare.</td></tr>
+          <tr><td><strong>Supabase</strong></td><td>Baza de date (PostgreSQL în cloud).</td></tr>
+          <tr><td><strong>Stripe</strong></td><td>Serviciul de plăți și abonamente.</td></tr>
+          <tr><td><strong>Vercel</strong></td><td>Găzduirea; publică aplicația automat din GitHub.</td></tr>
+          <tr><td><strong>Webhook</strong></td><td>Un apel automat prin care un serviciu anunță aplicația că s-a întâmplat ceva.</td></tr>
+          <tr><td><strong>Idempotență</strong></td><td>Proprietatea că, dacă repeți aceeași operație, rezultatul rămâne același (nicio dublură).</td></tr>
+          <tr><td><strong>Gating</strong></td><td>Regula care decide cine vede conținutul premium.</td></tr>
+          <tr><td><strong>CI</strong></td><td>Un robot care verifică automat codul (teste + reguli) la fiecare modificare.</td></tr>
+          <tr><td><strong>Deploy</strong></td><td>Publicarea aplicației pe internet.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>Manual intern, generat din codul proiectului (iulie 2026). Reflectă starea de la
+      momentul scrierii — pentru detalii la zi, verifică fișierele reale din
+      <code>docs/</code> și <code>DEVLOG.md</code>.</footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    var root = document.documentElement;
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme');
+      if (!cur) cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+    });
+  })();
+</script>
+</body>
+</html>
