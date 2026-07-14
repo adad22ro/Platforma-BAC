@@ -20,7 +20,8 @@
 
 - **Faza curentă:** Faza 1 — MVP
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
-- **Bottleneck:** frontend (Bogdan) — API-urile, tipurile și uneltele sunt gata de consumat
+- **Frontend Săpt. 1-4:** landing, `/pricing`, `/dashboard` (+ buton upgrade) — gata. Rămâne pagina de profil elev
+- **Bottleneck:** frontend (Bogdan) — urmează zona de conținut (capitole + lecții); API-urile, tipurile și uneltele sunt gata de consumat
 - **Ultima actualizare:** 2026-07-15
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
