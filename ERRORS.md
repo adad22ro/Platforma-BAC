@@ -5,6 +5,24 @@
 
 ---
 
+## #017 — Nu se poate crea cont automat (browser automatizat) — Turnstile + Google OAuth
+**Data:** 2026-07-15
+**Context:** Verificarea în browser a paginii `/dashboard` (Playwright/Chromium, prin CDP) necesita un cont de test. Atât înregistrarea automată, cât și login-ul cu Google au eșuat.
+**Cauză:** Două protecții anti-bot, independente:
+1. **Clerk → Cloudflare Turnstile** pe formularul de **sign-up**. Respinge browserele automatizate („Verification failed"), inclusiv când un om apasă caseta — portul de debug + flag-urile Playwright marchează browserul. Se aplică și la afișarea formularului, și la submit.
+2. **Google OAuth** („Couldn't sign you in / This browser or app may not be secure") — Google blochează OAuth în orice browser controlat prin automatizare.
+
+**Diagnostic cheie:** Protecția e **doar pe sign-up, NU și pe sign-in.** Autentificarea unui cont deja existent funcționează normal în browserul automatizat.
+
+**Soluție (fluxul de lucru pentru verificări UI):**
+1. Contul de test se creează **o dată, manual, într-un browser normal** (Chrome).
+2. În Chromium-ul automatizat te **autentifici** cu el (email + parolă, nu Google). Cu profil persistent (`launchPersistentContext`), sesiunea se păstrează între rulări — o singură dată.
+3. Pe instanțele Clerk de development (`pk_test`), emailurile care conțin `+clerk_test` se verifică cu codul fix `424242`, fără email real.
+
+**NU** încerca să ocolești Turnstile — nu e necesar (sign-in-ul e suficient) și protecția își face treaba. Pentru ce tot nu se poate verifica în browser, scrie teste (vezi `tests/dashboard.test.ts`).
+
+---
+
 ## #016 — `GH007: Your push would publish a private email address`
 **Data:** 2026-07-13  
 **Context:** `git push` respins de GitHub, deși contul avea drept de scriere pe repo.  

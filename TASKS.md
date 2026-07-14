@@ -21,7 +21,7 @@
 - **Faza curentă:** Faza 1 — MVP
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
 - **Bottleneck:** frontend (Bogdan) — API-urile, tipurile și uneltele sunt gata de consumat
-- **Ultima actualizare:** 2026-07-13
+- **Ultima actualizare:** 2026-07-15
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -73,9 +73,9 @@
 | ✅ | Protejare rute (redirect dacă nu e autentificat) | Andrei | `setup-clerk` | `proxy.ts` cu `clerkMiddleware` |
 | ✅ | Webhook Clerk — sync user în DB la înregistrare | Andrei | `auth-cont-elev` | Confirmat end-to-end (user real → tabel `users`); erori logate în `error_logs` |
 | ⬜ | Pagină de profil elev | Bogdan | `auth-cont-elev` | |
-| ⬜ | Pagină de upgrade abonament (UI) | Bogdan | `auth-cont-elev` | Buton „Upgrade" → link la `/upgrade` (logica de checkout există). |
+| ✅ | Pagină de upgrade abonament (UI) | Bogdan | `dashboard-elev` | Buton „Upgrade la Premium" în cardul de abonament din `/dashboard` → `/upgrade`. Verificat E2E: duce pe Stripe Checkout. |
 | ✅ | Pagină de prețuri (carduri Free/Premium) | Bogdan | `landing-si-pricing` | `app/pricing/page.tsx` + `_components/pricing-plans.tsx` (+ FAQ). Rută publică. Preț Premium încă placeholder — de completat suma. |
-| ⬜ | Pagină `/dashboard` | Bogdan | `auth-cont-elev` | Aici aterizează sign-up-ul (free) și succesul Stripe; momentan 404. |
+| ✅ | Pagină `/dashboard` | Bogdan | `dashboard-elev` | `app/dashboard/page.tsx` — abonament + cont + tratare `?checkout=success\|cancel`. 8 teste în `tests/dashboard.test.ts`. |
 | ✅ | Integrare Stripe Checkout pentru abonament lunar | Andrei | `auth-cont-elev` | `app/api/checkout/route.ts` — creează Checkout Session, întoarce `url`. |
 | ✅ | Webhook Stripe — activare/dezactivare abonament în DB | Andrei | `auth-cont-elev` | `app/api/webhooks/stripe/route.ts` — testat E2E cu Stripe CLI (`subscription_status` → `active`/`cancelled`). |
 | ✅ | Pagină `/upgrade` (pornește checkout + redirect Stripe) | Andrei | `auth-cont-elev` | `app/upgrade/page.tsx` — reutilizată de butonul „Upgrade" și de fluxul premium-la-înregistrare. |

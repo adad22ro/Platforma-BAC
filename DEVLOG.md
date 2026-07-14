@@ -6,6 +6,33 @@
 
 ---
 
+## 2026-07-15 — Bogdan (Sesiunea 2 frontend)
+
+**Ce s-a făcut:**
+- **Pagina `/dashboard`** (`app/dashboard/page.tsx`) — lipsea, deci fluxul de plată se termina în 404. Server component pe helperii existenți (`getCurrentAppUser`, `canAccessPremium`): card de abonament (Gratuit/Premium), card de cont (email + rol), placeholder pentru lecții
+- **Butonul „Upgrade la Premium"** → `/upgrade` (apare doar pe cont gratuit). Verificat E2E: ajunge pe Stripe Checkout
+- **Tratarea întoarcerii din Stripe** — `?checkout=success` și `?checkout=cancel`
+- **`AppHeader`** (`app/_components/app-header.tsx`) — header pentru zona logată, cu `UserButton` (Clerk); distinct de `SiteHeader`-ul public
+- **8 teste noi** (`tests/dashboard.test.ts`) — total **51**
+- `app/layout.tsx` — `afterSignOutUrl="/"` mutat pe `ClerkProvider` (nu mai e prop pe `UserButton` în v7)
+- `ERRORS.md` #017 — de ce nu se poate crea cont automat (Turnstile + Google OAuth) și care e fluxul corect de verificare UI
+
+**Notă proces:** branch `dashboard-elev`. lint + typecheck + test (51) verzi.
+
+**Decizii luate:**
+- **Cursa cu webhook-ul, tratată explicit:** după plată, Stripe redirectează imediat, dar abonamentul e activat de webhook câteva secunde mai târziu. Deci „success" + status încă `free` **nu e eroare** — pagina spune „se activează în câteva secunde", în loc să afișeze „Gratuit" cuiva care tocmai a plătit. La fel dacă rândul din `users` lipsește încă (webhook Clerk întârziat): mesaj de așteptare, nu eroare
+- Testele folosesc helperii **reali** de gating (`canAccessPremium`), nu o reimplementare — doar sursa userului e mock-uită
+- Verificare UI: cont de test creat manual în Chrome, apoi autentificare în Chromium-ul automatizat (vezi `ERRORS.md` #017)
+
+**Probleme deschise / Next steps:**
+- **Prețul Premium e încă placeholder** în `_components/pricing-plans.tsx` — de completat suma reală (sau de citit din Stripe la runtime)
+- **Pagina de profil elev** — singura rămasă din Săpt. 3-4
+- Urmează Săpt. 5-6: listă capitole (`GET /api/chapters`) + pagină lecție (`GET /api/lessons/[id]`, cu `402 premium_required`). Atenție: free vede lista completă de titluri (`locked: true`), doar conținutul e blocat
+- `/dashboard` are un placeholder pentru lecții — de înlocuit când apare pagina de capitole
+- De adăugat `DumnieGOD` în `.github/CODEOWNERS` (secțiunea de frontend e pregătită, dar comentată)
+
+---
+
 ## 2026-07-13 — Bogdan (Sesiunea 1 frontend)
 
 **Ce s-a făcut:**
