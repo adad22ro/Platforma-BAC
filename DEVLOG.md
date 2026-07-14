@@ -15,14 +15,17 @@
 - **`AppHeader`** (`app/_components/app-header.tsx`) — header pentru zona logată, cu `UserButton` (Clerk); distinct de `SiteHeader`-ul public
 - **8 teste noi** (`tests/dashboard.test.ts`) — total **51**
 - `app/layout.tsx` — `afterSignOutUrl="/"` mutat pe `ClerkProvider` (nu mai e prop pe `UserButton` în v7)
-- `ERRORS.md` #017 — de ce nu se poate crea cont automat (Turnstile + Google OAuth) și care e fluxul corect de verificare UI
+- **Bugfix: după autentificare rămâneai pe landing** (raportat de Bogdan). `<SignIn />` era fără props, iar `SIGN_IN_FALLBACK_REDIRECT_URL` e ignorat când Clerk are o pagină de proveniență. Fix: `forceRedirectUrl="/dashboard"` (`ERRORS.md` #018)
+- `.env.example` — variabilele Clerk erau cele vechi (`AFTER_SIGN_IN_URL`), deprecate și ignorate în v7 → corectate la `*_FALLBACK_REDIRECT_URL`
+- `ERRORS.md` #017 — de ce nu se poate autentifica un browser automatizat (Turnstile pe sign-up **și** sign-in, plus Google OAuth) și care e fluxul corect de verificare UI
 
 **Notă proces:** branch `dashboard-elev`. lint + typecheck + test (51) verzi.
 
 **Decizii luate:**
 - **Cursa cu webhook-ul, tratată explicit:** după plată, Stripe redirectează imediat, dar abonamentul e activat de webhook câteva secunde mai târziu. Deci „success" + status încă `free` **nu e eroare** — pagina spune „se activează în câteva secunde", în loc să afișeze „Gratuit" cuiva care tocmai a plătit. La fel dacă rândul din `users` lipsește încă (webhook Clerk întârziat): mesaj de așteptare, nu eroare
 - Testele folosesc helperii **reali** de gating (`canAccessPremium`), nu o reimplementare — doar sursa userului e mock-uită
-- Verificare UI: cont de test creat manual în Chrome, apoi autentificare în Chromium-ul automatizat (vezi `ERRORS.md` #017)
+- **Destinația după login se forțează în cod** (`forceRedirectUrl`), nu prin variabile de mediu de tip „fallback" — acelea cedează în fața paginii de proveniență, deci nu garantează nimic
+- Verificare UI: autentificarea o face omul în fereastra Chromium (protecția anti-bot blochează automatizarea), agentul preia după login (vezi `ERRORS.md` #017)
 
 **Probleme deschise / Next steps:**
 - **Prețul Premium e încă placeholder** în `_components/pricing-plans.tsx` — de completat suma reală (sau de citit din Stripe la runtime)

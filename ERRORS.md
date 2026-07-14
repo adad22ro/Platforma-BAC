@@ -5,6 +5,16 @@
 
 ---
 
+## #018 — După autentificare rămâi pe landing, nu ajungi pe `/dashboard`
+**Data:** 2026-07-15
+**Context:** Click pe „Autentificare" din header-ul landing-ului → login reușit → utilizatorul rămâne pe `/` în loc să ajungă pe `/dashboard`. Sign-up-ul, în schimb, redirecta corect.
+**Cauză:** `<SignIn />` era folosit fără props, bazându-ne pe `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard`. Dar **„fallback" înseamnă „doar dacă nu există altă destinație"**: când ajungi pe `/sign-in` dintr-o pagină anume, Clerk reține pagina de proveniență (`/`) ca `redirect_url`, aceasta are prioritate, iar fallback-ul e ignorat. Sign-up-ul nu avea bug-ul fiindcă folosea deja `forceRedirectUrl`.
+**Diagnostic cheie:** `forceRedirectUrl` **suprascrie** proveniența; `fallbackRedirectUrl` / `*_FALLBACK_REDIRECT_URL` **cedează** în fața ei. Dacă vrei o destinație garantată, nu te baza pe fallback.
+**Soluție:** `<SignIn forceRedirectUrl="/dashboard" />` în `app/sign-in/[[...sign-in]]/page.tsx`.
+**Notă adiacentă:** `.env.example` încă lista variabilele vechi (`NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` / `AFTER_SIGN_UP_URL`), deprecate și **ignorate** în Clerk v7 — cine își construia `.env.local` după el pornea cu configurație moartă. Corectate la numele noi (`*_FALLBACK_REDIRECT_URL`).
+
+---
+
 ## #017 — Nu se poate crea cont automat (browser automatizat) — Turnstile + Google OAuth
 **Data:** 2026-07-15
 **Context:** Verificarea în browser a paginii `/dashboard` (Playwright/Chromium, prin CDP) necesita un cont de test. Atât înregistrarea automată, cât și login-ul cu Google au eșuat.
@@ -12,14 +22,16 @@
 1. **Clerk → Cloudflare Turnstile** pe formularul de **sign-up**. Respinge browserele automatizate („Verification failed"), inclusiv când un om apasă caseta — portul de debug + flag-urile Playwright marchează browserul. Se aplică și la afișarea formularului, și la submit.
 2. **Google OAuth** („Couldn't sign you in / This browser or app may not be secure") — Google blochează OAuth în orice browser controlat prin automatizare.
 
-**Diagnostic cheie:** Protecția e **doar pe sign-up, NU și pe sign-in.** Autentificarea unui cont deja existent funcționează normal în browserul automatizat.
+**Diagnostic cheie:** Protecția anti-bot e **și pe sign-up, și pe sign-in** — dar se manifestă diferit. La sign-up e vizibilă („Verification failed"). La sign-in e tăcută: câmpul de parolă rămâne permanent `disabled`, fără niciun mesaj de eroare. Un **om** trece prin ambele fără să observe; un browser automatizat, prin niciunul.
 
 **Soluție (fluxul de lucru pentru verificări UI):**
-1. Contul de test se creează **o dată, manual, într-un browser normal** (Chrome).
-2. În Chromium-ul automatizat te **autentifici** cu el (email + parolă, nu Google). Cu profil persistent (`launchPersistentContext`), sesiunea se păstrează între rulări — o singură dată.
-3. Pe instanțele Clerk de development (`pk_test`), emailurile care conțin `+clerk_test` se verifică cu codul fix `424242`, fără email real.
+1. Contul de test se creează **manual**, într-un browser normal (Chrome). Pe instanțele Clerk de development (`pk_test`), emailurile care conțin `+clerk_test` se verifică cu codul fix `424242`, fără email real.
+2. **Autentificarea o face tot un om**, direct în fereastra Chromium (email + parolă, nu Google). Cu profil persistent (`launchPersistentContext`), sesiunea se păstrează între rulări — deci se face o singură dată.
+3. **Agentul preia după login** și automatizează restul: navigare, screenshot-uri, inspecția DOM-ului, verificarea fluxurilor.
 
-**NU** încerca să ocolești Turnstile — nu e necesar (sign-in-ul e suficient) și protecția își face treaba. Pentru ce tot nu se poate verifica în browser, scrie teste (vezi `tests/dashboard.test.ts`).
+⚠️ **Atenție:** `context.clearCookies()` într-un script șterge sesiunea din profilul persistent și obligă la re-login manual. Nu o folosi fără motiv.
+
+**NU** încerca să ocolești protecția anti-bot — își face treaba. Pentru ce nu se poate verifica în browser, scrie teste (vezi `tests/dashboard.test.ts`).
 
 ---
 
