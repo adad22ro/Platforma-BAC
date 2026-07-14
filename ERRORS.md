@@ -5,6 +5,24 @@
 
 ---
 
+## #016 — `GH007: Your push would publish a private email address`
+**Data:** 2026-07-13  
+**Context:** `git push` respins de GitHub, deși contul avea drept de scriere pe repo.  
+**Cauză:** Commit-ul era făcut cu adresa de email personală, iar contul GitHub are activată opțiunea „Keep my email address private" — GitHub refuză push-ul care ar publica adresa în istoricul public.  
+**Soluție:** Configurare adresă `noreply` de GitHub **doar pentru acest repo** (nu global):  
+`git config user.email "<ID>+<user>@users.noreply.github.com"` (ID-ul se ia din `https://api.github.com/users/<user>`), apoi `git commit --amend --reset-author --no-edit` și push. Alternativa (nerecomandată): dezactivarea protecției din https://github.com/settings/emails.
+
+---
+
+## #015 — Landing page (`/`) dă 404 pentru vizitatorii nelogați
+**Data:** 2026-07-13  
+**Context:** După crearea landing page-ului, `GET /` întorcea 404 (log: `GET / 404 ... proxy.ts: 215ms`), deși `app/page.tsx` exista și compila fără erori.  
+**Cauză:** `proxy.ts` (`clerkMiddleware`) protejează **toate** rutele, cu o listă mică de excepții publice (`/sign-in`, `/sign-up`, `/api/webhooks`, `/api/health`). Rădăcina `/` nu era în listă → `auth.protect()` bloca cererea înainte să ajungă la pagină.  
+**Diagnostic cheie:** 404 pe o rută care există clar în `app/` + `proxy.ts` vizibil în timpii din log = middleware, nu routing.  
+**Soluție:** Adăugarea rutelor publice de marketing în `isPublicRoute` din `proxy.ts` (`"/"`, `"/pricing"`). **De reținut:** orice pagină nouă vizibilă vizitatorilor nelogați trebuie adăugată acolo, altfel e blocată implicit.
+
+---
+
 ## #014 — CI pică pe `npm run lint` (26 erori `react-hooks` în `/admin`)
 **Data:** 2026-07-01  
 **Context:** Primul workflow CI (GitHub Actions, `lint` + `test`) a eșuat după 25s. Testele treceau; pasul de lint raporta 26 erori — toate în componentele panoului `/admin/_components/*`, cod pre-existent. Local nimeni nu observase, fiindcă nu exista CI, iar `next build` nu blochează pe aceste reguli.  

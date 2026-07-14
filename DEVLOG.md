@@ -6,6 +6,34 @@
 
 ---
 
+## 2026-07-13 — Bogdan (Sesiunea 1 frontend)
+
+**Ce s-a făcut:**
+- **Landing page** (`app/page.tsx`) — înlocuit boilerplate-ul `create-next-app`: hero + 3 features (lecții pe capitole, teste grilă, mentorat „Nu am înțeles")
+- **Pagina `/pricing`** (`app/pricing/page.tsx`) — carduri Free/Premium + secțiune de întrebări frecvente, cu metadata proprie
+- **Componente comune** (`app/_components/`): `SiteHeader` (server component, se adaptează la sesiune prin `auth()`), `SiteFooter`, `PricingPlans` (cardurile, generate dintr-un array — sursă unică de adevăr)
+- `proxy.ts` — `/` și `/pricing` adăugate la rutele publice (vezi `ERRORS.md` #015)
+- `app/layout.tsx` — metadata reală (title/description) în loc de „Create Next App"
+- `app/globals.css` — fontul Geist se aplică efectiv pe `body` (era forțat Arial, care anula variabila)
+- `ERRORS.md` #015 (404 pe landing din cauza middleware-ului) și #016 (GH007 la push)
+
+**Notă proces:** branch `landing-si-pricing`, PR deschis. lint + typecheck verzi.
+
+**Decizii luate:**
+- **Tailwind curat, fără shadcn/ui** deocamdată — landing-ul și pricing-ul nu au nevoie de primitive complexe; decizia rămâne deschisă pentru zona de elev (formulare, dialoguri)
+- **Prețurile doar pe `/pricing`**, nu și ca secțiune pe landing — o singură sursă, fără duplicare de conținut
+- **Clerk**: `SignedIn`/`SignedOut` nu există în v7.5.12 → starea de autentificare se citește server-side cu `auth()` din `@clerk/nextjs/server` (mai curat pentru Server Components, fără flash la hidratare)
+- Commit-uri cu adresa `noreply` de GitHub (config local pe repo), ca să nu se publice adresa personală
+
+**Probleme deschise / Next steps:**
+- **Prețul Premium e placeholder** în `_components/pricing-plans.tsx` — de completat suma reală (sau, mai robust, de citit prețul din Stripe la runtime ca să nu diveargă de ce se taxează efectiv)
+- **`/dashboard` lipsește încă** — aici aterizează sign-up-ul free și succesul Stripe; momentan 404. Următoarea sarcină.
+- Butonul „Upgrade" (→ `/upgrade`) și pagina de profil elev — de făcut, probabil în `/dashboard`
+- Săpt. 5-6 deblocate pe frontend: API-urile de capitole/lecții există (`GET /api/chapters`, `GET /api/lessons/[id]`). Atenție la modelul de produs stabilit în Sesiunea 13: free vede **lista completă** de capitole/lecții (titluri), conținutul e blocat (`locked: true`); paywall-ul real e pe `GET /api/lessons/[id]` (`402`)
+- De adăugat handle-ul meu de GitHub (`DumnieGOD`) în `.github/CODEOWNERS` — secțiunea de frontend e pregătită, dar comentată (vezi Sesiunea 10)
+
+---
+
 ## 2026-07-01 — Andrei (Sesiunea 15)
 
 **Ce s-a făcut (curs-manual intern):**

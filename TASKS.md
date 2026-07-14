@@ -21,7 +21,7 @@
 - **Faza curentă:** Faza 1 — MVP
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
 - **Bottleneck:** frontend (Bogdan) — API-urile, tipurile și uneltele sunt gata de consumat
-- **Ultima actualizare:** 2026-07-01
+- **Ultima actualizare:** 2026-07-13
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -57,9 +57,9 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Alegere și configurare librărie UI (ex: Tailwind CSS + shadcn/ui) | Bogdan | `setup-ui` | Recomandare: shadcn/ui (vezi DEVLOG) |
-| ⬜ | Layout de bază al aplicației (header, sidebar, footer) | Bogdan | `setup-ui` | |
-| ⬜ | Pagină de start / landing page placeholder | Bogdan | `setup-ui` | |
+| ⬜ | Alegere și configurare librărie UI (ex: Tailwind CSS + shadcn/ui) | Bogdan | `setup-ui` | Momentan Tailwind curat (fără shadcn) — de decis dacă mai adăugăm shadcn. |
+| ✅ | Layout de bază al aplicației (header, sidebar, footer) | Bogdan | `landing-si-pricing` | `app/_components/site-header.tsx` + `site-footer.tsx` (header adaptat la sesiune). Sidebar: când apare zona de elev. |
+| ✅ | Pagină de start / landing page placeholder | Bogdan | `landing-si-pricing` | `app/page.tsx` — hero + features. `/` făcută publică în `proxy.ts`. |
 
 ---
 
@@ -74,7 +74,7 @@
 | ✅ | Webhook Clerk — sync user în DB la înregistrare | Andrei | `auth-cont-elev` | Confirmat end-to-end (user real → tabel `users`); erori logate în `error_logs` |
 | ⬜ | Pagină de profil elev | Bogdan | `auth-cont-elev` | |
 | ⬜ | Pagină de upgrade abonament (UI) | Bogdan | `auth-cont-elev` | Buton „Upgrade" → link la `/upgrade` (logica de checkout există). |
-| ⬜ | Pagină de prețuri (carduri Free/Premium) | Bogdan | `auth-cont-elev` | „Premium" → `/sign-up?plan=premium` · „Gratuit" → `/sign-up`. |
+| ✅ | Pagină de prețuri (carduri Free/Premium) | Bogdan | `landing-si-pricing` | `app/pricing/page.tsx` + `_components/pricing-plans.tsx` (+ FAQ). Rută publică. Preț Premium încă placeholder — de completat suma. |
 | ⬜ | Pagină `/dashboard` | Bogdan | `auth-cont-elev` | Aici aterizează sign-up-ul (free) și succesul Stripe; momentan 404. |
 | ✅ | Integrare Stripe Checkout pentru abonament lunar | Andrei | `auth-cont-elev` | `app/api/checkout/route.ts` — creează Checkout Session, întoarce `url`. |
 | ✅ | Webhook Stripe — activare/dezactivare abonament în DB | Andrei | `auth-cont-elev` | `app/api/webhooks/stripe/route.ts` — testat E2E cu Stripe CLI (`subscription_status` → `active`/`cancelled`). |
