@@ -6,6 +6,18 @@
 
 ---
 
+## 2026-07-15 — Bogdan (Sesiunea 3 frontend)
+
+**Ce s-a făcut:**
+- **Pagina de profil elev** (`app/profil/page.tsx`) — încheie Săpt. 3-4. Card cont (nume/email/rol) + card abonament (cu data de valabilitate pentru Premium, stare „anulat" + buton de reactivare pentru cancelled). Editarea contului (nume/email/parolă/securitate) e delegată lui `<UserProfile routing="hash" />` de la Clerk — nu reimplementăm un flux deja rezolvat
+- Link „Profil" adăugat în `AppHeader`
+- **6 teste noi** (`tests/profil.test.ts`) — total **57**
+- Verificat vizual în browser: randare corectă, `<UserProfile />` se încarcă, zero erori
+
+**Frontend Săpt. 1-4 = complet.** Urmează zona de conținut (capitole + lecții).
+
+---
+
 ## 2026-07-15 — Bogdan (Sesiunea 2 frontend)
 
 **Ce s-a făcut:**

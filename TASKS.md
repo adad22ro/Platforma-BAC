@@ -20,7 +20,7 @@
 
 - **Faza curentă:** Faza 1 — MVP
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
-- **Frontend Săpt. 1-4:** landing, `/pricing`, `/dashboard` (+ buton upgrade) — gata. Rămâne pagina de profil elev
+- **Frontend Săpt. 1-4:** complet (landing, `/pricing`, `/dashboard`, `/profil`, buton upgrade)
 - **Bottleneck:** frontend (Bogdan) — urmează zona de conținut (capitole + lecții); API-urile, tipurile și uneltele sunt gata de consumat
 - **Ultima actualizare:** 2026-07-15
 - **Roluri:** Andrei = backend · Bogdan = frontend
@@ -73,7 +73,7 @@
 | ✅ | Schema bază de date: tabel `users` (extins față de Clerk) | Andrei | `auth-cont-elev` | Creat în Supabase cu RLS activat |
 | ✅ | Protejare rute (redirect dacă nu e autentificat) | Andrei | `setup-clerk` | `proxy.ts` cu `clerkMiddleware` |
 | ✅ | Webhook Clerk — sync user în DB la înregistrare | Andrei | `auth-cont-elev` | Confirmat end-to-end (user real → tabel `users`); erori logate în `error_logs` |
-| ⬜ | Pagină de profil elev | Bogdan | `auth-cont-elev` | |
+| ✅ | Pagină de profil elev | Bogdan | `dashboard-elev` | `app/profil/page.tsx` — cont (nume/email/rol) + abonament (cu dată valabilitate) + `<UserProfile />` Clerk pentru setări. 6 teste. |
 | ✅ | Pagină de upgrade abonament (UI) | Bogdan | `dashboard-elev` | Buton „Upgrade la Premium" în cardul de abonament din `/dashboard` → `/upgrade`. Verificat E2E: duce pe Stripe Checkout. |
 | ✅ | Pagină de prețuri (carduri Free/Premium) | Bogdan | `landing-si-pricing` | `app/pricing/page.tsx` + `_components/pricing-plans.tsx` (+ FAQ). Rută publică. Preț Premium încă placeholder — de completat suma. |
 | ✅ | Pagină `/dashboard` | Bogdan | `dashboard-elev` | `app/dashboard/page.tsx` — abonament + cont + tratare `?checkout=success\|cancel`. 8 teste în `tests/dashboard.test.ts`. |

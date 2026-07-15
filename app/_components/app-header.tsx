@@ -16,7 +16,15 @@ export function AppHeader() {
           </span>
           <span className="text-lg">Platforma&nbsp;BAC</span>
         </Link>
-        <UserButton />
+        <div className="flex items-center gap-4">
+          <Link
+            href="/profil"
+            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+          >
+            Profil
+          </Link>
+          <UserButton />
+        </div>
       </nav>
     </header>
   );
