@@ -3,6 +3,7 @@ import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { getCurrentAppUser, canAccessPremium } from "@/lib/current-user";
 import { AppHeader } from "../_components/app-header";
+import { ChaptersBrowser } from "../_components/chapters-browser";
 
 export const metadata: Metadata = {
   title: "Contul meu — Platforma BAC",
@@ -78,14 +79,10 @@ export default async function DashboardPage({
           </div>
         )}
 
-        {/* Continut — pagina de capitole urmeaza. Datele de cont si abonament
-            traiesc pe /profil, ca sa nu le duplicam aici. */}
-        <section className="mt-8 rounded-2xl border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
-          <h2 className="font-semibold">Lecțiile tale</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-            Capitolele și lecțiile apar aici în curând.
-          </p>
-        </section>
+        {/* Continut — capitole + lectii. Datele se aduc client-side din /api,
+            care aplica gating-ul (elevul vede titlurile, continutul premium e
+            blocat). Datele de cont si abonament traiesc pe /profil. */}
+        <ChaptersBrowser />
       </main>
     </div>
   );
