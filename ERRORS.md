@@ -5,6 +5,45 @@
 
 ---
 
+## #019 — `Vitest failed to find the runner` la pre-push (cache corupt)
+**Data:** 2026-07-24
+**Context:** `git push` blocat de hook-ul pre-push: toate cele 8 suite pică la import cu `Vitest failed to find the runner` și `Tests: no tests`, deși `npm test` trecuse verde (55/55) cu câteva secunde înainte. Rulările ulterioare de `npm test` picau la fel, constant.
+**Cauză:** Cache-ul Vite/Vitest din `node_modules/.vite` s-a corupt (similar cu #003 — cache Turbopack corupt). Codul și config-ul erau intacte; nimic din sursă nu se schimbase între rularea verde și cele roșii.
+**Diagnostic cheie:** Toate suitele pică simultan la **import** (0 teste rulate) cu mesaj despre „runner", nu erori de assertion → nu e o regresie de cod, ci stare/cache corupt. Un run verde urmat brusc de run-uri roșii pe aceleași fișiere confirmă.
+**Soluție:** `rm -rf node_modules/.vite node_modules/.vitest` apoi `npm test` → verde din nou; push-ul a trecut.
+
+---
+
+## #018 — După autentificare rămâi pe landing, nu ajungi pe `/dashboard`
+**Data:** 2026-07-15
+**Context:** Click pe „Autentificare" din header-ul landing-ului → login reușit → utilizatorul rămâne pe `/` în loc să ajungă pe `/dashboard`. Sign-up-ul, în schimb, redirecta corect.
+**Cauză:** `<SignIn />` era folosit fără props, bazându-ne pe `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard`. Dar **„fallback" înseamnă „doar dacă nu există altă destinație"**: când ajungi pe `/sign-in` dintr-o pagină anume, Clerk reține pagina de proveniență (`/`) ca `redirect_url`, aceasta are prioritate, iar fallback-ul e ignorat. Sign-up-ul nu avea bug-ul fiindcă folosea deja `forceRedirectUrl`.
+**Diagnostic cheie:** `forceRedirectUrl` **suprascrie** proveniența; `fallbackRedirectUrl` / `*_FALLBACK_REDIRECT_URL` **cedează** în fața ei. Dacă vrei o destinație garantată, nu te baza pe fallback.
+**Soluție:** `<SignIn forceRedirectUrl="/dashboard" />` în `app/sign-in/[[...sign-in]]/page.tsx`.
+**Notă adiacentă:** `.env.example` încă lista variabilele vechi (`NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` / `AFTER_SIGN_UP_URL`), deprecate și **ignorate** în Clerk v7 — cine își construia `.env.local` după el pornea cu configurație moartă. Corectate la numele noi (`*_FALLBACK_REDIRECT_URL`).
+
+---
+
+## #017 — Nu se poate crea cont automat (browser automatizat) — Turnstile + Google OAuth
+**Data:** 2026-07-15
+**Context:** Verificarea în browser a paginii `/dashboard` (Playwright/Chromium, prin CDP) necesita un cont de test. Atât înregistrarea automată, cât și login-ul cu Google au eșuat.
+**Cauză:** Două protecții anti-bot, independente:
+1. **Clerk → Cloudflare Turnstile** pe formularul de **sign-up**. Respinge browserele automatizate („Verification failed"), inclusiv când un om apasă caseta — portul de debug + flag-urile Playwright marchează browserul. Se aplică și la afișarea formularului, și la submit.
+2. **Google OAuth** („Couldn't sign you in / This browser or app may not be secure") — Google blochează OAuth în orice browser controlat prin automatizare.
+
+**Diagnostic cheie:** Protecția anti-bot e **și pe sign-up, și pe sign-in** — dar se manifestă diferit. La sign-up e vizibilă („Verification failed"). La sign-in e tăcută: câmpul de parolă rămâne permanent `disabled`, fără niciun mesaj de eroare. Un **om** trece prin ambele fără să observe; un browser automatizat, prin niciunul.
+
+**Soluție (fluxul de lucru pentru verificări UI):**
+1. Contul de test se creează **manual**, într-un browser normal (Chrome). Pe instanțele Clerk de development (`pk_test`), emailurile care conțin `+clerk_test` se verifică cu codul fix `424242`, fără email real.
+2. **Autentificarea o face tot un om**, direct în fereastra Chromium (email + parolă, nu Google). Cu profil persistent (`launchPersistentContext`), sesiunea se păstrează între rulări — deci se face o singură dată.
+3. **Agentul preia după login** și automatizează restul: navigare, screenshot-uri, inspecția DOM-ului, verificarea fluxurilor.
+
+⚠️ **Atenție:** `context.clearCookies()` într-un script șterge sesiunea din profilul persistent și obligă la re-login manual. Nu o folosi fără motiv.
+
+**NU** încerca să ocolești protecția anti-bot — își face treaba. Pentru ce nu se poate verifica în browser, scrie teste (vezi `tests/dashboard.test.ts`).
+
+---
+
 ## #016 — `GH007: Your push would publish a private email address`
 **Data:** 2026-07-13  
 **Context:** `git push` respins de GitHub, deși contul avea drept de scriere pe repo.  

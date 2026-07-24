@@ -20,8 +20,10 @@
 
 - **Faza curentă:** Faza 1 — MVP
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
-- **Bottleneck:** frontend (Bogdan) — API-urile, tipurile și uneltele sunt gata de consumat
-- **Ultima actualizare:** 2026-07-13
+- **Frontend Săpt. 1-4:** complet (landing, `/pricing`, `/dashboard`, `/profil`, buton upgrade)
+- **Frontend Săpt. 5-6 (vedere elev):** complet — listă capitole (accordion pe `/dashboard`) + pagină lecție (`/lectii/[id]`) cu paywall. Plus buton temă zi/noapte pe toate paginile.
+- **Bottleneck:** frontend (Bogdan) — urmează **panelul profesor** (formulare capitol/lecție) și **Săpt. 7-8** (teste grilă + progres)
+- **Ultima actualizare:** 2026-07-24
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -72,10 +74,10 @@
 | ✅ | Schema bază de date: tabel `users` (extins față de Clerk) | Andrei | `auth-cont-elev` | Creat în Supabase cu RLS activat |
 | ✅ | Protejare rute (redirect dacă nu e autentificat) | Andrei | `setup-clerk` | `proxy.ts` cu `clerkMiddleware` |
 | ✅ | Webhook Clerk — sync user în DB la înregistrare | Andrei | `auth-cont-elev` | Confirmat end-to-end (user real → tabel `users`); erori logate în `error_logs` |
-| ⬜ | Pagină de profil elev | Bogdan | `auth-cont-elev` | |
-| ⬜ | Pagină de upgrade abonament (UI) | Bogdan | `auth-cont-elev` | Buton „Upgrade" → link la `/upgrade` (logica de checkout există). |
+| ✅ | Pagină de profil elev | Bogdan | `dashboard-elev` | `app/profil/page.tsx` — cont (nume/email/rol) + abonament (cu dată valabilitate) + `<UserProfile />` Clerk pentru setări. 6 teste. |
+| ✅ | Pagină de upgrade abonament (UI) | Bogdan | `dashboard-elev` | Buton „Upgrade la Premium" în cardul de abonament din `/dashboard` → `/upgrade`. Verificat E2E: duce pe Stripe Checkout. |
 | ✅ | Pagină de prețuri (carduri Free/Premium) | Bogdan | `landing-si-pricing` | `app/pricing/page.tsx` + `_components/pricing-plans.tsx` (+ FAQ). Rută publică. Preț Premium încă placeholder — de completat suma. |
-| ⬜ | Pagină `/dashboard` | Bogdan | `auth-cont-elev` | Aici aterizează sign-up-ul (free) și succesul Stripe; momentan 404. |
+| ✅ | Pagină `/dashboard` | Bogdan | `dashboard-elev` | `app/dashboard/page.tsx` — abonament + cont + tratare `?checkout=success\|cancel`. 8 teste în `tests/dashboard.test.ts`. |
 | ✅ | Integrare Stripe Checkout pentru abonament lunar | Andrei | `auth-cont-elev` | `app/api/checkout/route.ts` — creează Checkout Session, întoarce `url`. |
 | ✅ | Webhook Stripe — activare/dezactivare abonament în DB | Andrei | `auth-cont-elev` | `app/api/webhooks/stripe/route.ts` — testat E2E cu Stripe CLI (`subscription_status` → `active`/`cancelled`). |
 | ✅ | Pagină `/upgrade` (pornește checkout + redirect Stripe) | Andrei | `auth-cont-elev` | `app/upgrade/page.tsx` — reutilizată de butonul „Upgrade" și de fluxul premium-la-înregistrare. |
@@ -89,10 +91,10 @@
 |---|---|---|---|---|
 | ✅ | Schema DB: tabele `chapters`, `lessons` | Andrei | `panel-profesor-capitole` | RLS activat; SQL în `docs/database.md` |
 | ✅ | Date placeholder: 3 capitole, 2-3 lecții per capitol | Andrei | `panel-profesor-capitole` | `npm run seed:content` (generic, NU structura reală BAC) |
-| ⬜ | Pagină listă capitole (vedere elev) | Bogdan | `panel-profesor-capitole` | Consumă `GET /api/chapters` |
-| ⬜ | Pagină lecție (text + embed video) | Bogdan | `panel-profesor-capitole` | `GET /api/lessons/[id]`; tratează `402 premium_required` |
+| ✅ | Pagină listă capitole (vedere elev) | Bogdan | `dashboard-elev` | Accordion pe `/dashboard` (`_components/chapters-browser.tsx`) — `GET /api/chapters` + lecții per capitol la expand. Verificat în browser. |
+| ✅ | Pagină lecție (text + embed video) | Bogdan | `dashboard-elev` | `app/lectii/[id]/` — conținut + buton video; tratează `402` (paywall) și `404`. Verificat în browser. |
 | ✅ | Autentificare profesor (rol distinct în Clerk/Supabase) | Andrei | `panel-profesor-capitole` | `users.role`; promovare din `/admin` (buton) via `POST /api/admin/set-role` |
-| ⬜ | Panel profesor — formular "Capitol nou" | Bogdan | `panel-profesor-capitole` | `POST /api/chapters` |
+| ✅ | Panel profesor — formular "Capitol nou" | Bogdan | `dashboard-elev` | `app/profesor/` (gated pe rol teacher) — formular titlu/descriere/gratuit/publică → `POST /api/chapters` + listă capitole. Link „Profesor" în `AppHeader` doar pt. teacher. Verificat E2E în browser. |
 | ⬜ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `panel-profesor-capitole` | `POST /api/lessons` |
 | ✅ | API routes pentru CRUD capitole și lecții | Andrei | `panel-profesor-capitole` | `/api/chapters`, `/api/lessons` (+ `[id]`); detalii în `docs/api.md` |
 

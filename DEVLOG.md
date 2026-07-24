@@ -6,6 +6,86 @@
 
 ---
 
+## 2026-07-24 — Bogdan (Sesiunea 5 frontend)
+
+**Ce s-a făcut:**
+- **Panel profesor — formular „Capitol nou"** (`app/profesor/`):
+  - `page.tsx` — rută nouă gated pe rol **teacher** din DB (`isTeacher`); elevii → redirect `/dashboard`.
+  - `teacher-chapters.tsx` — formular client (titlu obligatoriu, descriere, checkbox gratuit, checkbox publică-imediat) → `POST /api/chapters`, cu stări succes/eroare + validare; plus listă live a capitolelor (badge Gratuit/Premium + Publicat/Draft).
+  - `AppHeader` devine async: link „Profesor" afișat doar profesorilor (`getCurrentAppUser`/`isTeacher`).
+
+**Verificat în browser** (Chromium personal): gating student (redirect + link ascuns + `POST → 403`); ca teacher — creare capitol cu succes + apariție în listă, validare submit gol. Pentru testul de teacher am promovat temporar contul de test la `teacher`, apoi am șters capitolul de test și am readus contul la `student` (fără urme în DB).
+
+**Rămas deschis:** formular „Lecție nouă" cu editor text (`POST /api/lessons`) — următorul task din Săpt. 5-6.
+
+**Verzi:** typecheck curat, 55/55 teste, lint doar cu warning-ul preexistent.
+
+---
+
+## 2026-07-24 — Bogdan (Sesiunea 4 frontend)
+
+**Ce s-a făcut:**
+- **Zona de conținut (capitole + lecții)** pe `/dashboard`:
+  - `app/_components/chapters-browser.tsx` — accordion **client**: aduce capitolele din `GET /api/chapters` la mount, iar la expand aduce lecțiile din `GET /api/chapters/[id]/lessons` (cache per capitol). Badge Gratuit/Premium, lacăt 🔒 pe lecțiile blocate, fiecare lecție = link spre `/lectii/[id]`.
+  - `app/lectii/[id]/` — pagină lecție (shell server + `LessonView` client): `200` → titlu + buton video + conținut (`whitespace-pre-wrap`); `402` → panou paywall „Conținut Premium" + buton upgrade; `404` → „nu a fost găsită".
+  - **Decizie:** componentele consumă API-ul direct (care întoarce deja `locked` + `402`), deci gating-ul rămâne o singură sursă — acoperit de `content-api.test.ts`, fără duplicare și fără atingerea rutelor testate.
+  - Placeholder-ul „Lecțiile tale" din `/dashboard` înlocuit cu `<ChaptersBrowser />`.
+- **Buton de temă zi/noapte** pe toate paginile (lângă Profil în `AppHeader`, în grupul de acțiuni din `SiteHeader`):
+  - `app/_components/theme-toggle.tsx` — `useSyncExternalStore` (fără setState-in-effect, fără mismatch de hidratare). Persistă alegerea în `localStorage`, sincronizează între tab-uri.
+  - Dark mode mutat de pe `prefers-color-scheme` pe **strategie de clasă** (`.dark` pe `<html>`, `@custom-variant` în `globals.css`), ca butonul să poată suprascrie sistemul.
+  - Script inline anti-flash în `layout.tsx` (aplică tema înainte de paint din `localStorage` sau preferința sistemului).
+
+**Verificat în browser** (Chromium personal, cont de test free): accordion + badge-uri, lecție liberă cu conținut, paywall pe lecție premium (`402`), comutare temă + **persistență la reload** (dark & light, înainte și după hidratare) + la navigare între pagini. Date deja seedate în DB (capitol demo gratuit + capitol premium, câte 2 lecții).
+
+**Rămas deschis:** componentele interne Clerk (`UserButton`/`UserProfile`/`SignIn`) au tematizarea lor — dacă vrem să urmeze exact tema noastră, de configurat `appearance` la Clerk. Prețul Premium de pe `/pricing` încă placeholder.
+
+**Verzi:** typecheck curat, 55/55 teste, lint doar cu warning-ul preexistent (`content-api.test.ts:64`).
+
+---
+
+## 2026-07-15 — Bogdan (Sesiunea 3 frontend)
+
+**Ce s-a făcut:**
+- **Pagina de profil elev** (`app/profil/page.tsx`) — încheie Săpt. 3-4. Card cont (nume/email/rol) + card abonament (cu data de valabilitate pentru Premium, stare „anulat" + buton de reactivare pentru cancelled). Editarea contului (nume/email/parolă/securitate) e delegată lui `<UserProfile routing="hash" />` de la Clerk — nu reimplementăm un flux deja rezolvat
+- Link „Profil" adăugat în `AppHeader`
+- **6 teste noi** (`tests/profil.test.ts`) — total **57**
+- Verificat vizual în browser: randare corectă, `<UserProfile />` se încarcă, zero erori
+- **Dedup `/dashboard`:** scoase cardurile Abonament + Cont (identice cu cele de pe `/profil`); rămâne un CTA subțire „Treci la Premium" (doar pentru free) + bannerele Stripe + placeholder lecții
+
+**Frontend Săpt. 1-4 = complet.** Urmează zona de conținut (capitole + lecții).
+
+---
+
+## 2026-07-15 — Bogdan (Sesiunea 2 frontend)
+
+**Ce s-a făcut:**
+- **Pagina `/dashboard`** (`app/dashboard/page.tsx`) — lipsea, deci fluxul de plată se termina în 404. Server component pe helperii existenți (`getCurrentAppUser`, `canAccessPremium`): card de abonament (Gratuit/Premium), card de cont (email + rol), placeholder pentru lecții
+- **Butonul „Upgrade la Premium"** → `/upgrade` (apare doar pe cont gratuit). Verificat E2E: ajunge pe Stripe Checkout
+- **Tratarea întoarcerii din Stripe** — `?checkout=success` și `?checkout=cancel`
+- **`AppHeader`** (`app/_components/app-header.tsx`) — header pentru zona logată, cu `UserButton` (Clerk); distinct de `SiteHeader`-ul public
+- **8 teste noi** (`tests/dashboard.test.ts`) — total **51**
+- `app/layout.tsx` — `afterSignOutUrl="/"` mutat pe `ClerkProvider` (nu mai e prop pe `UserButton` în v7)
+- **Bugfix: după autentificare rămâneai pe landing** (raportat de Bogdan). `<SignIn />` era fără props, iar `SIGN_IN_FALLBACK_REDIRECT_URL` e ignorat când Clerk are o pagină de proveniență. Fix: `forceRedirectUrl="/dashboard"` (`ERRORS.md` #018)
+- `.env.example` — variabilele Clerk erau cele vechi (`AFTER_SIGN_IN_URL`), deprecate și ignorate în v7 → corectate la `*_FALLBACK_REDIRECT_URL`
+- `ERRORS.md` #017 — de ce nu se poate autentifica un browser automatizat (Turnstile pe sign-up **și** sign-in, plus Google OAuth) și care e fluxul corect de verificare UI
+
+**Notă proces:** branch `dashboard-elev`. lint + typecheck + test (51) verzi.
+
+**Decizii luate:**
+- **Cursa cu webhook-ul, tratată explicit:** după plată, Stripe redirectează imediat, dar abonamentul e activat de webhook câteva secunde mai târziu. Deci „success" + status încă `free` **nu e eroare** — pagina spune „se activează în câteva secunde", în loc să afișeze „Gratuit" cuiva care tocmai a plătit. La fel dacă rândul din `users` lipsește încă (webhook Clerk întârziat): mesaj de așteptare, nu eroare
+- Testele folosesc helperii **reali** de gating (`canAccessPremium`), nu o reimplementare — doar sursa userului e mock-uită
+- **Destinația după login se forțează în cod** (`forceRedirectUrl`), nu prin variabile de mediu de tip „fallback" — acelea cedează în fața paginii de proveniență, deci nu garantează nimic
+- Verificare UI: autentificarea o face omul în fereastra Chromium (protecția anti-bot blochează automatizarea), agentul preia după login (vezi `ERRORS.md` #017)
+
+**Probleme deschise / Next steps:**
+- **Prețul Premium e încă placeholder** în `_components/pricing-plans.tsx` — de completat suma reală (sau de citit din Stripe la runtime)
+- **Pagina de profil elev** — singura rămasă din Săpt. 3-4
+- Urmează Săpt. 5-6: listă capitole (`GET /api/chapters`) + pagină lecție (`GET /api/lessons/[id]`, cu `402 premium_required`). Atenție: free vede lista completă de titluri (`locked: true`), doar conținutul e blocat
+- `/dashboard` are un placeholder pentru lecții — de înlocuit când apare pagina de capitole
+- De adăugat `DumnieGOD` în `.github/CODEOWNERS` (secțiunea de frontend e pregătită, dar comentată)
+
+---
+
 ## 2026-07-13 — Bogdan (Sesiunea 1 frontend)
 
 **Ce s-a făcut:**
