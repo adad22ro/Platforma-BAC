@@ -5,6 +5,15 @@
 
 ---
 
+## #019 — `Vitest failed to find the runner` la pre-push (cache corupt)
+**Data:** 2026-07-24
+**Context:** `git push` blocat de hook-ul pre-push: toate cele 8 suite pică la import cu `Vitest failed to find the runner` și `Tests: no tests`, deși `npm test` trecuse verde (55/55) cu câteva secunde înainte. Rulările ulterioare de `npm test` picau la fel, constant.
+**Cauză:** Cache-ul Vite/Vitest din `node_modules/.vite` s-a corupt (similar cu #003 — cache Turbopack corupt). Codul și config-ul erau intacte; nimic din sursă nu se schimbase între rularea verde și cele roșii.
+**Diagnostic cheie:** Toate suitele pică simultan la **import** (0 teste rulate) cu mesaj despre „runner", nu erori de assertion → nu e o regresie de cod, ci stare/cache corupt. Un run verde urmat brusc de run-uri roșii pe aceleași fișiere confirmă.
+**Soluție:** `rm -rf node_modules/.vite node_modules/.vitest` apoi `npm test` → verde din nou; push-ul a trecut.
+
+---
+
 ## #018 — După autentificare rămâi pe landing, nu ajungi pe `/dashboard`
 **Data:** 2026-07-15
 **Context:** Click pe „Autentificare" din header-ul landing-ului → login reușit → utilizatorul rămâne pe `/` în loc să ajungă pe `/dashboard`. Sign-up-ul, în schimb, redirecta corect.

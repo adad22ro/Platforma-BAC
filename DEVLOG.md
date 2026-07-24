@@ -17,8 +17,6 @@
 
 **Frontend Săpt. 1-4 = complet.** Urmează zona de conținut (capitole + lecții).
 
-> ⚠️ **Necomis la închiderea sesiunii:** dedup-ul `/dashboard` (`app/dashboard/page.tsx` + `tests/dashboard.test.ts`) e doar în working tree — Bogdan decide când se comite. 55/55 teste verzi local.
-
 ---
 
 ## 2026-07-15 — Bogdan (Sesiunea 2 frontend)
