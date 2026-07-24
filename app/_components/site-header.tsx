@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
+import { ThemeToggle } from "./theme-toggle";
 
 // Header-ul public (landing + /pricing). Server component: citeste sesiunea
 // direct din Clerk, fara flash de continut gresit la hidratare.
@@ -19,6 +20,7 @@ export async function SiteHeader() {
           <span className="text-lg">Platforma&nbsp;BAC</span>
         </Link>
         <div className="flex items-center gap-3 text-sm font-medium">
+          <ThemeToggle />
           <Link
             href="/pricing"
             className="hidden text-zinc-600 hover:text-zinc-900 sm:inline dark:text-zinc-400 dark:hover:text-zinc-50"

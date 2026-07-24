@@ -19,6 +19,11 @@ export const metadata: Metadata = {
     "Lecții pe capitole, teste grilă cu corectare automată și mentorat de la profesori. Pregătește-te de BAC fără stres.",
 };
 
+// Ruleaza inainte de paint: seteaza clasa `dark` pe <html> dupa preferinta
+// salvata (localStorage) sau, in lipsa, dupa preferinta sistemului. Evita
+// flash-ul de tema gresita la incarcare.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,8 +32,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <ClerkProvider afterSignOutUrl="/">
           {children}

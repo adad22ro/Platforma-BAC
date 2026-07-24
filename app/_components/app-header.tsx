@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
+import { ThemeToggle } from "./theme-toggle";
 
 // Header pentru zona logata (dashboard, lectii, profil).
 // Diferit de SiteHeader (public): are meniul de cont Clerk, nu CTA-uri de inregistrare.
@@ -17,6 +18,7 @@ export function AppHeader() {
           <span className="text-lg">Platforma&nbsp;BAC</span>
         </Link>
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <Link
             href="/profil"
             className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"

@@ -6,6 +6,27 @@
 
 ---
 
+## 2026-07-24 — Bogdan (Sesiunea 4 frontend)
+
+**Ce s-a făcut:**
+- **Zona de conținut (capitole + lecții)** pe `/dashboard`:
+  - `app/_components/chapters-browser.tsx` — accordion **client**: aduce capitolele din `GET /api/chapters` la mount, iar la expand aduce lecțiile din `GET /api/chapters/[id]/lessons` (cache per capitol). Badge Gratuit/Premium, lacăt 🔒 pe lecțiile blocate, fiecare lecție = link spre `/lectii/[id]`.
+  - `app/lectii/[id]/` — pagină lecție (shell server + `LessonView` client): `200` → titlu + buton video + conținut (`whitespace-pre-wrap`); `402` → panou paywall „Conținut Premium" + buton upgrade; `404` → „nu a fost găsită".
+  - **Decizie:** componentele consumă API-ul direct (care întoarce deja `locked` + `402`), deci gating-ul rămâne o singură sursă — acoperit de `content-api.test.ts`, fără duplicare și fără atingerea rutelor testate.
+  - Placeholder-ul „Lecțiile tale" din `/dashboard` înlocuit cu `<ChaptersBrowser />`.
+- **Buton de temă zi/noapte** pe toate paginile (lângă Profil în `AppHeader`, în grupul de acțiuni din `SiteHeader`):
+  - `app/_components/theme-toggle.tsx` — `useSyncExternalStore` (fără setState-in-effect, fără mismatch de hidratare). Persistă alegerea în `localStorage`, sincronizează între tab-uri.
+  - Dark mode mutat de pe `prefers-color-scheme` pe **strategie de clasă** (`.dark` pe `<html>`, `@custom-variant` în `globals.css`), ca butonul să poată suprascrie sistemul.
+  - Script inline anti-flash în `layout.tsx` (aplică tema înainte de paint din `localStorage` sau preferința sistemului).
+
+**Verificat în browser** (Chromium personal, cont de test free): accordion + badge-uri, lecție liberă cu conținut, paywall pe lecție premium (`402`), comutare temă + **persistență la reload** (dark & light, înainte și după hidratare) + la navigare între pagini. Date deja seedate în DB (capitol demo gratuit + capitol premium, câte 2 lecții).
+
+**Rămas deschis:** componentele interne Clerk (`UserButton`/`UserProfile`/`SignIn`) au tematizarea lor — dacă vrem să urmeze exact tema noastră, de configurat `appearance` la Clerk. Prețul Premium de pe `/pricing` încă placeholder.
+
+**Verzi:** typecheck curat, 55/55 teste, lint doar cu warning-ul preexistent (`content-api.test.ts:64`).
+
+---
+
 ## 2026-07-15 — Bogdan (Sesiunea 3 frontend)
 
 **Ce s-a făcut:**
