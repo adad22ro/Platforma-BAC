@@ -6,6 +6,22 @@
 
 ---
 
+## 2026-07-24 — Bogdan (Sesiunea 5 frontend)
+
+**Ce s-a făcut:**
+- **Panel profesor — formular „Capitol nou"** (`app/profesor/`):
+  - `page.tsx` — rută nouă gated pe rol **teacher** din DB (`isTeacher`); elevii → redirect `/dashboard`.
+  - `teacher-chapters.tsx` — formular client (titlu obligatoriu, descriere, checkbox gratuit, checkbox publică-imediat) → `POST /api/chapters`, cu stări succes/eroare + validare; plus listă live a capitolelor (badge Gratuit/Premium + Publicat/Draft).
+  - `AppHeader` devine async: link „Profesor" afișat doar profesorilor (`getCurrentAppUser`/`isTeacher`).
+
+**Verificat în browser** (Chromium personal): gating student (redirect + link ascuns + `POST → 403`); ca teacher — creare capitol cu succes + apariție în listă, validare submit gol. Pentru testul de teacher am promovat temporar contul de test la `teacher`, apoi am șters capitolul de test și am readus contul la `student` (fără urme în DB).
+
+**Rămas deschis:** formular „Lecție nouă" cu editor text (`POST /api/lessons`) — următorul task din Săpt. 5-6.
+
+**Verzi:** typecheck curat, 55/55 teste, lint doar cu warning-ul preexistent.
+
+---
+
 ## 2026-07-24 — Bogdan (Sesiunea 4 frontend)
 
 **Ce s-a făcut:**

@@ -21,8 +21,9 @@
 - **Faza curentă:** Faza 1 — MVP
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
 - **Frontend Săpt. 1-4:** complet (landing, `/pricing`, `/dashboard`, `/profil`, buton upgrade)
-- **Bottleneck:** frontend (Bogdan) — urmează zona de conținut (capitole + lecții); API-urile, tipurile și uneltele sunt gata de consumat
-- **Ultima actualizare:** 2026-07-15
+- **Frontend Săpt. 5-6 (vedere elev):** complet — listă capitole (accordion pe `/dashboard`) + pagină lecție (`/lectii/[id]`) cu paywall. Plus buton temă zi/noapte pe toate paginile.
+- **Bottleneck:** frontend (Bogdan) — urmează **panelul profesor** (formulare capitol/lecție) și **Săpt. 7-8** (teste grilă + progres)
+- **Ultima actualizare:** 2026-07-24
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -90,10 +91,10 @@
 |---|---|---|---|---|
 | ✅ | Schema DB: tabele `chapters`, `lessons` | Andrei | `panel-profesor-capitole` | RLS activat; SQL în `docs/database.md` |
 | ✅ | Date placeholder: 3 capitole, 2-3 lecții per capitol | Andrei | `panel-profesor-capitole` | `npm run seed:content` (generic, NU structura reală BAC) |
-| ⬜ | Pagină listă capitole (vedere elev) | Bogdan | `panel-profesor-capitole` | Consumă `GET /api/chapters` |
-| ⬜ | Pagină lecție (text + embed video) | Bogdan | `panel-profesor-capitole` | `GET /api/lessons/[id]`; tratează `402 premium_required` |
+| ✅ | Pagină listă capitole (vedere elev) | Bogdan | `dashboard-elev` | Accordion pe `/dashboard` (`_components/chapters-browser.tsx`) — `GET /api/chapters` + lecții per capitol la expand. Verificat în browser. |
+| ✅ | Pagină lecție (text + embed video) | Bogdan | `dashboard-elev` | `app/lectii/[id]/` — conținut + buton video; tratează `402` (paywall) și `404`. Verificat în browser. |
 | ✅ | Autentificare profesor (rol distinct în Clerk/Supabase) | Andrei | `panel-profesor-capitole` | `users.role`; promovare din `/admin` (buton) via `POST /api/admin/set-role` |
-| ⬜ | Panel profesor — formular "Capitol nou" | Bogdan | `panel-profesor-capitole` | `POST /api/chapters` |
+| ✅ | Panel profesor — formular "Capitol nou" | Bogdan | `dashboard-elev` | `app/profesor/` (gated pe rol teacher) — formular titlu/descriere/gratuit/publică → `POST /api/chapters` + listă capitole. Link „Profesor" în `AppHeader` doar pt. teacher. Verificat E2E în browser. |
 | ⬜ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `panel-profesor-capitole` | `POST /api/lessons` |
 | ✅ | API routes pentru CRUD capitole și lecții | Andrei | `panel-profesor-capitole` | `/api/chapters`, `/api/lessons` (+ `[id]`); detalii în `docs/api.md` |
 
