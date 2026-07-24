@@ -52,33 +52,23 @@ beforeEach(() => {
   };
 });
 
-describe("/dashboard — abonament", () => {
-  it("user gratuit: arata planul Gratuit + butonul de upgrade catre /upgrade", async () => {
+// Nota: cardurile de abonament + cont au fost mutate pe /profil, ca sa nu fie
+// duplicate. Acele scenarii sunt acoperite in profil.test.ts. Pe dashboard ramane
+// doar un CTA subtire de upgrade pentru userii free.
+
+describe("/dashboard — CTA upgrade", () => {
+  it("user free: arata 'Treci la Premium' catre /upgrade", async () => {
     h.appUser = student({ subscription_status: "free" });
     const html = await render();
-
-    expect(html).toContain("Gratuit");
-    expect(html).toContain("Upgrade la Premium");
+    expect(html).toContain("Treci la Premium");
     expect(html).toContain('href="/upgrade"');
   });
 
-  it("user premium: fara buton de upgrade", async () => {
+  it("user premium: fara CTA de upgrade", async () => {
     h.appUser = student({ subscription_status: "active" });
     const html = await render();
-
-    expect(html).toContain("Premium");
-    expect(html).not.toContain("Upgrade la Premium");
+    expect(html).not.toContain("Treci la Premium");
     expect(html).not.toContain('href="/upgrade"');
-  });
-
-  it("abonament expirat (end_date in trecut): tratat ca gratuit, cu upgrade", async () => {
-    h.appUser = student({
-      subscription_status: "active",
-      subscription_end_date: new Date(Date.now() - 86_400_000).toISOString(),
-    });
-    const html = await render();
-
-    expect(html).toContain("Upgrade la Premium");
   });
 });
 
@@ -113,16 +103,5 @@ describe("/dashboard — intoarcerea de la Stripe", () => {
     const html = await render();
 
     expect(html).not.toContain("Plata a fost");
-  });
-});
-
-describe("/dashboard — cont neprovizionat inca", () => {
-  it("fara rand in DB (webhook Clerk intarziat): mesaj de asteptare, nu eroare", async () => {
-    h.appUser = null;
-    const html = await render();
-
-    expect(html).toContain("Îți pregătim contul");
-    // fara abonament cunoscut => tratat ca gratuit
-    expect(html).toContain("Upgrade la Premium");
   });
 });

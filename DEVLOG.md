@@ -13,8 +13,11 @@
 - Link „Profil" adăugat în `AppHeader`
 - **6 teste noi** (`tests/profil.test.ts`) — total **57**
 - Verificat vizual în browser: randare corectă, `<UserProfile />` se încarcă, zero erori
+- **Dedup `/dashboard`:** scoase cardurile Abonament + Cont (identice cu cele de pe `/profil`); rămâne un CTA subțire „Treci la Premium" (doar pentru free) + bannerele Stripe + placeholder lecții
 
 **Frontend Săpt. 1-4 = complet.** Urmează zona de conținut (capitole + lecții).
+
+> ⚠️ **Necomis la închiderea sesiunii:** dedup-ul `/dashboard` (`app/dashboard/page.tsx` + `tests/dashboard.test.ts`) e doar în working tree — Bogdan decide când se comite. 55/55 teste verzi local.
 
 ---
 

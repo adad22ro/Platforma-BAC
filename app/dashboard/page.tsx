@@ -42,6 +42,17 @@ export default async function DashboardPage({
           De aici îți continui pregătirea pentru Bacalaureat.
         </p>
 
+        {/* CTA subtire de upgrade — doar pentru userii free. Detaliile de
+            abonament traiesc pe /profil. */}
+        {!isPremium && (
+          <Link
+            href="/upgrade"
+            className="mt-5 inline-flex h-10 items-center justify-center rounded-full bg-indigo-600 px-5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+          >
+            Treci la Premium
+          </Link>
+        )}
+
         {/* Mesaje dupa intoarcerea de la Stripe */}
         {checkout === "success" && (
           <div className="mt-8 rounded-xl border border-green-200 bg-green-50 p-5 dark:border-green-900 dark:bg-green-950/40">
@@ -67,70 +78,9 @@ export default async function DashboardPage({
           </div>
         )}
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          {/* Abonament */}
-          <section className="rounded-2xl border border-zinc-200 p-6 dark:border-zinc-800">
-            <h2 className="text-sm font-medium text-zinc-500">Abonament</h2>
-            <p className="mt-2 flex items-center gap-2 text-2xl font-bold">
-              {isPremium ? "Premium" : "Gratuit"}
-              <span
-                className={
-                  isPremium
-                    ? "rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-950 dark:text-green-400"
-                    : "rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                }
-              >
-                {isPremium ? "activ" : "limitat"}
-              </span>
-            </p>
-
-            {isPremium ? (
-              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                Ai acces complet la lecții, teste și mentorat.
-              </p>
-            ) : (
-              <>
-                <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  Cu Premium deblochezi toate lecțiile, teste nelimitate și
-                  mentoratul „Nu am înțeles”.
-                </p>
-                <Link
-                  href="/upgrade"
-                  className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-indigo-600 px-6 font-medium text-white transition-colors hover:bg-indigo-500"
-                >
-                  Upgrade la Premium
-                </Link>
-              </>
-            )}
-          </section>
-
-          {/* Cont */}
-          <section className="rounded-2xl border border-zinc-200 p-6 dark:border-zinc-800">
-            <h2 className="text-sm font-medium text-zinc-500">Contul tău</h2>
-            <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-zinc-500">Email</dt>
-                <dd className="truncate font-medium">
-                  {clerkUser?.primaryEmailAddress?.emailAddress ?? "—"}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-zinc-500">Rol</dt>
-                <dd className="font-medium">
-                  {appUser?.role === "teacher" ? "Profesor" : "Elev"}
-                </dd>
-              </div>
-            </dl>
-            {!appUser && (
-              <p className="mt-4 text-sm text-amber-700 dark:text-amber-400">
-                Îți pregătim contul. Reîmprospătează pagina în câteva secunde.
-              </p>
-            )}
-          </section>
-        </div>
-
-        {/* Continut — pagina de capitole urmeaza */}
-        <section className="mt-6 rounded-2xl border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
+        {/* Continut — pagina de capitole urmeaza. Datele de cont si abonament
+            traiesc pe /profil, ca sa nu le duplicam aici. */}
+        <section className="mt-8 rounded-2xl border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
           <h2 className="font-semibold">Lecțiile tale</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
             Capitolele și lecțiile apar aici în curând.
