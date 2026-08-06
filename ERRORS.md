@@ -11,6 +11,7 @@
 **Cauză:** Cache-ul Vite/Vitest din `node_modules/.vite` s-a corupt (similar cu #003 — cache Turbopack corupt). Codul și config-ul erau intacte; nimic din sursă nu se schimbase între rularea verde și cele roșii.
 **Diagnostic cheie:** Toate suitele pică simultan la **import** (0 teste rulate) cu mesaj despre „runner", nu erori de assertion → nu e o regresie de cod, ci stare/cache corupt. Un run verde urmat brusc de run-uri roșii pe aceleași fișiere confirmă.
 **Soluție:** `rm -rf node_modules/.vite node_modules/.vitest` apoi `npm test` → verde din nou; push-ul a trecut.
+**Recidivă 2026-08-06** (branch `teste-progres`): exact același tipar — 75/75 verde, apoi toate cele 9 suite roșii la pre-push cu `Tests: no tests`. Aceeași soluție, aceeași durată. Nu e un incident izolat: dacă se mai repetă, merită un `pretest` care curăță cache-ul.
 
 ---
 
