@@ -30,6 +30,7 @@ vi.mock("@/app/_components/app-header", () => ({
 import DashboardPage from "@/app/dashboard/page";
 
 const student = (over: Partial<AppUser> = {}): AppUser => ({
+  id: "u-s",
   clerk_id: "s",
   role: "student",
   subscription_status: "free",

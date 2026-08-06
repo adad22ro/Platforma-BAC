@@ -25,6 +25,7 @@ vi.mock("@/lib/current-user", async (importActual) => {
 import ProfilPage from "@/app/profil/page";
 
 const student = (over: Partial<AppUser> = {}): AppUser => ({
+  id: "u-s",
   clerk_id: "s",
   role: "student",
   subscription_status: "free",
