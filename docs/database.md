@@ -217,6 +217,56 @@ DDL-ul canonic: [`supabase/migrations/20260806120000_teste_progres.sql`](../supa
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol;
 necesită `npm run seed:content` rulat înainte).
 
+### tickets
+Scop: sistemul de mentorat „Nu am înțeles". Elevul trimite o întrebare cu contextul
+paginii; profesorul răspunde.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| user_id | uuid | FK → `users(id)` ON DELETE CASCADE — autorul |
+| chapter_id | uuid | FK → `chapters(id)` ON DELETE **SET NULL** — context |
+| lesson_id | uuid | FK → `lessons(id)` ON DELETE **SET NULL** — context |
+| lesson_title | text | Titlul lecției, **snapshot** la creare |
+| message | text | Întrebarea inițială (NOT NULL) — rezumat pentru liste |
+| selection | text | Fragmentul selectat de elev din lecție |
+| scroll_percent | int | Cât parcursese din lecție (0-100, CHECK) |
+| progress_score / _total / _attempts | int | Progresul la testul capitolului, **înghețat** la momentul întrebării |
+| status | text | `open` / `answered` / `closed` (default `open`) — CHECK |
+| last_message_at | timestamptz | Ultima activitate — după ea se ordonează coada |
+| created_at / updated_at | timestamptz | default `now()` |
+
+### ticket_messages
+Scop: firul de discuție al unui tichet. Fluxul nu e o pereche întrebare/răspuns:
+elevul poate reveni, profesorul poate cere lămuriri.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| ticket_id | uuid | FK → `tickets(id)` ON DELETE CASCADE |
+| author_id | uuid | FK → `users(id)` ON DELETE SET NULL |
+| author_role | text | `student` / `teacher` — **înghețat** la momentul scrierii (CHECK) |
+| body | text | Conținutul mesajului (NOT NULL, max 5000 în API) |
+| created_at | timestamptz | default `now()` |
+
+> **De ce `author_role` înghețat:** dacă un elev e promovat profesor, mesajele lui vechi
+> nu trebuie să devină retroactiv răspunsuri oficiale.
+>
+> **De ce snapshot la `lesson_title` și la progres:** `lesson_id` e ON DELETE SET NULL,
+> deci după ștergerea lecției tichetul ar rămâne fără subiect; iar profesorul trebuie să
+> vadă cum stătea elevul **când a întrebat**, nu cum stă când citește.
+
+> **De ce SET NULL pe context:** dacă profesorul șterge lecția, întrebarea elevului
+> **nu** trebuie să dispară — se pierde doar legătura, nu și subiectul (vezi `lesson_title`).
+
+Tichetele se deschid **doar din fereastra unei lecții** — `lesson_id` e obligatoriu în API.
+Coloana rămâne totuși nullable în DB, ca ștergerea lecției să poată face SET NULL fără să
+piardă tichetul.
+
+DDL: [`20260807100000_tichete_mentorat.sql`](../supabase/migrations/20260807100000_tichete_mentorat.sql)
++ [`20260807120000_tichete_mesaje_context.sql`](../supabase/migrations/20260807120000_tichete_mesaje_context.sql)
+(firul de mesaje + contextul de lecție).
+
 ---
 
 ## Conexiunea la Supabase

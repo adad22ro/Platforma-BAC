@@ -6,6 +6,32 @@
 
 ---
 
+## 2026-08-07 — Andrei (Sesiunea backend — Săpt. 9-10, tichete)
+
+**Ce s-a făcut:** Săpt. 7-8 a intrat în `main` (PR #38, CI verde). Apoi backendul de mentorat, pe `sistem-tichete-mentorat`.
+
+- **Migrări** `20260807100000_tichete_mentorat.sql` (tabel `tickets`) + `20260807120000_tichete_mesaje_context.sql` (fir de mesaje + context), ambele aplicate în producție. A doua a apărut după feedback, în aceeași sesiune — de aceea migrare nouă, nu editarea celei dintâi (regula din `supabase/README.md`).
+  - Contextul (`chapter_id`, `lesson_id`) e **ON DELETE SET NULL**, nu CASCADE: dacă profesorul șterge lecția, întrebarea elevului nu trebuie să dispară.
+- **API:** `GET/POST /api/tickets`, `GET /api/tickets/[id]` (cu fir), `POST /api/tickets/[id]/messages`.
+  - Elevul e legat de `user.id` din sesiune — un `user_id` din query string e ignorat (test dedicat).
+  - Contextul se derivă din DB: capitolul se ia din lecție, nu din ce declară clientul (test dedicat).
+  - Nu se poate deschide tichet despre conținut inaccesibil (404 draft / 402 premium) — altfel tichetul e o cale laterală de a afla ce e acolo. Refolosește `lib/chapter-access.ts`.
+  - Tichetul altcuiva dă **404, nu 403** — nu confirmăm că există; nici mesajele lui nu se citesc.
+
+**Revizuire în aceeași sesiune, după feedback (Gabi):**
+- **Tichetul devine fir de mesaje** (`ticket_messages`), nu pereche întrebare/răspuns. Coloanele `answer`/`answered_by`/`answered_at` au dispărut, iar migrarea mută conținutul existent în fir în loc să-l piardă. Statusul urmează ultimul vorbitor: profesor → `answered`, revenire elev → `open`. `author_role` e înghețat la scriere, ca un elev promovat profesor să nu-și transforme retroactiv mesajele vechi în răspunsuri oficiale.
+- **Tichetele se deschid doar din fereastra lecției** — `lesson_id` obligatoriu în API. Coloana rămâne nullable în DB ca ștergerea lecției să facă SET NULL fără să piardă tichetul; de aceea `lesson_title` e salvat ca snapshot.
+- **Context complet pentru profesor:** progresul la testul capitolului (înghețat la momentul întrebării, nu citit la afișare), poziția în lecție (`scroll_percent`) și fragmentul selectat. Doar ultimele două vin de la client — restul se citește pe server.
+- Notă pentru Bogdan: butonul „Nu am înțeles" trebuie să trimită `lesson_id` și, dacă poate, `selection` + `scroll_percent`.
+
+**Rămas deschis / blocat:** notificarea pe email a elevului. Nu e ales un serviciu (Resend / Postmark / SendGrid) și nu există variabile de mediu pentru el. Locul de apel e pregătit și documentat în ruta de răspuns: trimiterea se face **după** scrierea în DB și fără să blocheze răspunsul — un email nelivrat nu trebuie să piardă răspunsul profesorului.
+
+**Verzi:** typecheck curat, **102/102 teste** (+27 în `tests/tickets-api.test.ts`), lint doar cu warning-ul preexistent.
+
+**Eroare nouă notată:** #020 — `GenericStringError` la `tsc` fiindcă selectul Supabase era scris cu concatenare (`'a, b' + 'c'`). Tipul rândului se deduce din textul literal al selectului; concatenarea îl face `string` și strică inferența.
+
+---
+
 ## 2026-08-06 — Andrei (Sesiunea backend — Săpt. 7-8, partea 1)
 
 **Ce s-a făcut:** schema DB pentru teste grilă + progres, pe branch `teste-progres`.

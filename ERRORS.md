@@ -5,6 +5,15 @@
 
 ---
 
+## #020 — `Property 'user_id' does not exist on type 'GenericStringError'`
+**Data:** 2026-08-07
+**Context:** `tsc --noEmit` pică pe `app/api/tickets/[id]/route.ts` cu două erori ciudate: `Property 'user_id' does not exist on type 'GenericStringError'` și `Spread types may only be created from object types`. Codul părea corect, iar coloanele existau în `types/database.ts` (regenerate după migrare).
+**Cauză:** Selectul era scris pe două rânduri, cu concatenare: `.select('a, b, ' + 'c, d')`. Supabase deduce tipul rândului **din textul literal** al selectului, prin template literal types. O concatenare cu `+` produce tipul lat `string`, inferența eșuează, iar rezultatul devine `GenericStringError`.
+**Diagnostic cheie:** `GenericStringError` în mesaj = selectul n-a putut fi parsat ca literal. Nu e o problemă de schemă sau de tipuri lipsă, ci de **forma** stringului. Se aplică la fel dacă selectul vine dintr-o variabilă `let` sau dintr-un template literal cu interpolări.
+**Soluție:** Un singur literal, oricât de lung: `.select('id, user_id, ...')`. Dacă deranjează lungimea rândului, un `as const` pe o constantă separată funcționează — dar cel mai simplu e literalul inline.
+
+---
+
 ## #019 — `Vitest failed to find the runner` la pre-push (cache corupt)
 **Data:** 2026-07-24
 **Context:** `git push` blocat de hook-ul pre-push: toate cele 8 suite pică la import cu `Vitest failed to find the runner` și `Tests: no tests`, deși `npm test` trecuse verde (55/55) cu câteva secunde înainte. Rulările ulterioare de `npm test` picau la fel, constant.

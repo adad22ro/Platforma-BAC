@@ -130,6 +130,55 @@ correct_answer_id, correct, explanation }] }`.
 
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol, idempotent).
 
+### Mentorat — tichete
+
+| Rută | Metodă | Scop | Acces |
+|---|---|---|---|
+| `/api/tickets` | GET | listă tichete, ordonate după ultima activitate | elev: **doar ale lui** · profesor: toate (`?status=`, `?chapter_id=`, `?lesson_id=`) |
+| `/api/tickets` | POST | elevul deschide un tichet **din fereastra lecției** | orice user logat |
+| `/api/tickets/[id]` | GET | tichetul **cu firul de mesaje** | autorul sau profesor |
+| `/api/tickets/[id]/messages` | POST | adaugă un mesaj în fir | autorul sau profesor |
+
+**Corp cerere (creare):** `{ lesson_id, message, selection?, scroll_percent? }` —
+`lesson_id` și `message` obligatorii (max 2000 caractere), `selection` max 1000,
+`scroll_percent` 0-100. **Corp mesaj:** `{ body }`, max 5000.
+
+**Discuția e un fir, nu o pereche întrebare/răspuns** (`ticket_messages`): elevul poate
+reveni cu „tot nu am înțeles", profesorul poate cere lămuriri. Statusul urmează ultimul
+vorbitor — mesaj de profesor → `answered`, revenire a elevului → `open`, deci tichetul
+reintră în coadă. `author_role` e înghețat la momentul scrierii: dacă un elev devine
+profesor, mesajele lui vechi nu devin retroactiv răspunsuri oficiale.
+
+**Contextul pe care îl vede profesorul** se captează la creare, aproape tot **pe server**:
+
+| Câmp | De unde vine |
+|---|---|
+| `lesson_id`, `chapter_id`, `lesson_title` | din DB, după `lesson_id` — nu din ce declară clientul |
+| `progress_score` / `_total` / `_attempts` | din `student_progress`, **înghețat** la momentul întrebării |
+| `selection`, `scroll_percent` | de la client — singurele lucruri pe care serverul n-are de unde să le știe |
+
+> `lesson_title` e snapshot pentru că `lesson_id` e `ON DELETE SET NULL`: după ștergerea
+> lecției, tichetul ar rămâne altfel fără niciun indiciu despre subiect. La fel, progresul
+> e înghețat pentru că profesorul trebuie să vadă cum stătea elevul **când a întrebat**,
+> nu cum stă când citește.
+
+**Trei reguli de autorizare care contează:**
+- Elevul e legat de `user.id` din sesiune; un `user_id` trimis în query string e ignorat.
+- Contextul se derivă din DB: dacă vine `lesson_id`, capitolul se ia din lecție, nu din
+  ce declară clientul.
+- Nu poți deschide tichet despre conținut la care n-ai acces (`404` draft / `402` premium)
+  — altfel tichetul devine o cale laterală de a afla ce e acolo.
+- Un tichet străin dă **`404`, nu `403`** — nu confirmăm că există.
+
+**Stări:** `open` ⇄ `answered`, plus `closed` (închiderea explicită n-are încă rută —
+se adaugă un PATCH când Bogdan face UI-ul de închidere).
+
+> **Neimplementat încă:** notificarea pe email a elevului la primirea răspunsului —
+> nu există serviciu de email configurat. Când va exista, se trimite din
+> `POST /api/tickets/[id]/messages` (doar la mesaj de profesor), **după** scrierea în DB
+> și fără să blocheze răspunsul: un email nelivrat nu trebuie să piardă munca profesorului.
+> Locul exact e marcat cu comentariu în rută.
+
 ### POST /api/admin/set-role
 Scop: schimbă rolul unui user (`student` ↔ `teacher`).
 
