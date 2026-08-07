@@ -103,11 +103,20 @@ Date placeholder: `npm run seed:content` (3 capitole + lecții demo, idempotent)
 | `/api/questions/[id]` | GET | întrebarea cu variantele, inclusiv `is_correct` | teacher |
 | `/api/questions/[id]` | PATCH | actualizează enunțul/metadatele | teacher |
 | `/api/questions/[id]` | DELETE | șterge (cascade variante) | teacher |
+| `/api/questions/[id]/answers` | PUT | **înlocuiește tot setul** de variante | teacher |
 | `/api/progress` | GET | progresul **propriu** al elevului, pe capitole | orice user logat |
 
 **Regula de aur:** `is_correct` pleacă spre client **doar** prin `GET /api/questions/[id]`
 (rută de profesor). `GET /api/chapters/[id]/questions` nici măcar nu selectează coloana.
 Corectarea se face exclusiv server-side în `submit` — un scor trimis de client e ignorat.
+
+**Editarea variantelor e înlocuire completă, nu PATCH pe variante individuale:**
+invariantul „exact un răspuns corect" nu poate fi menținut dacă variantele se editează
+una câte una — între două cereri întrebarea ar avea zero sau două răspunsuri corecte.
+`PUT` validează setul nou **întreg** înainte să atingă DB-ul. Cum `supabase-js` nu oferă
+tranzacții, setul vechi e păstrat în memorie și repus dacă inserarea celui nou eșuează;
+dacă nici restaurarea nu reușește, se loghează `critical` (alertă Discord) — întrebarea
+a rămas fără variante și trebuie reparată manual.
 
 **`POST /api/chapters/[id]/questions` nu există intenționat:** întrebarea și variantele
 se creează împreună (`POST /api/questions`), pentru că o întrebare fără variante ar strica
@@ -137,6 +146,7 @@ Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capi
 | `/api/tickets` | GET | listă tichete, ordonate după ultima activitate | elev: **doar ale lui** · profesor: toate (`?status=`, `?chapter_id=`, `?lesson_id=`) |
 | `/api/tickets` | POST | elevul deschide un tichet **din fereastra lecției** | orice user logat |
 | `/api/tickets/[id]` | GET | tichetul **cu firul de mesaje** | autorul sau profesor |
+| `/api/tickets/[id]` | PATCH | închide / redeschide (`{ status }`) | autorul sau profesor |
 | `/api/tickets/[id]/messages` | POST | adaugă un mesaj în fir | autorul sau profesor |
 
 **Corp cerere (creare):** `{ lesson_id, message, selection?, scroll_percent? }` —
@@ -170,8 +180,10 @@ profesor, mesajele lui vechi nu devin retroactiv răspunsuri oficiale.
   — altfel tichetul devine o cale laterală de a afla ce e acolo.
 - Un tichet străin dă **`404`, nu `403`** — nu confirmăm că există.
 
-**Stări:** `open` ⇄ `answered`, plus `closed` (închiderea explicită n-are încă rută —
-se adaugă un PATCH când Bogdan face UI-ul de închidere).
+**Stări:** `open` ⇄ `answered` (automat, după cine a scris ultimul mesaj), plus `closed`
+prin `PATCH`. Prin PATCH se pot seta **doar** `closed` și `open` — `answered` nu e o stare
+pe care o alege cineva manual, ea rezultă din faptul că profesorul a scris în fir. Altfel
+un tichet ar putea apărea „răspuns" fără niciun răspuns.
 
 > **Neimplementat încă:** notificarea pe email a elevului la primirea răspunsului —
 > nu există serviciu de email configurat. Când va exista, se trimite din

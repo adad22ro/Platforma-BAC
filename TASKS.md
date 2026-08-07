@@ -25,7 +25,7 @@
 - **Backend Săpt. 7-8:** complet (schema + seed + API întrebări + corectare + progres) — în `main` prin PR #38
 - **Backend Săpt. 9-10:** tichete ca **fir de mesaje**, deschise doar din fereastra lecției, cu context complet pentru profesor (lecție + poziție + fragment selectat + progres la test) — gata; rămâne notificarea pe email (blocată de alegerea serviciului)
 - **Bottleneck:** frontend (Bogdan) — urmează formularul „Lecție nouă" și UI-ul de test grilă (Săpt. 7-8)
-- **Ultima actualizare:** 2026-08-07
+- **Ultima actualizare:** 2026-08-07 (backend: Săpt. 7-8 și 9-10 în `main`; restanțe închise)
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -112,7 +112,7 @@
 | 🔄 | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | **API gata** (Andrei): `POST /api/chapters/[id]/submit` → `{ score, total, results }`. Rămâne afișarea (Bogdan) |
 | ⬜ | Statistici simple de progres per capitol (UI) | Bogdan | `teste-progres` | |
 | ⬜ | Panel profesor — formular "Întrebare test" | Bogdan | `teste-progres` | |
-| ✅ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | `/api/questions` (+ `[id]`), `/api/chapters/[id]/questions`, `/api/progress`. Detalii în `docs/api.md` |
+| ✅ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | `/api/questions` (+ `[id]`, `[id]/answers`), `/api/chapters/[id]/questions`, `/api/progress`. Detalii în `docs/api.md` |
 
 ---
 
