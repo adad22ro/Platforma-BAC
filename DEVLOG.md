@@ -6,6 +6,26 @@
 
 ---
 
+## 2026-08-07 — Andrei (Sesiunea backend — Săpt. 9-10, tichete)
+
+**Ce s-a făcut:** Săpt. 7-8 a intrat în `main` (PR #38, CI verde). Apoi backendul de mentorat, pe `sistem-tichete-mentorat`.
+
+- **Migrare** `20260807100000_tichete_mentorat.sql` — tabel `tickets`, aplicată în producție.
+  - **Un singur tabel, fără fir de mesaje:** fluxul e o întrebare → un răspuns. Dacă ajungem la conversații, adăugăm atunci `ticket_messages`; nu construim acum pentru un flux ipotetic.
+  - Contextul (`chapter_id`, `lesson_id`) e **ON DELETE SET NULL**, nu CASCADE: dacă profesorul șterge lecția, întrebarea elevului nu trebuie să dispară.
+  - CHECK care garantează că un tichet `answered` are efectiv `answer` + `answered_at` — altfel elevul vede „ai primit răspuns" pe un tichet gol.
+- **API:** `GET/POST /api/tickets`, `GET /api/tickets/[id]`, `POST /api/tickets/[id]/answer`.
+  - Elevul e legat de `user.id` din sesiune — un `user_id` din query string e ignorat (test dedicat).
+  - Contextul se derivă din DB: dacă vine `lesson_id`, capitolul se ia din lecție, nu din ce declară clientul (test dedicat).
+  - Nu se poate deschide tichet despre conținut inaccesibil (404 draft / 402 premium) — altfel tichetul e o cale laterală de a afla ce e acolo. Refolosește `lib/chapter-access.ts`.
+  - Tichetul altcuiva dă **404, nu 403** — nu confirmăm că există.
+
+**Rămas deschis / blocat:** notificarea pe email a elevului. Nu e ales un serviciu (Resend / Postmark / SendGrid) și nu există variabile de mediu pentru el. Locul de apel e pregătit și documentat în ruta de răspuns: trimiterea se face **după** scrierea în DB și fără să blocheze răspunsul — un email nelivrat nu trebuie să piardă răspunsul profesorului.
+
+**Verzi:** typecheck curat, **94/94 teste** (+19 noi în `tests/tickets-api.test.ts`), lint doar cu warning-ul preexistent.
+
+---
+
 ## 2026-08-06 — Andrei (Sesiunea backend — Săpt. 7-8, partea 1)
 
 **Ce s-a făcut:** schema DB pentru teste grilă + progres, pe branch `teste-progres`.

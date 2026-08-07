@@ -130,6 +130,34 @@ correct_answer_id, correct, explanation }] }`.
 
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol, idempotent).
 
+### Mentorat — tichete
+
+| Rută | Metodă | Scop | Acces |
+|---|---|---|---|
+| `/api/tickets` | GET | listă tichete | elev: **doar ale lui** · profesor: toate (`?status=`, `?chapter_id=`) |
+| `/api/tickets` | POST | elevul trimite o întrebare | orice user logat |
+| `/api/tickets/[id]` | GET | un tichet | autorul sau profesor |
+| `/api/tickets/[id]/answer` | POST | profesorul răspunde | teacher |
+
+**Corp cerere (creare):** `{ message, lesson_id?, chapter_id? }` — `message` obligatoriu,
+max 2000 caractere. **Corp răspuns profesor:** `{ answer }`, max 5000.
+
+**Trei reguli de autorizare care contează:**
+- Elevul e legat de `user.id` din sesiune; un `user_id` trimis în query string e ignorat.
+- Contextul se derivă din DB: dacă vine `lesson_id`, capitolul se ia din lecție, nu din
+  ce declară clientul.
+- Nu poți deschide tichet despre conținut la care n-ai acces (`404` draft / `402` premium)
+  — altfel tichetul devine o cale laterală de a afla ce e acolo.
+- Un tichet străin dă **`404`, nu `403`** — nu confirmăm că există.
+
+**Stări:** `open` → `answered` → `closed`. Un CHECK în DB garantează că `answered` are
+efectiv `answer` + `answered_at` (altfel elevul ar vedea „ai primit răspuns" pe un tichet gol).
+
+> **Neimplementat încă:** notificarea pe email a elevului la primirea răspunsului —
+> nu există serviciu de email configurat. Când va exista, se trimite din
+> `POST /api/tickets/[id]/answer`, **după** scrierea în DB și fără să blocheze
+> răspunsul: un email nelivrat nu trebuie să piardă răspunsul profesorului.
+
 ### POST /api/admin/set-role
 Scop: schimbă rolul unui user (`student` ↔ `teacher`).
 

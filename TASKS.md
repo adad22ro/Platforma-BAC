@@ -22,9 +22,10 @@
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
 - **Frontend Săpt. 1-4:** complet (landing, `/pricing`, `/dashboard`, `/profil`, buton upgrade)
 - **Frontend Săpt. 5-6 (vedere elev):** complet — listă capitole (accordion pe `/dashboard`) + pagină lecție (`/lectii/[id]`) cu paywall. Plus buton temă zi/noapte pe toate paginile.
-- **Backend Săpt. 7-8:** schema `questions`/`answers`/`student_progress` + date placeholder — gata; urmează API-ul CRUD întrebări + corectarea
+- **Backend Săpt. 7-8:** complet (schema + seed + API întrebări + corectare + progres) — în `main` prin PR #38
+- **Backend Săpt. 9-10:** schema `tickets` + API (creare, listare, răspuns profesor) — gata; rămâne notificarea pe email (blocată de alegerea serviciului)
 - **Bottleneck:** frontend (Bogdan) — urmează formularul „Lecție nouă" și UI-ul de test grilă (Săpt. 7-8)
-- **Ultima actualizare:** 2026-08-06
+- **Ultima actualizare:** 2026-08-07
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -119,13 +120,13 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Schema DB: tabel `tickets` | Andrei | `sistem-tichete-mentorat` | |
+| ✅ | Schema DB: tabel `tickets` | Andrei | `sistem-tichete-mentorat` | Migrare `20260807100000_tichete_mentorat.sql`, aplicată. Context cu ON DELETE SET NULL; CHECK pe status. `docs/database.md` |
 | ⬜ | Buton "Nu am înțeles" în pagina de lecție/test (cu context automat) | Bogdan | `sistem-tichete-mentorat` | |
 | ⬜ | Mesaj așteptare afișat elevului (ex: "Răspuns în 24h") | Bogdan | `sistem-tichete-mentorat` | |
-| ⬜ | API route — creare tichet | Andrei | `sistem-tichete-mentorat` | |
+| ✅ | API route — creare tichet | Andrei | `sistem-tichete-mentorat` | `POST /api/tickets` (+ `GET` listă și `GET /[id]`). Context derivat din DB, gating pe capitol. `docs/api.md` |
 | ⬜ | Interfață profesor — listă tichete organizate pe capitol | Bogdan | `sistem-tichete-mentorat` | |
-| ⬜ | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `sistem-tichete-mentorat` | API: Andrei · UI: Bogdan |
-| ⬜ | Notificare email elev la primirea răspunsului | Andrei | `sistem-tichete-mentorat` | |
+| 🔄 | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `sistem-tichete-mentorat` | **API gata** (Andrei): `POST /api/tickets/[id]/answer`. Rămâne UI (Bogdan) |
+| ❌ | Notificare email elev la primirea răspunsului | Andrei | `sistem-tichete-mentorat` | **Blocat:** nu e ales/configurat un serviciu de email. Locul de apel e pregătit în `POST /api/tickets/[id]/answer` |
 | ⬜ | Pagină elev — vizualizare răspuns primit | Bogdan | `sistem-tichete-mentorat` | |
 
 ---

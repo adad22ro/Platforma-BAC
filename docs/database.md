@@ -217,6 +217,35 @@ DDL-ul canonic: [`supabase/migrations/20260806120000_teste_progres.sql`](../supa
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol;
 necesită `npm run seed:content` rulat înainte).
 
+### tickets
+Scop: sistemul de mentorat „Nu am înțeles". Elevul trimite o întrebare cu contextul
+paginii; profesorul răspunde.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| user_id | uuid | FK → `users(id)` ON DELETE CASCADE — autorul |
+| chapter_id | uuid | FK → `chapters(id)` ON DELETE **SET NULL** — context |
+| lesson_id | uuid | FK → `lessons(id)` ON DELETE **SET NULL** — context |
+| message | text | Întrebarea (NOT NULL, max 2000 în API) |
+| status | text | `open` / `answered` / `closed` (default `open`) — CHECK |
+| answer | text | Răspunsul profesorului |
+| answered_by | uuid | FK → `users(id)` ON DELETE SET NULL |
+| answered_at | timestamptz | Când s-a răspuns |
+| created_at / updated_at | timestamptz | default `now()` |
+
+> **De ce SET NULL pe context:** dacă profesorul șterge lecția, întrebarea elevului
+> **nu** trebuie să dispară — se pierde doar contextul.
+>
+> **De ce un singur tabel, fără fir de mesaje:** fluxul e o întrebare → un răspuns.
+> Dacă ajungem la conversații cu mai multe schimburi, se adaugă atunci un tabel
+> `ticket_messages` — nu construim acum pentru un flux ipotetic.
+
+CHECK suplimentar: un tichet `answered` trebuie să aibă `answer` și `answered_at`
+(altfel elevul vede „ai primit răspuns" și deschide un tichet gol).
+
+DDL: [`supabase/migrations/20260807100000_tichete_mentorat.sql`](../supabase/migrations/20260807100000_tichete_mentorat.sql).
+
 ---
 
 ## Conexiunea la Supabase
