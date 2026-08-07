@@ -245,54 +245,101 @@ export type Database = {
           },
         ]
       }
+      ticket_messages: {
+        Row: {
+          author_id: string | null
+          author_role: string
+          body: string
+          created_at: string
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_role?: string
+          body: string
+          created_at?: string
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_role?: string
+          body?: string
+          created_at?: string
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tickets: {
         Row: {
-          answer: string | null
-          answered_at: string | null
-          answered_by: string | null
           chapter_id: string | null
           created_at: string
           id: string
+          last_message_at: string | null
           lesson_id: string | null
+          lesson_title: string | null
           message: string
+          progress_attempts: number | null
+          progress_score: number | null
+          progress_total: number | null
+          scroll_percent: number | null
+          selection: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
-          answer?: string | null
-          answered_at?: string | null
-          answered_by?: string | null
           chapter_id?: string | null
           created_at?: string
           id?: string
+          last_message_at?: string | null
           lesson_id?: string | null
+          lesson_title?: string | null
           message: string
+          progress_attempts?: number | null
+          progress_score?: number | null
+          progress_total?: number | null
+          scroll_percent?: number | null
+          selection?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          answer?: string | null
-          answered_at?: string | null
-          answered_by?: string | null
           chapter_id?: string | null
           created_at?: string
           id?: string
+          last_message_at?: string | null
           lesson_id?: string | null
+          lesson_title?: string | null
           message?: string
+          progress_attempts?: number | null
+          progress_score?: number | null
+          progress_total?: number | null
+          scroll_percent?: number | null
+          selection?: string | null
           status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "tickets_answered_by_fkey"
-            columns: ["answered_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tickets_chapter_id_fkey"
             columns: ["chapter_id"]

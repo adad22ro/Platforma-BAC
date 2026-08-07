@@ -227,24 +227,45 @@ paginii; profesorul răspunde.
 | user_id | uuid | FK → `users(id)` ON DELETE CASCADE — autorul |
 | chapter_id | uuid | FK → `chapters(id)` ON DELETE **SET NULL** — context |
 | lesson_id | uuid | FK → `lessons(id)` ON DELETE **SET NULL** — context |
-| message | text | Întrebarea (NOT NULL, max 2000 în API) |
+| lesson_title | text | Titlul lecției, **snapshot** la creare |
+| message | text | Întrebarea inițială (NOT NULL) — rezumat pentru liste |
+| selection | text | Fragmentul selectat de elev din lecție |
+| scroll_percent | int | Cât parcursese din lecție (0-100, CHECK) |
+| progress_score / _total / _attempts | int | Progresul la testul capitolului, **înghețat** la momentul întrebării |
 | status | text | `open` / `answered` / `closed` (default `open`) — CHECK |
-| answer | text | Răspunsul profesorului |
-| answered_by | uuid | FK → `users(id)` ON DELETE SET NULL |
-| answered_at | timestamptz | Când s-a răspuns |
+| last_message_at | timestamptz | Ultima activitate — după ea se ordonează coada |
 | created_at / updated_at | timestamptz | default `now()` |
 
-> **De ce SET NULL pe context:** dacă profesorul șterge lecția, întrebarea elevului
-> **nu** trebuie să dispară — se pierde doar contextul.
+### ticket_messages
+Scop: firul de discuție al unui tichet. Fluxul nu e o pereche întrebare/răspuns:
+elevul poate reveni, profesorul poate cere lămuriri.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| ticket_id | uuid | FK → `tickets(id)` ON DELETE CASCADE |
+| author_id | uuid | FK → `users(id)` ON DELETE SET NULL |
+| author_role | text | `student` / `teacher` — **înghețat** la momentul scrierii (CHECK) |
+| body | text | Conținutul mesajului (NOT NULL, max 5000 în API) |
+| created_at | timestamptz | default `now()` |
+
+> **De ce `author_role` înghețat:** dacă un elev e promovat profesor, mesajele lui vechi
+> nu trebuie să devină retroactiv răspunsuri oficiale.
 >
-> **De ce un singur tabel, fără fir de mesaje:** fluxul e o întrebare → un răspuns.
-> Dacă ajungem la conversații cu mai multe schimburi, se adaugă atunci un tabel
-> `ticket_messages` — nu construim acum pentru un flux ipotetic.
+> **De ce snapshot la `lesson_title` și la progres:** `lesson_id` e ON DELETE SET NULL,
+> deci după ștergerea lecției tichetul ar rămâne fără subiect; iar profesorul trebuie să
+> vadă cum stătea elevul **când a întrebat**, nu cum stă când citește.
 
-CHECK suplimentar: un tichet `answered` trebuie să aibă `answer` și `answered_at`
-(altfel elevul vede „ai primit răspuns" și deschide un tichet gol).
+> **De ce SET NULL pe context:** dacă profesorul șterge lecția, întrebarea elevului
+> **nu** trebuie să dispară — se pierde doar legătura, nu și subiectul (vezi `lesson_title`).
 
-DDL: [`supabase/migrations/20260807100000_tichete_mentorat.sql`](../supabase/migrations/20260807100000_tichete_mentorat.sql).
+Tichetele se deschid **doar din fereastra unei lecții** — `lesson_id` e obligatoriu în API.
+Coloana rămâne totuși nullable în DB, ca ștergerea lecției să poată face SET NULL fără să
+piardă tichetul.
+
+DDL: [`20260807100000_tichete_mentorat.sql`](../supabase/migrations/20260807100000_tichete_mentorat.sql)
++ [`20260807120000_tichete_mesaje_context.sql`](../supabase/migrations/20260807120000_tichete_mesaje_context.sql)
+(firul de mesaje + contextul de lecție).
 
 ---
 

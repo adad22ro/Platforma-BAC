@@ -56,7 +56,7 @@ vi.mock("@/lib/current-user", async (importActual) => {
 
 import { GET as ticketsGET, POST as ticketsPOST } from "@/app/api/tickets/route";
 import { GET as ticketGET } from "@/app/api/tickets/[id]/route";
-import { POST as answerPOST } from "@/app/api/tickets/[id]/answer/route";
+import { POST as messagePOST } from "@/app/api/tickets/[id]/messages/route";
 
 const teacher: AppUser = { id: "u-t", clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
 const student: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "free", subscription_end_date: null };
@@ -74,8 +74,24 @@ function jsonReq(body: unknown, url = "http://localhost/api/tickets") {
 
 const getReq = (url = "http://localhost/api/tickets") => new Request(url) as never;
 
+const lesson = { data: { id: "l1", chapter_id: "c1", title: "Lectia 1.2" }, error: null };
 const freeChapter = { data: { id: "c1", is_free: true, published: true }, error: null };
 const premiumChapter = { data: { id: "c1", is_free: false, published: true }, error: null };
+
+// Contextul complet pentru o creare reusita de tichet.
+function creationResults(chapter = freeChapter, progress: unknown = { score: 3, total: 6, attempts: 2 }) {
+  return {
+    lessons: [lesson],
+    chapters: [chapter],
+    student_progress: [{ data: progress, error: null }],
+    tickets: [{ data: { id: "t1", status: "open" }, error: null }],
+    ticket_messages: [{ data: { id: "m1" }, error: null }],
+  };
+}
+
+const insertOn = (table: string) =>
+  h.fromCalls.find((c) => c.table === table && c.calls.some(([n]) => n === "insert"))
+    ?.calls.find(([n]) => n === "insert")?.[1] as Record<string, unknown> | undefined;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -106,157 +122,261 @@ describe("GET /api/tickets", () => {
     const eqUserCalls = h.fromCalls
       .find((c) => c.table === "tickets")
       ?.calls.filter(([name, col]) => name === "eq" && col === "user_id");
-    // Un singur filtru pe user_id, si acela cu id-ul din sesiune.
     expect(eqUserCalls).toEqual([["eq", "user_id", "u-s"]]);
   });
 
-  it("profesorul vede toate tichetele, filtrabile pe status si capitol", async () => {
+  it("profesorul vede toate tichetele, filtrabile pe status, capitol si lectie", async () => {
     h.state.user = teacher;
     h.state.results = { tickets: [{ data: [], error: null }] };
 
-    await ticketsGET(getReq("http://localhost/api/tickets?status=open&chapter_id=c1"));
+    await ticketsGET(getReq("http://localhost/api/tickets?status=open&chapter_id=c1&lesson_id=l1"));
     const calls = h.fromCalls.find((c) => c.table === "tickets")?.calls ?? [];
     expect(calls.some(([name, col]) => name === "eq" && col === "user_id")).toBe(false);
     expect(calls).toContainEqual(["eq", "status", "open"]);
     expect(calls).toContainEqual(["eq", "chapter_id", "c1"]);
+    expect(calls).toContainEqual(["eq", "lesson_id", "l1"]);
+  });
+
+  it("coada e ordonata dupa ultima activitate", async () => {
+    h.state.user = teacher;
+    h.state.results = { tickets: [{ data: [], error: null }] };
+    await ticketsGET(getReq());
+    const calls = h.fromCalls.find((c) => c.table === "tickets")?.calls ?? [];
+    expect(calls).toContainEqual(["order", "last_message_at", { ascending: false }]);
   });
 });
 
 describe("POST /api/tickets", () => {
+  const body = { message: "Nu am inteles", lesson_id: "l1" };
+
   it("401 fara sesiune", async () => {
-    expect((await ticketsPOST(jsonReq({ message: "ceva" }))).status).toBe(401);
+    expect((await ticketsPOST(jsonReq(body))).status).toBe(401);
   });
 
-  it("400 fara mesaj sau cu mesaj gol", async () => {
+  it("400 fara lesson_id — tichetele exista doar in contextul unei lectii", async () => {
     h.state.user = student;
-    expect((await ticketsPOST(jsonReq({}))).status).toBe(400);
-    expect((await ticketsPOST(jsonReq({ message: "   " }))).status).toBe(400);
-  });
-
-  it("400 la mesaj peste limita", async () => {
-    h.state.user = student;
-    const res = await ticketsPOST(jsonReq({ message: "x".repeat(2001) }));
+    const res = await ticketsPOST(jsonReq({ message: "ceva" }));
     expect(res.status).toBe(400);
+    expect(await res.text()).toContain("lesson_id");
   });
 
-  it("creeaza tichet fara context", async () => {
+  it("400 fara mesaj, cu mesaj gol sau peste limita", async () => {
     h.state.user = student;
-    h.state.results = { tickets: [{ data: { id: "t1", status: "open" }, error: null }] };
+    expect((await ticketsPOST(jsonReq({ lesson_id: "l1" }))).status).toBe(400);
+    expect((await ticketsPOST(jsonReq({ ...body, message: "   " }))).status).toBe(400);
+    expect((await ticketsPOST(jsonReq({ ...body, message: "x".repeat(2001) }))).status).toBe(400);
+  });
 
-    const res = await ticketsPOST(jsonReq({ message: "Nu am inteles" }));
+  it("capteaza contextul de lectie: titlu din DB, selectie si pozitie de la client", async () => {
+    h.state.user = student;
+    h.state.results = creationResults();
+
+    const res = await ticketsPOST(
+      jsonReq({ ...body, selection: "fraza neinteleasa", scroll_percent: 62.4 })
+    );
     expect(res.status).toBe(201);
 
-    const insert = h.fromCalls
-      .find((c) => c.table === "tickets")
-      ?.calls.find(([n]) => n === "insert");
-    expect(insert?.[1]).toMatchObject({ user_id: "u-s", message: "Nu am inteles", status: "open" });
+    expect(insertOn("tickets")).toMatchObject({
+      user_id: "u-s",
+      lesson_id: "l1",
+      chapter_id: "c1",
+      lesson_title: "Lectia 1.2",
+      selection: "fraza neinteleasa",
+      scroll_percent: 62,
+    });
   });
 
-  it("deriva capitolul din lectie, nu din ce spune clientul", async () => {
+  it("ingheata progresul la testul capitolului in momentul intrebarii", async () => {
     h.state.user = student;
-    h.state.results = {
-      lessons: [{ data: { id: "l1", chapter_id: "c1" }, error: null }],
-      chapters: [freeChapter],
-      tickets: [{ data: { id: "t1" }, error: null }],
-    };
+    h.state.results = creationResults();
 
-    await ticketsPOST(jsonReq({ message: "intrebare", lesson_id: "l1", chapter_id: "c-minciuna" }));
-
-    const insert = h.fromCalls
-      .find((c) => c.table === "tickets")
-      ?.calls.find(([n]) => n === "insert");
-    expect(insert?.[1]).toMatchObject({ lesson_id: "l1", chapter_id: "c1" });
+    await ticketsPOST(jsonReq(body));
+    expect(insertOn("tickets")).toMatchObject({
+      progress_score: 3,
+      progress_total: 6,
+      progress_attempts: 2,
+    });
   });
 
-  it("400 daca lectia din context nu exista", async () => {
+  it("fara progres inregistrat, campurile raman null (nu 0)", async () => {
+    h.state.user = student;
+    h.state.results = creationResults(freeChapter, null);
+
+    await ticketsPOST(jsonReq(body));
+    expect(insertOn("tickets")).toMatchObject({
+      progress_score: null,
+      progress_total: null,
+      progress_attempts: null,
+    });
+  });
+
+  it("ignora un scroll_percent invalid", async () => {
+    h.state.user = student;
+    h.state.results = creationResults();
+    await ticketsPOST(jsonReq({ ...body, scroll_percent: 500 }));
+    expect(insertOn("tickets")).toMatchObject({ scroll_percent: null });
+  });
+
+  it("capitolul vine din lectie, nu din ce declara clientul", async () => {
+    h.state.user = student;
+    h.state.results = creationResults();
+
+    await ticketsPOST(jsonReq({ ...body, chapter_id: "c-minciuna" }));
+    expect(insertOn("tickets")).toMatchObject({ chapter_id: "c1" });
+  });
+
+  it("mesajul initial devine primul mesaj din fir", async () => {
+    h.state.user = student;
+    h.state.results = creationResults();
+
+    await ticketsPOST(jsonReq(body));
+    expect(insertOn("ticket_messages")).toMatchObject({
+      ticket_id: "t1",
+      author_id: "u-s",
+      author_role: "student",
+      body: "Nu am inteles",
+    });
+  });
+
+  it("400 daca lectia nu exista", async () => {
     h.state.user = student;
     h.state.results = { lessons: [{ data: null, error: { message: "not found" } }] };
 
-    const res = await ticketsPOST(jsonReq({ message: "intrebare", lesson_id: "inexistent" }));
+    const res = await ticketsPOST(jsonReq(body));
     expect(res.status).toBe(400);
     expect(h.fromCalls.some((c) => c.table === "tickets")).toBe(false);
   });
 
-  it("402 daca elevul nu are acces la capitolul din context", async () => {
+  it("402 daca elevul nu are acces la capitolul lectiei", async () => {
     h.state.user = student;
-    h.state.results = { chapters: [premiumChapter] };
+    h.state.results = { lessons: [lesson], chapters: [premiumChapter] };
 
-    const res = await ticketsPOST(jsonReq({ message: "intrebare", chapter_id: "c1" }));
+    const res = await ticketsPOST(jsonReq(body));
     expect(res.status).toBe(402);
-    // Nu se creeaza tichet despre continut inaccesibil.
     expect(h.fromCalls.some((c) => c.table === "tickets")).toBe(false);
   });
 
-  it("elevul cu abonament activ poate intreba despre capitol premium", async () => {
+  it("elevul cu abonament activ poate intreba despre lectie premium", async () => {
     h.state.user = studentActive;
+    h.state.results = creationResults(premiumChapter);
+    expect((await ticketsPOST(jsonReq(body))).status).toBe(201);
+  });
+
+  it("sterge tichetul daca primul mesaj nu se poate scrie (fara tichete fara fir)", async () => {
+    h.state.user = student;
     h.state.results = {
-      chapters: [premiumChapter],
-      tickets: [{ data: { id: "t1" }, error: null }],
+      ...creationResults(),
+      ticket_messages: [{ data: null, error: { code: "23505", message: "boom" } }],
     };
 
-    expect((await ticketsPOST(jsonReq({ message: "intrebare", chapter_id: "c1" }))).status).toBe(201);
+    const res = await ticketsPOST(jsonReq(body));
+    expect(res.status).toBe(500);
+    const deleted = h.fromCalls.some(
+      (c) => c.table === "tickets" && c.calls.some(([n]) => n === "delete")
+    );
+    expect(deleted).toBe(true);
   });
 });
 
 describe("GET /api/tickets/[id]", () => {
   const ticket = { data: { id: "t1", user_id: "u-s", message: "x" }, error: null };
+  const messages = { data: [{ id: "m1", body: "Nu am inteles" }], error: null };
 
-  it("autorul isi vede tichetul", async () => {
+  it("autorul isi vede tichetul cu firul de mesaje", async () => {
     h.state.user = student;
-    h.state.results = { tickets: [ticket] };
-    expect((await ticketGET({} as never, ctx("t1"))).status).toBe(200);
+    h.state.results = { tickets: [ticket], ticket_messages: [messages] };
+
+    const res = await ticketGET({} as never, ctx("t1"));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.ticket.messages).toHaveLength(1);
   });
 
   it("404 pentru tichetul altcuiva (nu 403 — nu confirmam ca exista)", async () => {
     h.state.user = { ...student, id: "u-altcineva" };
     h.state.results = { tickets: [ticket] };
+
     const res = await ticketGET({} as never, ctx("t1"));
     expect(res.status).toBe(404);
     expect(await res.text()).not.toContain("t1");
+    // Nu se ating mesajele unui tichet strain.
+    expect(h.fromCalls.some((c) => c.table === "ticket_messages")).toBe(false);
   });
 
   it("profesorul vede orice tichet", async () => {
     h.state.user = teacher;
-    h.state.results = { tickets: [ticket] };
+    h.state.results = { tickets: [ticket], ticket_messages: [messages] };
     expect((await ticketGET({} as never, ctx("t1"))).status).toBe(200);
   });
 });
 
-describe("POST /api/tickets/[id]/answer", () => {
-  it("403 pentru elev", async () => {
-    h.state.user = student;
-    const res = await answerPOST(jsonReq({ answer: "raspuns" }), ctx("t1"));
-    expect(res.status).toBe(403);
-    expect(h.supabaseAdmin.from).not.toHaveBeenCalled();
+describe("POST /api/tickets/[id]/messages", () => {
+  const ticket = { data: { id: "t1", user_id: "u-s", status: "open" }, error: null };
+
+  function threadResults() {
+    return {
+      tickets: [ticket],
+      ticket_messages: [{ data: { id: "m2" }, error: null }],
+    };
+  }
+
+  it("401 fara sesiune", async () => {
+    expect((await messagePOST(jsonReq({ body: "x" }), ctx("t1"))).status).toBe(401);
   });
 
-  it("400 fara raspuns", async () => {
+  it("400 fara continut sau peste limita", async () => {
     h.state.user = teacher;
-    expect((await answerPOST(jsonReq({}), ctx("t1"))).status).toBe(400);
-    expect((await answerPOST(jsonReq({ answer: "  " }), ctx("t1"))).status).toBe(400);
+    expect((await messagePOST(jsonReq({}), ctx("t1"))).status).toBe(400);
+    expect((await messagePOST(jsonReq({ body: "  " }), ctx("t1"))).status).toBe(400);
+    expect((await messagePOST(jsonReq({ body: "x".repeat(5001) }), ctx("t1"))).status).toBe(400);
   });
 
-  it("profesorul raspunde: status answered + cine si cand", async () => {
+  it("raspunsul profesorului trece tichetul in answered", async () => {
     h.state.user = teacher;
-    h.state.results = { tickets: [{ data: { id: "t1", status: "answered" }, error: null }] };
+    h.state.results = threadResults();
 
-    const res = await answerPOST(jsonReq({ answer: "Uite cum se rezolva" }), ctx("t1"));
-    expect(res.status).toBe(200);
+    const res = await messagePOST(jsonReq({ body: "Uite cum se rezolva" }), ctx("t1"));
+    expect(res.status).toBe(201);
+    expect(insertOn("ticket_messages")).toMatchObject({
+      author_id: "u-t",
+      author_role: "teacher",
+      body: "Uite cum se rezolva",
+    });
 
     const update = h.fromCalls
-      .find((c) => c.table === "tickets")
+      .find((c) => c.table === "tickets" && c.calls.some(([n]) => n === "update"))
       ?.calls.find(([n]) => n === "update");
-    expect(update?.[1]).toMatchObject({
-      answer: "Uite cum se rezolva",
-      answered_by: "u-t",
-      status: "answered",
-    });
-    expect((update?.[1] as { answered_at?: string })?.answered_at).toBeTruthy();
+    expect(update?.[1]).toMatchObject({ status: "answered" });
+  });
+
+  it("revenirea elevului redeschide tichetul", async () => {
+    h.state.user = student;
+    h.state.results = {
+      tickets: [{ data: { id: "t1", user_id: "u-s", status: "answered" }, error: null }],
+      ticket_messages: [{ data: { id: "m3" }, error: null }],
+    };
+
+    await messagePOST(jsonReq({ body: "tot nu am inteles" }), ctx("t1"));
+    expect(insertOn("ticket_messages")).toMatchObject({ author_role: "student" });
+
+    const update = h.fromCalls
+      .find((c) => c.table === "tickets" && c.calls.some(([n]) => n === "update"))
+      ?.calls.find(([n]) => n === "update");
+    expect(update?.[1]).toMatchObject({ status: "open" });
   });
 
   it("404 daca tichetul nu exista", async () => {
     h.state.user = teacher;
     h.state.results = { tickets: [{ data: null, error: null }] };
-    expect((await answerPOST(jsonReq({ answer: "x" }), ctx("t1"))).status).toBe(404);
+    expect((await messagePOST(jsonReq({ body: "x" }), ctx("t1"))).status).toBe(404);
+  });
+
+  it("un elev strain nu poate scrie in fir (404, nu 403)", async () => {
+    h.state.user = { ...student, id: "u-altcineva" };
+    h.state.results = threadResults();
+
+    const res = await messagePOST(jsonReq({ body: "ma bag si eu" }), ctx("t1"));
+    expect(res.status).toBe(404);
+    expect(h.fromCalls.some((c) => c.table === "ticket_messages")).toBe(false);
   });
 });
