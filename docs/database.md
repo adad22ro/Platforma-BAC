@@ -158,6 +158,65 @@ grant select, insert, update, delete on public.lessons to service_role;
 create index if not exists lessons_chapter_id_idx on public.lessons (chapter_id);
 ```
 
+### questions
+Scop: întrebările grilă ale unui capitol. Gestionate de profesori; citite de elevi la test.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| chapter_id | uuid | FK → `chapters(id)` ON DELETE CASCADE |
+| text | text | Enunțul întrebării (NOT NULL) |
+| explanation | text | Explicația răspunsului corect (afișată după corectare) |
+| order_index | int | Ordinea în test (NOT NULL default 0) |
+| published | boolean | Draft vs. publicat; default `false` |
+| created_at | timestamptz | default `now()` |
+
+### answers
+Scop: variantele de răspuns ale unei întrebări (grilă cu **răspuns unic**).
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| question_id | uuid | FK → `questions(id)` ON DELETE CASCADE |
+| text | text | Textul variantei (NOT NULL) |
+| is_correct | boolean | Varianta corectă; default `false` |
+| order_index | int | Ordinea de afișare (NOT NULL default 0) |
+| created_at | timestamptz | default `now()` |
+
+> **Securitate — regula de aur:** `is_correct` **nu se trimite niciodată către client**.
+> Variantele stau în tabel separat (nu `jsonb` în `questions`) tocmai ca filtrarea să fie
+> explicită la fiecare citire, iar corectarea să se facă exclusiv pe server.
+>
+> Un index unic parțial (`answers_one_correct_per_question_idx`) garantează **cel mult**
+> un răspuns corect per întrebare. „Cel puțin unul" nu se poate exprima ca index — se
+> validează în API la scriere.
+
+### student_progress
+Scop: scorul unui elev pe un capitol. **O singură linie per (elev, capitol)** — o
+reîncercare face upsert peste ea și incrementează `attempts`.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| user_id | uuid | FK → `users(id)` ON DELETE CASCADE |
+| chapter_id | uuid | FK → `chapters(id)` ON DELETE CASCADE |
+| score | int | Răspunsuri corecte (default 0) |
+| total | int | Număr total de întrebări (default 0) |
+| attempts | int | Câte încercări a făcut elevul (default 1) |
+| completed_at | timestamptz | Ultima încercare (default `now()`) |
+
+CHECK: `score >= 0 and total >= 0 and score <= total`.
+UNIQUE: `(user_id, chapter_id)`.
+
+Model de acces (toate trei): RLS activat, fără politici pentru `anon` (deny), grant la
+`service_role` — autorizarea în API routes (scriere doar `role = teacher`; citirea
+testului respectă gating-ul premium al capitolului, ca la lecții).
+
+DDL-ul canonic: [`supabase/migrations/20260806120000_teste_progres.sql`](../supabase/migrations/20260806120000_teste_progres.sql).
+
+Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol;
+necesită `npm run seed:content` rulat înainte).
+
 ---
 
 ## Conexiunea la Supabase

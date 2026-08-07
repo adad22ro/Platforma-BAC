@@ -6,6 +6,33 @@
 
 ---
 
+## 2026-08-06 — Andrei (Sesiunea backend — Săpt. 7-8, partea 1)
+
+**Ce s-a făcut:** schema DB pentru teste grilă + progres, pe branch `teste-progres`.
+- `supabase/migrations/20260806120000_teste_progres.sql` — `questions`, `answers`, `student_progress`. RLS activat, fără politici `anon`, grant `service_role` — același model ca `chapters`/`lessons`.
+- **Decizie:** variantele de răspuns stau în tabel separat (`answers`), NU ca `jsonb` în `questions`. Motivul principal e de securitate: `is_correct` trebuie filtrat explicit la fiecare citire, ca să nu ajungă niciodată la client; cu jsonb ar fi fost o scăpare ușor de făcut. Bonus: index unic parțial care garantează **cel mult** un răspuns corect per întrebare („cel puțin unul" se validează în API).
+- `student_progress` are unique pe `(user_id, chapter_id)` + `attempts` — o reîncercare face upsert peste linia existentă, nu istoric. CHECK pe `score <= total`.
+- `types/database.ts` actualizat **manual** (migrarea nu e încă aplicată în producție, deci `npm run db:types` ar fi întors schema veche).
+- `scripts/seed-questions.mjs` + `npm run seed:questions` — 6 întrebări × 4 variante per capitol, idempotent, în stilul `seed:content`.
+- `docs/database.md` + `TASKS.md` actualizate.
+
+**Migrare aplicată în producție** (`supabase db push`) + `npm run db:types` — tipurile generate coincid cu cele scrise manual. Seed rulat: 18 întrebări × 4 variante (3 capitole).
+
+**API-ul de teste grilă** (partea 2, aceeași sesiune):
+- `POST /api/questions` — creează întrebarea **împreună cu** variantele (o întrebare fără variante ar strica testul). Validare: minim 2 variante, exact una corectă. Dacă inserarea variantelor eșuează, întrebarea creată e ștearsă — fără întrebări orfane.
+- `GET/PATCH/DELETE /api/questions/[id]` — profesor; GET-ul e singurul loc care întoarce `is_correct`.
+- `GET /api/chapters/[id]/questions` — testul pentru elev; **nu selectează deloc** coloana `is_correct` (test dedicat care verifică asta, plus că nu apare în payload).
+- `POST /api/chapters/[id]/submit` — corectare server-side; un `score` trimis de client e ignorat (test dedicat). Upsert în `student_progress` cu `attempts` incrementat.
+- `GET /api/progress` — progresul propriu, filtrat pe `user.id` din sesiune, niciodată pe un id din query string.
+- `lib/chapter-access.ts` — gating-ul de capitol (404 draft / 402 premium) extras din logica de la lecții. Rutele vechi de lecții **nu** au fost atinse (sunt acoperite de teste); pot adopta helperul la o trecere viitoare.
+- `AppUser` are acum `id` (id-ul din `users`, cerut de FK-ul `student_progress.user_id`) — fixture-urile din testele existente actualizate.
+
+**Rămas deschis:** înlocuirea variantelor unei întrebări (`PUT /api/questions/[id]/answers`) — n-am făcut-o ca să nu stric invariantul „exact una corectă" pe jumătate; de adăugat când Bogdan are nevoie de editare. UI-ul (test grilă + statistici progres) e la Bogdan.
+
+**Verzi:** typecheck curat, **75/75 teste** (+20 noi în `tests/questions-api.test.ts`), lint doar cu warning-ul preexistent (`content-api.test.ts:64`).
+
+---
+
 ## 2026-07-24 — Bogdan (Sesiunea 5 frontend)
 
 **Ce s-a făcut:**

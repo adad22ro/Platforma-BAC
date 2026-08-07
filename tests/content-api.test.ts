@@ -51,9 +51,9 @@ import { POST as lessonsPOST } from "@/app/api/lessons/route";
 import { GET as lessonByIdGET } from "@/app/api/lessons/[id]/route";
 import { GET as chapterLessonsGET } from "@/app/api/chapters/[id]/lessons/route";
 
-const teacher: AppUser = { clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
-const studentFree: AppUser = { clerk_id: "s", role: "student", subscription_status: "free", subscription_end_date: null };
-const studentActive: AppUser = { clerk_id: "s", role: "student", subscription_status: "active", subscription_end_date: null };
+const teacher: AppUser = { id: "u-t", clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
+const studentFree: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "free", subscription_end_date: null };
+const studentActive: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "active", subscription_end_date: null };
 
 function jsonReq(body: unknown) {
   return new Request("http://x", { method: "POST", body: JSON.stringify(body) });

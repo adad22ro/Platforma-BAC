@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      answers: {
+        Row: {
+          created_at: string
+          id: string
+          is_correct: boolean
+          order_index: number
+          question_id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          order_index?: number
+          question_id: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          order_index?: number
+          question_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chapters: {
         Row: {
           created_at: string
@@ -126,6 +161,89 @@ export type Database = {
           type?: string | null
         }
         Relationships: []
+      }
+      questions: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          explanation: string | null
+          id: string
+          order_index: number
+          published: boolean
+          text: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          order_index?: number
+          published?: boolean
+          text: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          order_index?: number
+          published?: boolean
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_progress: {
+        Row: {
+          attempts: number
+          chapter_id: string
+          completed_at: string
+          id: string
+          score: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          chapter_id: string
+          completed_at?: string
+          id?: string
+          score?: number
+          total?: number
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          chapter_id?: string
+          completed_at?: string
+          id?: string
+          score?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {

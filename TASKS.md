@@ -22,8 +22,9 @@
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
 - **Frontend Săpt. 1-4:** complet (landing, `/pricing`, `/dashboard`, `/profil`, buton upgrade)
 - **Frontend Săpt. 5-6 (vedere elev):** complet — listă capitole (accordion pe `/dashboard`) + pagină lecție (`/lectii/[id]`) cu paywall. Plus buton temă zi/noapte pe toate paginile.
-- **Bottleneck:** frontend (Bogdan) — urmează **panelul profesor** (formulare capitol/lecție) și **Săpt. 7-8** (teste grilă + progres)
-- **Ultima actualizare:** 2026-07-24
+- **Backend Săpt. 7-8:** schema `questions`/`answers`/`student_progress` + date placeholder — gata; urmează API-ul CRUD întrebări + corectarea
+- **Bottleneck:** frontend (Bogdan) — urmează formularul „Lecție nouă" și UI-ul de test grilă (Săpt. 7-8)
+- **Ultima actualizare:** 2026-08-06
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -104,13 +105,13 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Schema DB: tabele `questions`, `answers`, `student_progress` | Andrei | `teste-progres` | |
-| ⬜ | Date placeholder: 5-10 întrebări grilă per capitol | Andrei | `teste-progres` | |
+| ✅ | Schema DB: tabele `questions`, `answers`, `student_progress` | Andrei | `teste-progres` | Migrare `20260806120000_teste_progres.sql` + tipuri; RLS activat, grant `service_role`. Detalii în `docs/database.md` |
+| ✅ | Date placeholder: 5-10 întrebări grilă per capitol | Andrei | `teste-progres` | `npm run seed:questions` — 6 întrebări × 4 variante per capitol (generic, NU întrebări reale BAC) |
 | ⬜ | Pagină test per capitol (UI grilă) | Bogdan | `teste-progres` | |
-| ⬜ | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | Logică/API: Andrei · afișare: Bogdan |
+| 🔄 | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | **API gata** (Andrei): `POST /api/chapters/[id]/submit` → `{ score, total, results }`. Rămâne afișarea (Bogdan) |
 | ⬜ | Statistici simple de progres per capitol (UI) | Bogdan | `teste-progres` | |
 | ⬜ | Panel profesor — formular "Întrebare test" | Bogdan | `teste-progres` | |
-| ⬜ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | |
+| ✅ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | `/api/questions` (+ `[id]`), `/api/chapters/[id]/questions`, `/api/progress`. Detalii în `docs/api.md` |
 
 ---
 

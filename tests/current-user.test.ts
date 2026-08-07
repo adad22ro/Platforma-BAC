@@ -21,10 +21,10 @@ vi.mock("@/lib/supabase-admin", () => ({
 import { getCurrentAppUser, isTeacher, canAccessPremium } from "@/lib/current-user";
 import type { AppUser } from "@/lib/current-user";
 
-const teacher: AppUser = { clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
-const studentFree: AppUser = { clerk_id: "s", role: "student", subscription_status: "free", subscription_end_date: null };
-const studentActive: AppUser = { clerk_id: "s", role: "student", subscription_status: "active", subscription_end_date: null };
-const studentCancelled: AppUser = { clerk_id: "s", role: "student", subscription_status: "cancelled", subscription_end_date: null };
+const teacher: AppUser = { id: "u-t", clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
+const studentFree: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "free", subscription_end_date: null };
+const studentActive: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "active", subscription_end_date: null };
+const studentCancelled: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "cancelled", subscription_end_date: null };
 
 const future = new Date(Date.now() + 86_400_000).toISOString();
 const past = new Date(Date.now() - 86_400_000).toISOString();

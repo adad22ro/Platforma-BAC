@@ -93,6 +93,43 @@ lecții (titluri). Conținutul (text/video/teste) e blocat:
 
 Date placeholder: `npm run seed:content` (3 capitole + lecții demo, idempotent).
 
+### Teste grilă și progres
+
+| Rută | Metodă | Scop | Acces |
+|---|---|---|---|
+| `/api/chapters/[id]/questions` | GET | testul capitolului (întrebări + variante) | elev: publicate + acces la capitol |
+| `/api/chapters/[id]/submit` | POST | trimite răspunsurile → corectare + scor | orice user logat cu acces la capitol |
+| `/api/questions` | POST | creează întrebare **cu** variantele ei | teacher |
+| `/api/questions/[id]` | GET | întrebarea cu variantele, inclusiv `is_correct` | teacher |
+| `/api/questions/[id]` | PATCH | actualizează enunțul/metadatele | teacher |
+| `/api/questions/[id]` | DELETE | șterge (cascade variante) | teacher |
+| `/api/progress` | GET | progresul **propriu** al elevului, pe capitole | orice user logat |
+
+**Regula de aur:** `is_correct` pleacă spre client **doar** prin `GET /api/questions/[id]`
+(rută de profesor). `GET /api/chapters/[id]/questions` nici măcar nu selectează coloana.
+Corectarea se face exclusiv server-side în `submit` — un scor trimis de client e ignorat.
+
+**`POST /api/chapters/[id]/questions` nu există intenționat:** întrebarea și variantele
+se creează împreună (`POST /api/questions`), pentru că o întrebare fără variante ar strica
+testul. Validare: minim 2 variante, **exact una** corectă. Dacă inserarea variantelor
+eșuează, întrebarea deja creată e ștearsă (fără întrebări orfane).
+
+**Gating:** identic cu lecțiile, prin `lib/chapter-access.ts` (`404` capitol inexistent
+sau draft · `402` `{ error: "premium_required" }` la capitol premium fără abonament).
+
+**Formatul cererii de submit:**
+```json
+{ "answers": [{ "question_id": "...", "answer_id": "..." }] }
+```
+Răspuns: `{ score, total, saved, results: [{ question_id, chosen_answer_id,
+correct_answer_id, correct, explanation }] }`.
+- O întrebare fără răspuns corect în DB (date incomplete) se punctează **greșit**, nu corect.
+- `saved: false` = scorul e valid, dar progresul nu s-a înregistrat (profesor, sau eroare
+  de scriere — nu ascundem rezultatul elevului pentru o eroare de salvare).
+- Progresul e o linie per `(elev, capitol)`: reîncercarea face upsert și incrementează `attempts`.
+
+Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol, idempotent).
+
 ### POST /api/admin/set-role
 Scop: schimbă rolul unui user (`student` ↔ `teacher`).
 

@@ -2,6 +2,9 @@ import { auth } from '@clerk/nextjs/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export type AppUser = {
+  // id-ul din tabelul users (nu cel din Clerk) — cheia folosita de FK-uri
+  // interne, ex. student_progress.user_id.
+  id: string
   clerk_id: string
   role: 'student' | 'teacher'
   subscription_status: 'free' | 'active' | 'cancelled'
@@ -17,7 +20,7 @@ export async function getCurrentAppUser(): Promise<AppUser | null> {
 
   const { data, error } = await supabaseAdmin
     .from('users')
-    .select('clerk_id, role, subscription_status, subscription_end_date')
+    .select('id, clerk_id, role, subscription_status, subscription_end_date')
     .eq('clerk_id', userId)
     .single()
 
