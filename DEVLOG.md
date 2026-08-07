@@ -6,6 +6,19 @@
 
 ---
 
+## 2026-08-07 — Andrei (Sesiunea backend — restanțe)
+
+Trei lucruri mici rămase în urmă, pe `backend-restante`. Săpt. 9-10 intrase deja în `main` (PR #39, producție verificată: landing 200, `/api/health` ok).
+
+- **`PUT /api/questions/[id]/answers`** — înlocuiește tot setul de variante. **Nu** PATCH pe variante individuale: invariantul „exact un răspuns corect" nu se poate menține dacă se editează una câte una (între două cereri întrebarea ar avea zero sau două corecte). Setul nou e validat întreg înainte să se atingă DB-ul.
+  - `supabase-js` nu dă tranzacții, deci setul vechi e ținut în memorie și repus dacă inserarea celui nou eșuează. Dacă nici restaurarea nu reușește, se loghează `critical` (alertă Discord): întrebarea a rămas fără variante și strică testul pentru toți elevii.
+- **`PATCH /api/tickets/[id]`** — închide/redeschide. Se pot seta doar `closed` și `open`; `answered` rămâne derivat din fir, altfel un tichet ar putea apărea „răspuns" fără răspuns.
+- **Warning-ul de lint** din `content-api.test.ts:64` (directivă `eslint-disable` inutilă, rămasă de două săptămâni) — scos. **Lint complet curat acum, zero warning-uri.**
+
+**Verzi:** typecheck curat, **114/114 teste** (+12), lint curat.
+
+---
+
 ## 2026-08-07 — Andrei (Sesiunea backend — Săpt. 9-10, tichete)
 
 **Ce s-a făcut:** Săpt. 7-8 a intrat în `main` (PR #38, CI verde). Apoi backendul de mentorat, pe `sistem-tichete-mentorat`.

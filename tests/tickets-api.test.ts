@@ -55,7 +55,7 @@ vi.mock("@/lib/current-user", async (importActual) => {
 });
 
 import { GET as ticketsGET, POST as ticketsPOST } from "@/app/api/tickets/route";
-import { GET as ticketGET } from "@/app/api/tickets/[id]/route";
+import { GET as ticketGET, PATCH as ticketPATCH } from "@/app/api/tickets/[id]/route";
 import { POST as messagePOST } from "@/app/api/tickets/[id]/messages/route";
 
 const teacher: AppUser = { id: "u-t", clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
@@ -378,5 +378,71 @@ describe("POST /api/tickets/[id]/messages", () => {
     const res = await messagePOST(jsonReq({ body: "ma bag si eu" }), ctx("t1"));
     expect(res.status).toBe(404);
     expect(h.fromCalls.some((c) => c.table === "ticket_messages")).toBe(false);
+  });
+});
+
+describe("PATCH /api/tickets/[id]", () => {
+  const ticket = { data: { id: "t1", user_id: "u-s" }, error: null };
+
+  function patchReq(body: unknown) {
+    return new Request("http://localhost/api/tickets/t1", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    }) as never;
+  }
+
+  it("401 fara sesiune", async () => {
+    expect((await ticketPATCH(patchReq({ status: "closed" }), ctx("t1"))).status).toBe(401);
+  });
+
+  it("nu se poate seta manual `answered` — starea aia vine din fir", async () => {
+    h.state.user = teacher;
+    const res = await ticketPATCH(patchReq({ status: "answered" }), ctx("t1"));
+    expect(res.status).toBe(400);
+    expect(h.supabaseAdmin.from).not.toHaveBeenCalled();
+  });
+
+  it("400 la status necunoscut", async () => {
+    h.state.user = teacher;
+    expect((await ticketPATCH(patchReq({ status: "banana" }), ctx("t1"))).status).toBe(400);
+    expect((await ticketPATCH(patchReq({}), ctx("t1"))).status).toBe(400);
+  });
+
+  it("autorul isi poate inchide tichetul", async () => {
+    h.state.user = student;
+    h.state.results = { tickets: [ticket, { data: { id: "t1", status: "closed" }, error: null }] };
+
+    const res = await ticketPATCH(patchReq({ status: "closed" }), ctx("t1"));
+    expect(res.status).toBe(200);
+
+    const update = h.fromCalls
+      .find((c) => c.table === "tickets" && c.calls.some(([n]) => n === "update"))
+      ?.calls.find(([n]) => n === "update");
+    expect(update?.[1]).toMatchObject({ status: "closed" });
+  });
+
+  it("profesorul poate redeschide", async () => {
+    h.state.user = teacher;
+    h.state.results = { tickets: [ticket, { data: { id: "t1", status: "open" }, error: null }] };
+
+    const res = await ticketPATCH(patchReq({ status: "open" }), ctx("t1"));
+    expect(res.status).toBe(200);
+  });
+
+  it("404 pentru tichetul altcuiva", async () => {
+    h.state.user = { ...student, id: "u-altcineva" };
+    h.state.results = { tickets: [ticket] };
+
+    const res = await ticketPATCH(patchReq({ status: "closed" }), ctx("t1"));
+    expect(res.status).toBe(404);
+    const updated = h.fromCalls.some((c) => c.calls.some(([n]) => n === "update"));
+    expect(updated).toBe(false);
+  });
+
+  it("404 daca tichetul nu exista", async () => {
+    h.state.user = teacher;
+    h.state.results = { tickets: [{ data: null, error: null }] };
+    expect((await ticketPATCH(patchReq({ status: "closed" }), ctx("t1"))).status).toBe(404);
   });
 });

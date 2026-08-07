@@ -36,3 +36,45 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
   return Response.json({ ticket: { ...ticket, messages: messages ?? [] } })
 }
+
+// PATCH /api/tickets/[id] — inchide sau redeschide un tichet. Autorul sau un profesor.
+//
+// Se pot seta doar `closed` si `open`. `answered` NU e o stare pe care o alege cineva
+// manual: ea rezulta din faptul ca profesorul a scris in fir (vezi ruta de mesaje).
+// Daca ar fi setabila aici, un tichet ar putea aparea "raspuns" fara niciun raspuns.
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const { id } = await ctx.params
+  const user = await getCurrentAppUser()
+  if (!user) return new Response('Unauthorized', { status: 401 })
+
+  const body = await req.json().catch(() => ({}))
+  const status = body?.status
+  if (status !== 'closed' && status !== 'open') {
+    return new Response('Bad request: status must be "closed" or "open"', { status: 400 })
+  }
+
+  const { data: ticket } = await supabaseAdmin
+    .from('tickets')
+    .select('id, user_id')
+    .eq('id', id)
+    .single()
+
+  if (!ticket) return new Response('Not found', { status: 404 })
+  if (!isTeacher(user) && ticket.user_id !== user.id) {
+    return new Response('Not found', { status: 404 })
+  }
+
+  const { data, error: uErr } = await supabaseAdmin
+    .from('tickets')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (uErr) {
+    await logError('tickets', 'PATCH error', { code: uErr.code, message: uErr.message, id })
+    return new Response('Database error', { status: 500 })
+  }
+
+  return Response.json({ ticket: data })
+}
