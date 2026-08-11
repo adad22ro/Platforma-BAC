@@ -1,57 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { inputCls, type ChaptersState, type Submit } from "./types";
 
-type Chapter = {
-  id: string;
-  title: string;
-  description: string | null;
-  order_index: number;
-  is_free: boolean;
-  published: boolean;
-};
-
-type ChaptersState =
-  | { status: "loading" }
-  | { status: "error" }
-  | { status: "loaded"; chapters: Chapter[] };
-
-type Submit =
-  | { status: "idle" }
-  | { status: "saving" }
-  | { status: "ok"; title: string }
-  | { status: "error"; message: string };
-
-const inputCls =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900";
-
-export function TeacherChapters() {
-  const [list, setList] = useState<ChaptersState>({ status: "loading" });
-
+export function TeacherChapters({
+  list,
+  onReload,
+}: {
+  list: ChaptersState;
+  onReload: () => Promise<void>;
+}) {
   // Campurile formularului
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isFree, setIsFree] = useState(false);
   const [published, setPublished] = useState(false);
   const [submit, setSubmit] = useState<Submit>({ status: "idle" });
-
-  async function loadChapters() {
-    setList({ status: "loading" });
-    try {
-      const res = await fetch("/api/chapters");
-      if (!res.ok) throw new Error(String(res.status));
-      const { chapters } = (await res.json()) as { chapters: Chapter[] };
-      setList({ status: "loaded", chapters });
-    } catch {
-      setList({ status: "error" });
-    }
-  }
-
-  useEffect(() => {
-    // loadChapters e async: setState se intampla dupa await, nu sincron in efect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadChapters();
-  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,8 +27,7 @@ export function TeacherChapters() {
     setSubmit({ status: "saving" });
 
     // Pozitia noului capitol: la coada listei existente.
-    const orderIndex =
-      list.status === "loaded" ? list.chapters.length : 0;
+    const orderIndex = list.status === "loaded" ? list.chapters.length : 0;
 
     try {
       const res = await fetch("/api/chapters", {
@@ -85,7 +48,7 @@ export function TeacherChapters() {
         setDescription("");
         setIsFree(false);
         setPublished(false);
-        await loadChapters();
+        await onReload();
         return;
       }
       if (res.status === 403) {
@@ -190,7 +153,7 @@ export function TeacherChapters() {
           <h2 className="text-xl font-semibold">Capitole existente</h2>
           <button
             type="button"
-            onClick={loadChapters}
+            onClick={onReload}
             className="text-sm text-indigo-600 hover:text-indigo-500"
           >
             ↻ Reîncarcă
