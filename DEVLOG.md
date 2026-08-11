@@ -6,6 +6,109 @@
 
 ---
 
+## 2026-08-11 — Bogdan (Sesiunea 7 frontend, partea 6)
+
+**Ce s-a făcut:** ultima sarcină de frontend din Săpt. 9-10 — pagina elevului cu răspunsurile primite. **Frontendul Săpt. 9-10 e complet.**
+
+- **Rută nouă `/intrebari`** (`app/intrebari/page.tsx` + `my-tickets.tsx`): întrebările trimise de elev, fiecare cu contextul (capitol / lecție / întrebarea din test) și răspunsul profesorului în card verde, cu data. Cele fără răspuns arată „În așteptare" + termenul de 24h.
+- **Ordonare pe folosul elevului:** tichetele cu răspuns primele — ele sunt motivul pentru care a intrat pe pagină — apoi cele noi înaintea celor vechi.
+- Fiecare tichet are link **înapoi la locul întrebării**: lecția dacă o știm, altfel testul capitolului.
+- Stare goală dedicată („N-ai trimis încă nicio întrebare") cu explicația butonului „Nu am înțeles" și link la capitole.
+- **Legături:** intrare „Întrebările mele" în antetul zonei logate (`app-header.tsx`) și link „Vezi întrebările mele" în confirmarea de trimitere din `HelpButton`.
+
+**Verificat în browser** (Chromium + CDP, stub de `fetch`): lista cu 4 tichete — răspunsul afișat corect cu data, badge „În așteptare" pe cele deschise, contextul întrebării de test, linkurile către lecție/test — și starea goală, cu un stub care întoarce `[]`.
+
+**Verzi:** typecheck curat, lint fără warning-uri noi (două erori `react/no-unescaped-entities` de la ghilimelele românești, rezolvate cu `„…”`).
+
+**Rămas deschis:** tot backendul de tichete (Andrei). Din Săpt. 7-8 și 9-10, sarcinile de frontend sunt toate încheiate; ce rămâne e API + DB.
+
+---
+
+## 2026-08-11 — Bogdan (Sesiunea 7 frontend, partea 5)
+
+**Ce s-a făcut:** partea de UI din „Funcționalitate răspuns profesor la tichet" (rândul comun cu Andrei).
+
+- În fiecare tichet fără răspuns, butonul „Răspunde" (până acum dezactivat) deschide un formular: textarea (max 2000 caractere, contor), „Trimite răspunsul" / „Renunță", validare pe răspuns gol. Trimite la `POST /api/tickets/[id]/answer`.
+- **După trimitere, tichetul se actualizează în starea locală, fără refetch**: trece pe „Răspuns", primește data și textul, iar filtrul „doar fără răspuns" îl scoate imediat din listă și decrementează contorul — exact ce vrei după ce ai terminat de răspuns la un tichet.
+- Mesaje de eroare dedicate pe `403` (fără drept de profesor) și `409` (tichetul are deja răspuns → cere reîmprospătarea, pentru cazul în care doi profesori lucrează în paralel).
+
+**Verificat în browser** (Chromium + CDP, cu stub de `fetch` pentru `/api/tickets` și `/answer`): formularul se deschide, validarea pe gol funcționează, iar după trimitere tichetul trece pe „Răspuns", contorul scade de la 3 la 2, tichetul dispare din lista filtrată și răspunsul apare în cardul verde cu data.
+
+**Verzi:** typecheck curat, lint fără warning-uri noi.
+
+**Rămas deschis:** ruta `POST /api/tickets/[id]/answer` (Andrei) — contract documentat în `docs/api.md`, inclusiv `409`. Emailul de notificare către elev e sarcină separată, tot a lui.
+
+---
+
+## 2026-08-11 — Bogdan (Sesiunea 7 frontend, partea 4)
+
+**Ce s-a făcut:** interfața profesorului pentru tichete (`app/profesor/teacher-tickets.tsx`), a doua sarcină de frontend din Săpt. 9-10.
+
+- Secțiune nouă „Tichete" în `/profesor`: lista de tichete **grupată pe capitol**, cu numărul de tichete per grupă, filtru „Doar cele fără răspuns" (activ implicit) și rând desfășurabil cu mesajul complet + contextul automat (lecția / întrebarea de test).
+- **Ordinea grupelor urmează ordinea capitolelor din curs** (`order_index`), nu alfabetic — așa se vede unde se adună blocajele pe parcursul materiei. În fiecare grupă, tichetele noi primele.
+- **Tichetele fără capitol nu se pierd**: context pierdut sau lecție ștearsă → grupa „Fără capitol", la coadă. La fel, un capitol care nu mai e în listă (draft/șters) își păstrează grupa, cu titlul din tichet.
+- Butonul „Răspunde" e prezent dar **dezactivat** — răspunsul la tichet e sarcină separată (Andrei + Bogdan).
+
+**Verificat în browser** (Chromium + CDP): starea de eroare reală (ruta `/api/tickets` nu există → „Nu am putut încărca tichetele"), apoi UI-ul complet cu un **stub de `fetch` injectat în browser** (`Page.addScriptToEvaluateOnNewDocument`, fără să ating codul aplicației) și 4 tichete false: gruparea pe capitol în ordinea corectă, grupa „Fără capitol" la final, contoarele, badge-urile Fără răspuns/Răspuns, filtrul care arată/ascunde tichetele cu răspuns, desfășurarea cu context și afișarea răspunsului existent.
+
+**Verzi:** typecheck curat, lint fără warning-uri noi (am scos array-ul `[]` inline din corpul componentei într-o constantă de modul, altfel `useMemo` recalcula la fiecare randare).
+
+**Rămas deschis:** backendul de tichete (tabel + `POST`/`GET /api/tickets`, Andrei). Contractul `GET` e documentat în `docs/api.md`.
+
+---
+
+## 2026-08-11 — Bogdan (Sesiunea 7 frontend, partea 3)
+
+**Ce s-a făcut:** primul task de frontend din Săpt. 9-10 — butonul „Nu am înțeles" cu context automat.
+
+- **`app/_components/help-button.tsx`** — buton care deschide un formular scurt (textarea, max 1000 caractere, contor), trimite la `POST /api/tickets` și afișează confirmarea („răspuns în cel mult 24h", notificare pe email) cu opțiunea „Mai am o întrebare". Mesaje de eroare dedicate pe `401` și `429`.
+- **Context automat**, completat din pagină, ca elevul să nu descrie unde s-a blocat: `source` (`lesson`/`quiz`), `chapter_id`/`chapter_title`, `lesson_id`/`lesson_title`, `question_id`/`question_text`. Contextul e **arătat elevului** înainte de trimitere („Se trimite împreună cu: …") — fără surprize despre ce pleacă.
+- **Montat în două locuri:** pe `/lectii/[id]`, sub conținutul lecției; pe `/teste/[chapterId]`, câte unul sub fiecare întrebare **greșită** după corectare (acolo e blocajul real, iar tichetul pleacă cu întrebarea exactă) plus unul general pe capitol, disponibil și înainte de corectare.
+
+**Decizii luate:**
+- Titlurile din `context` sunt trimise doar pentru afișare; sursa de adevăr rămân ID-urile, care se re-rezolvă pe server (notat în `docs/api.md`).
+- Contractul `POST /api/tickets` documentat în `docs/api.md`, ca la Săpt. 7-8 — inclusiv `429` pentru limita anti-spam, pe care UI-ul o tratează deja.
+
+**Verificat în browser** (Chromium + CDP, pe `/lectii/bf4c133c…`): butonul apare, formularul se deschide, contextul afișat e corect („Se trimite împreună cu: Lectia 1 — Bine ai venit"), validarea pe mesaj gol funcționează („Scrie pe scurt ce nu ai înțeles."), iar la trimitere reală apare eroarea așteptată — ruta `/api/tickets` încă nu există — cu textul păstrat în formular.
+
+**Rămas deschis:** backendul (tabel `tickets` + ruta de creare, Andrei). Rândul „Mesaj așteptare" din TASKS e marcat 🟡: textul de confirmare există deja în starea de succes; de decis dacă mai vrem și un indicator persistent al tichetelor deschise.
+
+---
+
+## 2026-08-11 — Bogdan (Sesiunea 7 frontend, partea 2)
+
+**Ce s-a făcut:** închis taskul rămas din Săpt. 1-2 — „Alegere și configurare librărie UI".
+
+**Decizie: rămânem pe Tailwind curat, fără shadcn/ui.** UI-ul e deja scris integral și coerent; shadcn ar însemna rescriere plus dependențe noi (Radix, CVA, tailwind-merge) pentru un MVP de ~10 pagini, pe un stack (Next 16 + Tailwind 4) unde convențiile diferă de documentația generatoarelor. Componentele unde shadcn chiar ajută (dialog, combobox, date picker) nu apar în MVP. De reevaluat dacă apare nevoia de modal accesibil sau un al doilea om pe frontend.
+
+**În loc de librărie — primitive de stil** (`app/_components/ui.ts`): `btn(variant, size, extra)`, `inputCls`, `cardCls`, `listCls`, `badgeCls`. Motivul concret: același șir de clase pentru butonul primar era copiat de 13 ori în 10 fișiere, cu variații accidentale (`h-10` vs `h-11`, `hover:bg-zinc-50` vs `hover:bg-white`). Sunt șiruri de clase, nu componente React, ca să rămână compozabile cu clasele de poziționare. Refactorizate toate paginile și componentele; `inputCls` a plecat din `app/profesor/types.ts` în `ui.ts` (reexportat de acolo, ca să nu rup importurile).
+
+**`docs/components.md` rescris** — era încă la „nicio componentă creată încă". Acum conține decizia și motivele, tabelul primitivelor, tabelul celor 13 componente și convențiile de cod (uniuni discriminate pentru stările de fetch, flag `active` la cleanup, texte în română).
+
+**Verzi:** typecheck curat, 57/57 teste, `npm run build` reușit, lint doar cu warning-ul preexistent din `content-api.test.ts`.
+
+**Rămas deschis:** refactorul e pur vizual-neutru dar **neverificat în browser** — merită o trecere rapidă prin pagini când pornește dev serverul. Restul Săpt. 7-8 e backend (Andrei).
+
+---
+
+## 2026-08-11 — Bogdan (Sesiunea 7 frontend)
+
+**Ce s-a făcut:** partea de frontend din Săpt. 7-8 (teste grilă + progres), pe branch nou `teste-progres`.
+- **Pagină test per capitol** (`app/teste/[chapterId]/`): `page.tsx` + `quiz-view.tsx`. Întrebări cu radio (un răspuns per întrebare), contor „x/y răspunse", submit activ doar când toate au răspuns. După corectare: card de scor (`n/total` + procent, ton verde/ambru/roșu) și, per întrebare, marcarea variantei corecte (✓), a alegerii greșite (✕) și explicația. Buton „Reia testul". Aceleași stări ca la lecții: `402` → paywall Premium cu buton upgrade, `404` → „Testul nu a fost găsit", rest → eroare.
+- **Progres pe `/dashboard`** (`app/_components/progress-summary.tsx`): secțiunea „Progresul tău" — bară de progres + `best_score`/total + procent per capitol, „x/y capitole testate · medie z%", link „Dă testul"/„Reia testul". Capitolele fără întrebări sunt ascunse; dacă fetch-ul eșuează, secțiunea degradează discret (nu blochează pagina).
+- **Panel profesor — formular „Întrebare test"** (`app/profesor/teacher-questions.tsx`): select capitol, textul întrebării, variante dinamice (2-6, adăugare/ștergere, radio pentru varianta corectă cu reindexare corectă la ștergere), explicație opțională, checkbox publică-imediat → `POST /api/questions`. Sub formular, lista întrebărilor capitolului (inclusiv draft, via `?all=1`), cu varianta corectă vizibilă.
+- Link „Dă testul capitolului" în accordion-ul de capitole din `/dashboard`.
+
+**Decizii luate:**
+- **Contractul API l-am scris eu, în avans**, și l-am documentat în `docs/api.md` (secțiune marcată „nu sunt încă implementate"): `GET /api/chapters/[id]/questions` (+ `?all=1` pentru profesor), `POST /api/chapters/[id]/attempts`, `GET /api/progress`, `POST /api/questions`. UI-ul se conectează fără modificări când Andrei le implementează.
+- **Corectarea se face pe server**, nu în client: răspunsul corect nu ajunge la elev înainte de trimitere (forma de întrebare pentru elev nu conține `correct_option`).
+
+**Verzi:** typecheck curat, lint doar cu warning-ul preexistent din `content-api.test.ts`.
+
+**Rămas deschis:** backendul Săpt. 7-8 (Andrei) — tabelele `questions`/`answers`/`student_progress`, datele placeholder și cele 4 rute. Până atunci paginile de test și secțiunea de progres nu au date, deci **nu sunt verificate E2E în browser**.
+
+---
+
 ## 2026-08-10 — Bogdan (Sesiunea 6 frontend)
 
 **Ce s-a făcut:**

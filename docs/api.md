@@ -155,3 +155,116 @@ Response:
 
 `database` e critic (jos → 503); `stripe` e informativ (jos, dar DB ok → 200 „degraded").
 Rezultatul e cache-uit ~15s. Detalii în `docs/monitoring.md`.
+
+---
+
+## Teste grilă și progres — contract convenit (Săpt. 7-8)
+
+⚠️ **Rutele de mai jos nu sunt încă implementate** (backend: Andrei). Frontend-ul
+(`/teste/[chapterId]`, „Progresul tău" pe `/dashboard`, formularul „Întrebare test"
+din `/profesor`) e deja scris pe aceste forme și se conectează fără modificări.
+
+### GET /api/chapters/[id]/questions
+Scop: întrebările grilă publicate ale unui capitol, pentru elev.
+
+- `?all=1` — include și întrebările draft; doar pentru `teacher` (altfel ignorat).
+- **Răspunsul corect NU se trimite elevului** (fără `correct_option` / `explanation`).
+
+Response:
+- 200: `{ chapter?: { id, title }, questions: [{ id, chapter_id, text, options: string[], order_index }] }`
+- 200 cu `all=1` (teacher): fiecare întrebare are în plus `correct_option: number`, `explanation: string | null`, `published: boolean`
+- 402: `{ error: "premium_required" }` — capitol premium fără acces
+- 404: capitol inexistent
+
+### POST /api/chapters/[id]/attempts
+Scop: corectare automată a unei încercări + salvare în `student_progress`.
+
+Request: `{ answers: [{ question_id: string, option_index: number | null }] }`
+(`null` = fără răspuns → greșit).
+
+Response:
+- 200: `{ score, total, results: [{ question_id, correct: boolean, correct_option: number, explanation: string | null }] }`
+- 402 / 404: ca mai sus
+
+### GET /api/progress
+Scop: sumarul de progres al elevului logat, per capitol.
+
+Response:
+- 200: `{ progress: [{ chapter_id, chapter_title, questions_total, best_score: number | null, attempts: number, last_attempt_at: string | null }] }`
+  (`best_score: null` = niciun test dat; capitolele cu `questions_total = 0` sunt ignorate de UI)
+
+### POST /api/questions
+Scop: creează o întrebare grilă. Doar `teacher`.
+
+Request: `{ chapter_id, text, options: string[], correct_option: number, explanation: string | null, order_index: number, published: boolean }`
+
+Response: `201: { question }` · 400 date invalide · 403 neprofesor
+
+---
+
+## Tichete de mentorat — contract convenit (Săpt. 9-10)
+
+⚠️ **Neimplementat încă** (backend: Andrei). Butonul „Nu am înțeles"
+(`app/_components/help-button.tsx`, folosit în `/lectii/[id]` și `/teste/[chapterId]`)
+e deja scris pe această formă.
+
+### POST /api/tickets
+Scop: elevul trimite o întrebare către profesor, cu contextul completat automat
+din pagină (nu-l scrie el).
+
+Request:
+```jsonc
+{
+  "message": "string, 1-1000 caractere",
+  "context": {
+    "source": "lesson" | "quiz",   // din ce ecran a venit
+    "chapter_id": "uuid?",
+    "chapter_title": "string?",
+    "lesson_id": "uuid?",
+    "lesson_title": "string?",
+    "question_id": "uuid?",        // doar la source=quiz, dacă e legat de o întrebare
+    "question_text": "string?"
+  }
+}
+```
+
+Response:
+- 201: `{ ticket: { id, created_at } }`
+- 400: mesaj gol / prea lung / context invalid
+- 401: neautentificat
+- 429: prea multe tichete deschise (limită anti-spam — UI-ul afișează deja mesajul)
+
+Note pentru implementare:
+- Titlurile din `context` sunt trimise de client **doar pentru afișare**; sursa de adevăr
+  rămân `chapter_id` / `lesson_id` / `question_id`, care se re-rezolvă pe server.
+- UI-ul promite elevului **răspuns în cel mult 24h** și **notificare pe email** — de
+  respectat în rândurile corespunzătoare din TASKS.md.
+
+### GET /api/tickets
+Scop: lista de tichete. **Profesor** → toate tichetele; **elev** → doar ale lui.
+Folosită de secțiunea „Tichete" din `/profesor` (`app/profesor/teacher-tickets.tsx`).
+
+Response:
+- 200: `{ tickets: [{ id, message, status: "open" | "answered", created_at,
+  student_name: string | null, student_email, chapter_id, chapter_title,
+  lesson_id, lesson_title, question_id, question_text,
+  answer: string | null, answered_at: string | null }] }`
+  (câmpurile de context pot fi `null` — lecția/întrebarea pot fi șterse ulterior;
+  UI-ul grupează tichetele fără capitol într-o grupă „Fără capitol")
+- 401: neautentificat
+
+Gruparea pe capitol și ordonarea (capitolele în ordinea din curs, tichetele noi
+întâi) se fac în client — API-ul poate întoarce lista plată.
+
+### POST /api/tickets/[id]/answer
+Scop: profesorul răspunde la un tichet. Doar `teacher`.
+
+Request: `{ answer: string }` (1-2000 caractere)
+
+Response:
+- 200: `{ ticket: { id, answer, answered_at, status: "answered" } }`
+- 400: răspuns gol / prea lung · 403: neprofesor · 404: tichet inexistent
+- 409: tichetul are deja răspuns (UI-ul cere reîmprospătarea paginii)
+
+Efect secundar așteptat: trimite emailul de notificare către elev (sarcină separată
+în TASKS.md). UI-ul îi promite deja elevului notificare pe email.
