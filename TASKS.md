@@ -22,8 +22,9 @@
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
 - **Frontend Săpt. 1-4:** complet (landing, `/pricing`, `/dashboard`, `/profil`, buton upgrade)
 - **Frontend Săpt. 5-6 (vedere elev):** complet — listă capitole (accordion pe `/dashboard`) + pagină lecție (`/lectii/[id]`) cu paywall. Plus buton temă zi/noapte pe toate paginile.
-- **Bottleneck:** frontend (Bogdan) — urmează **panelul profesor** (formulare capitol/lecție) și **Săpt. 7-8** (teste grilă + progres)
-- **Ultima actualizare:** 2026-07-24
+- **Panel profesor (Săpt. 5-6):** complet — formulare „Capitol nou" și „Lecție nouă" pe `/profesor`
+- **Bottleneck:** frontend (Bogdan) — urmează **Săpt. 7-8** (teste grilă + progres)
+- **Ultima actualizare:** 2026-08-10
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -95,7 +96,7 @@
 | ✅ | Pagină lecție (text + embed video) | Bogdan | `dashboard-elev` | `app/lectii/[id]/` — conținut + buton video; tratează `402` (paywall) și `404`. Verificat în browser. |
 | ✅ | Autentificare profesor (rol distinct în Clerk/Supabase) | Andrei | `panel-profesor-capitole` | `users.role`; promovare din `/admin` (buton) via `POST /api/admin/set-role` |
 | ✅ | Panel profesor — formular "Capitol nou" | Bogdan | `dashboard-elev` | `app/profesor/` (gated pe rol teacher) — formular titlu/descriere/gratuit/publică → `POST /api/chapters` + listă capitole. Link „Profesor" în `AppHeader` doar pt. teacher. Verificat E2E în browser. |
-| ⬜ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `panel-profesor-capitole` | `POST /api/lessons` |
+| ✅ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `dashboard-elev` | `app/profesor/teacher-lessons.tsx` — select capitol / titlu / conținut (textarea + previzualizare) / link video / publică → `POST /api/lessons` + lista lecțiilor capitolului. Capitolele sunt încărcate o singură dată în `teacher-panel.tsx`. |
 | ✅ | API routes pentru CRUD capitole și lecții | Andrei | `panel-profesor-capitole` | `/api/chapters`, `/api/lessons` (+ `[id]`); detalii în `docs/api.md` |
 
 ---

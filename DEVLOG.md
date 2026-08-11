@@ -6,6 +6,23 @@
 
 ---
 
+## 2026-08-10 — Bogdan (Sesiunea 6 frontend)
+
+**Ce s-a făcut:**
+- **Panel profesor — formular „Lecție nouă"** (`app/profesor/teacher-lessons.tsx`): select capitol (obligatoriu), titlu (obligatoriu), conținut (textarea monospace + buton **Previzualizare** care randează exact ca pagina de lecție — text simplu, `whitespace-pre-wrap`), link video opțional, checkbox publică-imediat → `POST /api/lessons`. `order_index` = la coada lecțiilor existente din capitol. Sub formular, lista lecțiilor capitolului selectat (badge Publicat/Draft, marcaj ▶ video), reîncărcată după creare.
+- **Refactor:** capitolele se încarcă o singură dată, în `teacher-panel.tsx` (client), și se dau prin props la `TeacherChapters` + `TeacherLessons` — un capitol nou apare imediat în selectorul de capitol al lecției. Tipurile comune au ieșit în `app/profesor/types.ts`.
+- Mesaje de eroare dedicate pe `400`/`403`; dacă nu există niciun capitol, formularul de lecție e înlocuit cu un îndemn să se creeze întâi un capitol.
+
+**Verzi:** typecheck curat, 55/55 teste, lint doar cu warning-ul preexistent din `content-api.test.ts`, `npm run build` reușit.
+
+**Verificat E2E în browser** (Chromium Playwright + CDP, cont `profesor+clerk_test@example.com`): selectorul de capitol populat (inclusiv draft-ul, marcat), lista lecțiilor capitolului se încarcă la selecție, previzualizarea păstrează rândurile goale și textul se regăsește la revenirea în editare, creare cu succes (lecție la `#2`, badge Publicat + marcaj video, formular resetat, listă reîncărcată), validări „Alege întâi capitolul." / „Titlul e obligatoriu.". Lecția apare în accordion-ul din `/dashboard` și se randează corect pe `/lectii/[id]` (buton video + cele două paragrafe). Lecția de test ștearsă după (`DELETE /api/lessons/[id]` → 204).
+
+- **Fără CTA de upgrade pentru profesori:** butonul „Treci la Premium" de pe `/dashboard` și „Upgrade la Premium" de pe `/profil` se ascund pentru rolul `teacher` (are acces la conținut prin rol, nu prin abonament). Pe `/profil`, cardul de abonament arată „Profesor · activ" + „Ca profesor ai acces complet la conținut, fără abonament." Două teste noi (57/57). Verificat în browser cu contul de profesor.
+
+**Rămas deschis:** `/upgrade` rămâne accesibil dacă un profesor intră direct pe URL — nu mai are cum să ajungă acolo dintr-un buton, dar ruta nu blochează rolul teacher. Urmează Săpt. 7-8 — teste grilă + progres.
+
+---
+
 ## 2026-07-24 — Bogdan (Sesiunea 5 frontend)
 
 **Ce s-a făcut:**
