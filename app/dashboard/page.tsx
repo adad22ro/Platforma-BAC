@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
-import { getCurrentAppUser, canAccessPremium } from "@/lib/current-user";
+import { getCurrentAppUser, canAccessPremium, isTeacher } from "@/lib/current-user";
 import { AppHeader } from "../_components/app-header";
 import { ChaptersBrowser } from "../_components/chapters-browser";
 
@@ -24,6 +24,7 @@ export default async function DashboardPage({
   ]);
 
   const isPremium = canAccessPremium(appUser);
+  const teacher = isTeacher(appUser);
   const firstName = clerkUser?.firstName ?? null;
 
   // Dupa plata, Stripe ne trimite inapoi imediat — dar abonamentul e activat de
@@ -43,9 +44,11 @@ export default async function DashboardPage({
           De aici îți continui pregătirea pentru Bacalaureat.
         </p>
 
-        {/* CTA subtire de upgrade — doar pentru userii free. Detaliile de
-            abonament traiesc pe /profil. */}
-        {!isPremium && (
+        {/* CTA subtire de upgrade — doar pentru elevii free. Profesorul are deja
+            acces la tot continutul (gating-ul din API il trateaza separat), deci
+            un buton de upgrade nu are sens pentru el. Detaliile de abonament
+            traiesc pe /profil. */}
+        {!isPremium && !teacher && (
           <Link
             href="/upgrade"
             className="mt-5 inline-flex h-10 items-center justify-center rounded-full bg-indigo-600 px-5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
