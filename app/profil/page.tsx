@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { UserProfile } from "@clerk/nextjs";
-import { getCurrentAppUser, canAccessPremium } from "@/lib/current-user";
+import { getCurrentAppUser, canAccessPremium, isTeacher } from "@/lib/current-user";
 import { AppHeader } from "../_components/app-header";
 
 export const metadata: Metadata = {
@@ -30,6 +30,7 @@ export default async function ProfilPage() {
   ]);
 
   const isPremium = canAccessPremium(appUser);
+  const teacher = isTeacher(appUser);
   const isCancelled = appUser?.subscription_status === "cancelled";
   const endDate = formatDate(appUser?.subscription_end_date ?? null);
 
@@ -80,19 +81,29 @@ export default async function ProfilPage() {
           <section className="rounded-2xl border border-zinc-200 p-6 dark:border-zinc-800">
             <h2 className="text-sm font-medium text-zinc-500">Abonament</h2>
             <p className="mt-2 flex items-center gap-2 text-2xl font-bold">
-              {isPremium ? "Premium" : "Gratuit"}
+              {teacher ? "Profesor" : isPremium ? "Premium" : "Gratuit"}
               <span
                 className={
-                  isPremium
+                  teacher || isPremium
                     ? "rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-950 dark:text-green-400"
                     : "rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                 }
               >
-                {isPremium ? "activ" : isCancelled ? "anulat" : "limitat"}
+                {teacher || isPremium
+                  ? "activ"
+                  : isCancelled
+                    ? "anulat"
+                    : "limitat"}
               </span>
             </p>
 
-            {isPremium ? (
+            {/* Profesorul are acces la tot continutul prin rol, nu prin abonament —
+                deci nu-i aratam nici starea de plan, nici butonul de upgrade. */}
+            {teacher ? (
+              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+                Ca profesor ai acces complet la conținut, fără abonament.
+              </p>
+            ) : isPremium ? (
               <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
                 Ai acces complet la lecții, teste și mentorat.
                 {endDate && ` Valabil până la ${endDate}.`}

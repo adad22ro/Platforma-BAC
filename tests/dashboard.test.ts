@@ -71,6 +71,13 @@ describe("/dashboard — CTA upgrade", () => {
     expect(html).not.toContain("Treci la Premium");
     expect(html).not.toContain('href="/upgrade"');
   });
+
+  it("profesor fara abonament: fara CTA de upgrade (are acces prin rol)", async () => {
+    h.appUser = student({ role: "teacher", subscription_status: "free" });
+    const html = await render();
+    expect(html).not.toContain("Treci la Premium");
+    expect(html).not.toContain('href="/upgrade"');
+  });
 });
 
 describe("/dashboard — intoarcerea de la Stripe", () => {
