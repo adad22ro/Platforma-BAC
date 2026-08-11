@@ -4,6 +4,8 @@ import { currentUser } from "@clerk/nextjs/server";
 import { getCurrentAppUser, canAccessPremium, isTeacher } from "@/lib/current-user";
 import { AppHeader } from "../_components/app-header";
 import { ChaptersBrowser } from "../_components/chapters-browser";
+import { ProgressSummary } from "../_components/progress-summary";
+import { btn } from "../_components/ui";
 
 export const metadata: Metadata = {
   title: "Contul meu — Platforma BAC",
@@ -51,7 +53,7 @@ export default async function DashboardPage({
         {!isPremium && !teacher && (
           <Link
             href="/upgrade"
-            className="mt-5 inline-flex h-10 items-center justify-center rounded-full bg-indigo-600 px-5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+            className={btn("primary", "md", "mt-5")}
           >
             Treci la Premium
           </Link>
@@ -86,6 +88,9 @@ export default async function DashboardPage({
             care aplica gating-ul (elevul vede titlurile, continutul premium e
             blocat). Datele de cont si abonament traiesc pe /profil. */}
         <ChaptersBrowser />
+
+        {/* Scorurile la testele grila, per capitol. */}
+        <ProgressSummary />
       </main>
     </div>
   );
