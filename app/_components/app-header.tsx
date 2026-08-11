@@ -31,6 +31,12 @@ export async function AppHeader() {
             </Link>
           )}
           <Link
+            href="/intrebari"
+            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+          >
+            Întrebările mele
+          </Link>
+          <Link
             href="/profil"
             className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
           >

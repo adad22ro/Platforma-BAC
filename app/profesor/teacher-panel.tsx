@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { Chapter, ChaptersState } from "./types";
 import { TeacherChapters } from "./teacher-chapters";
 import { TeacherLessons } from "./teacher-lessons";
+import { TeacherQuestions } from "./teacher-questions";
+import { TeacherTickets } from "./teacher-tickets";
 
 // Sursa unica a listei de capitole: formularul de lectie are nevoie de aceeasi
 // lista ca sectiunea de capitole, iar un capitol nou trebuie sa apara imediat
@@ -33,6 +35,8 @@ export function TeacherPanel() {
     <div className="space-y-10">
       <TeacherChapters list={list} onReload={loadChapters} />
       <TeacherLessons list={list} />
+      <TeacherQuestions list={list} />
+      <TeacherTickets list={list} />
     </div>
   );
 }

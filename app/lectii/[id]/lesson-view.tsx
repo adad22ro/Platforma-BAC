@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { btn } from "../../_components/ui";
+import { HelpButton } from "../../_components/help-button";
 
 type Lesson = {
   id: string;
@@ -93,7 +95,7 @@ export function LessonView({ id }: { id: string }) {
         </p>
         <Link
           href="/upgrade"
-          className="mt-5 inline-flex h-10 items-center justify-center rounded-full bg-indigo-600 px-5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+          className={btn("primary", "md", "mt-5")}
         >
           Treci la Premium
         </Link>
@@ -112,7 +114,7 @@ export function LessonView({ id }: { id: string }) {
           href={lesson.video_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-full border border-zinc-300 px-5 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          className={btn("outline", "md", "mt-5")}
         >
           ▶ Vezi materialul video
         </a>
@@ -127,6 +129,16 @@ export function LessonView({ id }: { id: string }) {
           Lecția nu are încă text. Revino în curând.
         </p>
       )}
+
+      {/* Contextul (ce lectie, din ce capitol) pleaca automat cu tichetul. */}
+      <HelpButton
+        context={{
+          source: "lesson",
+          lesson_id: lesson.id,
+          lesson_title: lesson.title,
+          chapter_id: lesson.chapter_id,
+        }}
+      />
 
       <BackToDashboard />
     </article>
