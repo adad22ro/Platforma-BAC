@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { inputCls, type ChaptersState, type Submit } from "./types";
+import { btn, listCls } from "../_components/ui";
 
 export function TeacherChapters({
   list,
@@ -129,7 +130,7 @@ export function TeacherChapters({
             <button
               type="submit"
               disabled={submit.status === "saving"}
-              className="inline-flex h-10 items-center justify-center rounded-full bg-indigo-600 px-5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+              className={btn()}
             >
               {submit.status === "saving" ? "Se salvează…" : "Creează capitolul"}
             </button>
@@ -172,7 +173,7 @@ export function TeacherChapters({
           (list.chapters.length === 0 ? (
             <p className="mt-4 text-sm text-zinc-500">Niciun capitol încă.</p>
           ) : (
-            <ul className="mt-4 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+            <ul className={`mt-4 ${listCls}`}>
               {list.chapters.map((c) => (
                 <li
                   key={c.id}

@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { UserProfile } from "@clerk/nextjs";
 import { getCurrentAppUser, canAccessPremium, isTeacher } from "@/lib/current-user";
 import { AppHeader } from "../_components/app-header";
+import { btn } from "../_components/ui";
 
 export const metadata: Metadata = {
   title: "Profil — Platforma BAC",
@@ -117,7 +118,7 @@ export default async function ProfilPage() {
                 </p>
                 <Link
                   href="/upgrade"
-                  className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-indigo-600 px-6 font-medium text-white transition-colors hover:bg-indigo-500"
+                  className={btn("primary", "lg", "mt-5")}
                 >
                   {isCancelled ? "Reactivează Premium" : "Upgrade la Premium"}
                 </Link>

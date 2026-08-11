@@ -17,6 +17,19 @@ export type Lesson = {
   published: boolean;
 };
 
+// Intrebare grila. Spre deosebire de forma trimisa elevului, aici vine si
+// raspunsul corect (indexul in `options`) — profesorul are voie sa-l vada.
+export type Question = {
+  id: string;
+  chapter_id: string;
+  text: string;
+  options: string[];
+  correct_option: number;
+  explanation: string | null;
+  order_index: number;
+  published: boolean;
+};
+
 export type ChaptersState =
   | { status: "loading" }
   | { status: "error" }
@@ -29,5 +42,6 @@ export type Submit =
   | { status: "ok"; title: string }
   | { status: "error"; message: string };
 
-export const inputCls =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900";
+// `inputCls` a fost mutat in app/_components/ui.ts, langa restul primitivelor
+// de stil. Reexportat aici doar ca sa nu rupem importurile existente.
+export { inputCls } from "../_components/ui";

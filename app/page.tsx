@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "./_components/site-header";
 import { SiteFooter } from "./_components/site-footer";
+import { btn } from "./_components/ui";
 
 const features = [
   {
@@ -40,13 +41,13 @@ export default function Home() {
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <Link
             href="/sign-up?plan=premium"
-            className="flex h-12 items-center justify-center rounded-full bg-indigo-600 px-8 text-base font-medium text-white transition-colors hover:bg-indigo-500"
+            className={btn("primary", "lg")}
           >
             Începe acum
           </Link>
           <Link
             href="/pricing"
-            className="flex h-12 items-center justify-center rounded-full border border-zinc-300 px-8 text-base font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            className={btn("outline", "lg")}
           >
             Vezi prețurile
           </Link>
