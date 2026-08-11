@@ -111,7 +111,7 @@
 | ✅ | Schema DB: tabele `questions`, `answers`, `student_progress` | Andrei | `teste-progres` | Migrare `20260806120000_teste_progres.sql` + tipuri; RLS activat, grant `service_role`. Detalii în `docs/database.md` |
 | ✅ | Date placeholder: 5-10 întrebări grilă per capitol | Andrei | `teste-progres` | `npm run seed:questions` — 6 întrebări × 4 variante per capitol (generic, NU întrebări reale BAC) |
 | ✅ | Pagină test per capitol (UI grilă) | Bogdan | `teste-progres` | `/teste/[chapterId]` — grilă, paywall 402, feedback per întrebare |
-| ✅ | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | API: `POST /api/chapters/[id]/submit` (Andrei) · afișare scor + feedback per întrebare (Bogdan) |
+| ✅ | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | API: `POST /api/chapters/[id]/submit` (Andrei) · afișare scor + feedback per întrebare (Bogdan). Verificat cap-coadă cu date reale. |
 | ✅ | Statistici simple de progres per capitol (UI) | Bogdan | `teste-progres` | Secțiunea „Progresul tău" pe `/dashboard` (pe `GET /api/progress`) |
 | ✅ | Panel profesor — formular „Întrebare test" | Bogdan | `teste-progres` | Variante dinamice (2-6), marcarea răspunsului corect, explicație, draft |
 | ✅ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | `/api/questions` (+ `[id]`), `/api/chapters/[id]/questions`, `/api/progress`. Detalii în `docs/api.md` |

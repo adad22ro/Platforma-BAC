@@ -5,30 +5,40 @@ import Link from "next/link";
 import { btn } from "../../_components/ui";
 import { HelpButton } from "../../_components/help-button";
 
-// ATENTIE: rutele /api/chapters/[id]/questions si .../attempts nu exista inca
-// (sarcina Andrei, Sapt. 7-8). Formele de mai jos sunt contractul convenit,
-// documentat in docs/api.md — UI-ul se conecteaza fara modificari cand apar.
+// Formele vin din GET /api/chapters/[id]/questions si POST .../submit
+// (vezi docs/api.md). Variantele sunt randuri in tabelul `answers`, cu id
+// propriu — lucram cu answer_id peste tot, nu cu indici de pozitie.
+
+type Answer = {
+  id: string;
+  text: string;
+  order_index: number;
+};
 
 type Question = {
   id: string;
   chapter_id: string;
   text: string;
-  options: string[];
+  answers: Answer[];
   order_index: number;
 };
 
-// Corectarea vine de la server: clientul nu primeste niciodata raspunsul corect
-// inainte de trimitere.
+// Corectarea vine de la server: `is_correct` nu e nici macar selectat in ruta
+// de citire, deci clientul afla raspunsul corect abia dupa trimitere.
 type Result = {
   question_id: string;
+  chosen_answer_id: string | null;
+  correct_answer_id: string | null;
   correct: boolean;
-  correct_option: number;
   explanation: string | null;
 };
 
 type Graded = {
   score: number;
   total: number;
+  // false = scorul e valid, dar progresul nu s-a inregistrat (profesor sau
+  // eroare de scriere). Rezultatul se arata oricum.
+  saved: boolean;
   results: Result[];
 };
 
@@ -48,8 +58,8 @@ type SubmitState =
 
 export function QuizView({ chapterId }: { chapterId: string }) {
   const [state, setState] = useState<State>({ status: "loading" });
-  // question_id -> indexul optiunii bifate
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  // question_id -> answer_id bifat
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submit, setSubmit] = useState<SubmitState>({ status: "idle" });
 
   useEffect(() => {
@@ -66,17 +76,24 @@ export function QuizView({ chapterId }: { chapterId: string }) {
           return;
         }
         if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as {
-          chapter?: { title: string };
-          questions: Question[];
-        };
-        if (active) {
-          setState({
-            status: "loaded",
-            chapterTitle: data.chapter?.title ?? null,
-            questions: data.questions,
-          });
+        const { questions } = (await res.json()) as { questions: Question[] };
+
+        // Ruta de intrebari nu intoarce si capitolul; titlul (pentru antet si
+        // pentru contextul tichetului) il luam din lista de capitole.
+        let chapterTitle: string | null = null;
+        try {
+          const chRes = await fetch("/api/chapters");
+          if (chRes.ok) {
+            const { chapters } = (await chRes.json()) as {
+              chapters: { id: string; title: string }[];
+            };
+            chapterTitle = chapters.find((c) => c.id === chapterId)?.title ?? null;
+          }
+        } catch {
+          // Titlul e decorativ — testul se poate da si fara el.
         }
+
+        if (active) setState({ status: "loaded", chapterTitle, questions });
       } catch {
         if (active) setState({ status: "error" });
       }
@@ -91,14 +108,15 @@ export function QuizView({ chapterId }: { chapterId: string }) {
     if (state.status !== "loaded") return;
     setSubmit({ status: "sending" });
     try {
-      const res = await fetch(`/api/chapters/${chapterId}/attempts`, {
+      const res = await fetch(`/api/chapters/${chapterId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          answers: state.questions.map((q) => ({
-            question_id: q.id,
-            option_index: answers[q.id] ?? null,
-          })),
+          // Trimitem doar ce a bifat elevul; intrebarile fara raspuns lipsesc
+          // din lista si sunt punctate gresit pe server.
+          answers: state.questions
+            .filter((q) => answers[q.id])
+            .map((q) => ({ question_id: q.id, answer_id: answers[q.id] })),
         }),
       });
       if (!res.ok) throw new Error(String(res.status));
@@ -207,13 +225,14 @@ export function QuizView({ chapterId }: { chapterId: string }) {
               <p className="font-medium">{q.text}</p>
 
               <div className="mt-4 space-y-2">
-                {q.options.map((option, oi) => {
-                  const checked = answers[q.id] === oi;
-                  const isCorrect = result?.correct_option === oi;
-                  const isWrongPick = Boolean(result) && checked && !isCorrect;
+                {q.answers.map((option) => {
+                  const checked = answers[q.id] === option.id;
+                  const isCorrect = result?.correct_answer_id === option.id;
+                  const isWrongPick =
+                    result?.chosen_answer_id === option.id && !isCorrect;
                   return (
                     <label
-                      key={oi}
+                      key={option.id}
                       className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 text-sm transition-colors ${
                         isCorrect
                           ? "border-green-400 bg-green-100/70 dark:border-green-800 dark:bg-green-900/40"
@@ -231,10 +250,10 @@ export function QuizView({ chapterId }: { chapterId: string }) {
                         checked={checked}
                         disabled={Boolean(graded)}
                         onChange={() =>
-                          setAnswers((a) => ({ ...a, [q.id]: oi }))
+                          setAnswers((a) => ({ ...a, [q.id]: option.id }))
                         }
                       />
-                      <span className="flex-1">{option}</span>
+                      <span className="flex-1">{option.text}</span>
                       {isCorrect && (
                         <span
                           className="text-green-700 dark:text-green-400"
@@ -350,6 +369,14 @@ function ScoreCard({
             ? "E un început bun. Recitește lecțiile de la întrebările greșite."
             : "Mai reia capitolul și încearcă testul din nou."}
       </p>
+
+      {/* saved=false: profesor (nu i se tine progres) sau eroare de scriere.
+          Scorul e valid oricum, deci il aratam si spunem doar ce lipseste. */}
+      {!graded.saved && (
+        <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+          Rezultatul nu a fost înregistrat în progresul tău.
+        </p>
+      )}
       <button
         type="button"
         onClick={onRetry}

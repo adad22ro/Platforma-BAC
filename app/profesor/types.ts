@@ -17,14 +17,14 @@ export type Lesson = {
   published: boolean;
 };
 
-// Intrebare grila. Spre deosebire de forma trimisa elevului, aici vine si
-// raspunsul corect (indexul in `options`) — profesorul are voie sa-l vada.
+// Intrebare grila, asa cum vine din GET /api/chapters/[id]/questions.
+// Ruta nu selecteaza deloc `is_correct`, nici pentru profesor — varianta
+// corecta se afla doar prin GET /api/questions/[id].
 export type Question = {
   id: string;
   chapter_id: string;
   text: string;
-  options: string[];
-  correct_option: number;
+  answers: { id: string; text: string; order_index: number }[];
   explanation: string | null;
   order_index: number;
   published: boolean;

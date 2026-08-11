@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { btn, inputCls, listCls } from "../_components/ui";
 import type { ChaptersState, Question, Submit } from "./types";
 
-// ATENTIE: rutele /api/questions si /api/chapters/[id]/questions?all=1 nu exista
-// inca (sarcina Andrei, Sapt. 7-8). Contractul e in docs/api.md.
+// Rutele reale: POST /api/questions (intrebare + variante impreuna) si
+// GET /api/chapters/[id]/questions, care pentru profesor include si draft-urile.
 
 type QuestionsState =
   | { status: "idle" } // niciun capitol selectat
@@ -36,8 +36,8 @@ export function TeacherQuestions({ list }: { list: ChaptersState }) {
     }
     setQuestions({ status: "loading" });
     try {
-      // `all=1` cere si intrebarile draft — vizibile doar profesorului.
-      const res = await fetch(`/api/chapters/${id}/questions?all=1`);
+      // Pentru profesor, ruta include automat si intrebarile draft.
+      const res = await fetch(`/api/chapters/${id}/questions`);
       if (!res.ok) throw new Error(String(res.status));
       const data = (await res.json()) as { questions: Question[] };
       setQuestions({ status: "loaded", questions: data.questions });
@@ -103,8 +103,13 @@ export function TeacherQuestions({ list }: { list: ChaptersState }) {
         body: JSON.stringify({
           chapter_id: chapterId,
           text: trimmedText,
-          options: trimmedOptions,
-          correct_option: correct,
+          // Intrebarea si variantele se creeaza impreuna (o intrebare fara
+          // variante ar strica testul). API-ul cere minim 2 si exact una corecta.
+          answers: trimmedOptions.map((text, i) => ({
+            text,
+            is_correct: i === correct,
+            order_index: i,
+          })),
           explanation: explanation.trim() || null,
           order_index: orderIndex,
           published,
@@ -325,9 +330,11 @@ export function TeacherQuestions({ list }: { list: ChaptersState }) {
                         {q.published ? "Publicat" : "Draft"}
                       </span>
                     </div>
+                    {/* Varianta corecta nu vine pe ruta asta (`is_correct` nu e
+                        selectat nici pentru profesor), deci aratam doar cate
+                        variante are intrebarea. */}
                     <p className="mt-1 text-xs text-zinc-500">
-                      Corect: {q.options[q.correct_option] ?? "—"} ·{" "}
-                      {q.options.length} variante
+                      {q.answers.length} variante
                     </p>
                   </li>
                 ))}

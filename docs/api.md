@@ -158,50 +158,6 @@ Rezultatul e cache-uit ~15s. Detalii în `docs/monitoring.md`.
 
 ---
 
-## Teste grilă și progres — contract convenit (Săpt. 7-8)
-
-⚠️ **Rutele de mai jos nu sunt încă implementate** (backend: Andrei). Frontend-ul
-(`/teste/[chapterId]`, „Progresul tău" pe `/dashboard`, formularul „Întrebare test"
-din `/profesor`) e deja scris pe aceste forme și se conectează fără modificări.
-
-### GET /api/chapters/[id]/questions
-Scop: întrebările grilă publicate ale unui capitol, pentru elev.
-
-- `?all=1` — include și întrebările draft; doar pentru `teacher` (altfel ignorat).
-- **Răspunsul corect NU se trimite elevului** (fără `correct_option` / `explanation`).
-
-Response:
-- 200: `{ chapter?: { id, title }, questions: [{ id, chapter_id, text, options: string[], order_index }] }`
-- 200 cu `all=1` (teacher): fiecare întrebare are în plus `correct_option: number`, `explanation: string | null`, `published: boolean`
-- 402: `{ error: "premium_required" }` — capitol premium fără acces
-- 404: capitol inexistent
-
-### POST /api/chapters/[id]/attempts
-Scop: corectare automată a unei încercări + salvare în `student_progress`.
-
-Request: `{ answers: [{ question_id: string, option_index: number | null }] }`
-(`null` = fără răspuns → greșit).
-
-Response:
-- 200: `{ score, total, results: [{ question_id, correct: boolean, correct_option: number, explanation: string | null }] }`
-- 402 / 404: ca mai sus
-
-### GET /api/progress
-Scop: sumarul de progres al elevului logat, per capitol.
-
-Response:
-- 200: `{ progress: [{ chapter_id, chapter_title, questions_total, best_score: number | null, attempts: number, last_attempt_at: string | null }] }`
-  (`best_score: null` = niciun test dat; capitolele cu `questions_total = 0` sunt ignorate de UI)
-
-### POST /api/questions
-Scop: creează o întrebare grilă. Doar `teacher`.
-
-Request: `{ chapter_id, text, options: string[], correct_option: number, explanation: string | null, order_index: number, published: boolean }`
-
-Response: `201: { question }` · 400 date invalide · 403 neprofesor
-
----
-
 ## Tichete de mentorat — contract convenit (Săpt. 9-10)
 
 ⚠️ **Neimplementat încă** (backend: Andrei). Butonul „Nu am înțeles"

@@ -6,6 +6,26 @@
 
 ---
 
+## 2026-08-11 — Bogdan (Sesiunea 7 frontend, partea 7 — integrarea cu API-ul real)
+
+**Contextul:** la push am descoperit că `origin/teste-progres` era cu 7 commit-uri înainte — Andrei împinsese pe 6 august backendul complet de Săpt. 7-8. Cele trei commit-uri ale mele din sesiunea 6 nu ajunseseră niciodată pe remote, deci istoriile divergeau. Rebase pe `origin/teste-progres`, cu conflictele din `TASKS.md` și `DEVLOG.md` rezolvate păstrând ambele relatări (jurnalul rămâne cronologic invers).
+
+**Contractele mele presupuse nu se potriveau cu API-ul real.** Adaptat frontendul:
+- `POST /api/chapters/[id]/attempts` → **`/submit`**.
+- Variantele sunt rânduri în tabelul `answers`, cu id propriu: peste tot unde lucram cu indici de poziție (`0,1,2`) am trecut pe **`answer_id`** — starea bifelor, corpul cererii (`{ question_id, answer_id }`), marcarea variantei corecte (`correct_answer_id`) și a alegerii greșite (`chosen_answer_id`).
+- `GET /api/chapters/[id]/questions` întoarce `answers`, nu `options`, și **nu include capitolul** — titlul (pentru antet și pentru contextul tichetului) îl luăm din `/api/chapters`.
+- `POST /api/questions` creează întrebarea **împreună cu** variantele: trimit `answers: [{ text, is_correct, order_index }]`, nu `options` + `correct_option`.
+- Lista de întrebări a profesorului nu mai afișează varianta corectă — ruta nu selectează `is_correct` nici pentru profesor (doar `GET /api/questions/[id]` o dă). Rămâne numărul de variante.
+- `GET /api/progress` întoarce o linie per (elev, capitol) cu `score`/`total`/`attempts`, fără titluri și fără „best": `ProgressSummary` împerechează cu `/api/chapters` pe `chapter_id` și spune explicit că afișează **ultimul** rezultat, nu cel mai bun.
+- Tratat `saved: false` din `submit` (profesor sau eroare de scriere): scorul se arată, cu nota că nu s-a înregistrat în progres.
+- `docs/api.md`: secțiunea mea speculativă pentru teste a fost **ștearsă** — rutele reale sunt deja documentate de Andrei mai sus. Secțiunea de tichete rămâne (acolo chiar nu există backend).
+
+**Verificat cu date reale** (Chromium + CDP, seed-ul lui Andrei, cont de profesor): testul capitolului introductiv încărcat cu 6 întrebări × 4 variante, bifat, trimis → **3/6 (50%)**, marcaje ✓ pe variantele corecte, explicațiile afișate, butoane „Nu am înțeles" pe cele 3 întrebări greșite, plus nota „Rezultatul nu a fost înregistrat în progresul tău" (corect: profesorului nu i se ține progres). Secțiunea de progres pe `/dashboard` listează cele 3 capitole ca „netestat". În panelul profesor, lista întrebărilor capitolului se încarcă; creare de întrebare nouă (draft) → 201 cu 4 variante, apoi ștearsă (`DELETE /api/questions/[id]` → 204).
+
+**Verzi:** typecheck curat, **77/77 teste**, lint doar cu warning-ul preexistent.
+
+---
+
 ## 2026-08-11 — Bogdan (Sesiunea 7 frontend, partea 6)
 
 **Ce s-a făcut:** ultima sarcină de frontend din Săpt. 9-10 — pagina elevului cu răspunsurile primite. **Frontendul Săpt. 9-10 e complet.**
