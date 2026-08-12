@@ -6,6 +6,30 @@
 
 ---
 
+## 2026-08-12 — Andrei (Grupa B — backendul pentru „greșelile mele" și dificultate)
+
+Migrare `20260812180000_vederi_greseli_dificultate.sql` (aplicată) + două rute.
+
+**Amândouă măsurile par simple și au fiecare o capcană.** Le-am definit în **vederi SQL**, nu în rute, ca să nu fie reinterpretate diferit de fiecare consumator viitor:
+
+- **„Greșelile mele" e starea curentă, nu istoricul.** Se ia *ultimul* răspuns per întrebare (`latest_answer_per_question`), păstrând doar cele greșite. Dacă elevul a greșit, a înțeles conceptul și a nimerit-o data următoare, întrebarea **iese** din listă. Varianta naivă — „tot ce am greșit vreodată" — produce o listă care crește la nesfârșit și descurajează exact elevul care progresează.
+- **Dificultatea se calculează pe PRIMA întâlnire** a fiecărui elev cu întrebarea (`question_difficulty`), nu pe toate răspunsurile. Altfel reluările de test umflă rata de succes și fac întrebarea să pară mai ușoară decât e. `students` numără elevi distincți — un elev, un vot. E și măsura standard din psihometrie („p-value" al itemului).
+
+**Trei decizii mai mici, dar care s-ar fi simțit:**
+- `wrong_pct` e **`null`**, nu `0`, la o întrebare pe care n-a încercat-o nimeni. „N-a încercat-o nimeni" și „n-a greșit-o nimeni" sunt lucruri opuse; cu `0%` ar arăta identic, iar profesorul ar crede că întrebarea e ușoară.
+- Întrebările neîncercate **rămân** în listă, la coadă. Pentru profesor, „n-a încercat-o nimeni" e o informație, nu o absență.
+- `/api/questions/dificultate` e **doar pentru profesor**. Un elev n-are ce face cu ea, iar „82% au greșit" i-ar spune indirect că varianta pe care a ales-o el, ca majoritatea, e probabil greșită.
+
+Elevul își vede doar propriile greșeli: `user_id` vine din sesiune, iar un `user_id` din query string e ignorat — test dedicat, ca la tichete.
+
+**Notă tehnică:** vederile nu păstrează `NOT NULL` din tabelele de sub ele, deci tipurile generate ies nullable chiar dacă datele nu sunt. Filtrat explicit, nu forțat cu `!`.
+
+**Verzi:** typecheck curat, lint curat, **148/148 teste** (+10).
+
+**Rămâne pentru Bogdan:** pagina `/greseli` și afișarea dificultății în `/profesor`. Contractele sunt scrise în TASKS.
+
+---
+
 ## 2026-08-12 — Andrei (Etichete — grupa A închisă)
 
 Ultimul rând din grupa A. Migrare `20260812170000_etichete.sql`, aplicată în producție.
