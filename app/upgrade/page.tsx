@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isAllowedCheckoutUrl } from "@/lib/safe-redirect";
 
 // Porneste Stripe Checkout si redirectioneaza userul la pagina de plata.
 // Folosit in doua locuri:
@@ -18,6 +19,11 @@ export default function UpgradePage() {
         if (!res.ok) throw new Error(await res.text());
         const { url } = await res.json();
         if (!url) throw new Error("Raspuns invalid de la server (lipseste url).");
+        // Nu redirectionam nicaieri in afara de Stripe, oricat de „al nostru" ar
+        // parea raspunsul. Vezi lib/safe-redirect.ts.
+        if (!isAllowedCheckoutUrl(url)) {
+          throw new Error("Raspuns invalid de la server (adresa de plata neasteptata).");
+        }
         if (!cancelled) window.location.href = url;
       } catch (e) {
         if (!cancelled) {
