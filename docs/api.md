@@ -216,3 +216,17 @@ Response:
 
 `database` e critic (jos → 503); `stripe` e informativ (jos, dar DB ok → 200 „degraded").
 Rezultatul e cache-uit ~15s. Detalii în `docs/monitoring.md`.
+
+---
+
+## Tichete de mentorat — contract vechi (înlocuit)
+
+⚠️ Secțiunea speculativă scrisă în avans de Bogdan (`POST /api/tickets`, `GET /api/tickets`,
+`POST /api/tickets/[id]/answer`, cu tichetul ca pereche întrebare/răspuns) a fost **ștearsă**:
+backendul e implementat, iar contractul real e documentat mai sus, în tabelul de rute și în
+secțiunea de tichete. Diferența esențială: tichetul e un **fir de mesaje**
+(`POST /api/tickets/[id]/messages`), nu un câmp `answer`, iar `lesson_id` e **obligatoriu** la
+creare.
+
+Frontendul din `help-button.tsx`, `teacher-tickets.tsx` și `intrebari/my-tickets.tsx` e încă
+scris pe forma veche — vezi rândurile 🟡 din Săpt. 9-10 în `TASKS.md`.

@@ -22,11 +22,14 @@
 - **Backend Săpt. 3-6:** complet și în producție (auth, Stripe, conținut + rol profesor, monitorizare) — plus teste + CI + unelte DX + validare env + migrări/tipuri Supabase
 - **Frontend Săpt. 1-4:** complet (landing, `/pricing`, `/dashboard`, `/profil`, buton upgrade)
 - **Frontend Săpt. 5-6 (vedere elev):** complet — listă capitole (accordion pe `/dashboard`) + pagină lecție (`/lectii/[id]`) cu paywall. Plus buton temă zi/noapte pe toate paginile.
+- **Panel profesor (Săpt. 5-6):** complet — formulare „Capitol nou" și „Lecție nouă" pe `/profesor`
 - **Backend Săpt. 7-8:** complet (schema + seed + API întrebări + corectare + progres) — în `main` prin PR #38
-- **Backend Săpt. 9-10:** tichete ca **fir de mesaje**, deschise doar din fereastra lecției, cu context complet pentru profesor (lecție + poziție + fragment selectat + progres la test) — gata; rămâne notificarea pe email (blocată de alegerea serviciului)
-- **Bottleneck:** frontend (Bogdan) — urmează formularul „Lecție nouă" și UI-ul de test grilă (Săpt. 7-8)
+- **Frontend Săpt. 7-8:** complet — pagină test grilă, scor, progres pe dashboard, formular „Întrebare test"; conectat la API-ul real și verificat E2E
+- **Backend Săpt. 9-10:** tichete ca **fir de mesaje**, deschise doar din fereastra lecției, cu context complet pentru profesor (lecție + poziție + fragment selectat + progres la test) — în `main` prin PR #39/#40; rămâne notificarea pe email (blocată de alegerea serviciului)
+- **Frontend Săpt. 9-10:** UI-ul există (buton „Nu am înțeles", tichete la profesor, `/intrebari`), dar e scris pe **contractul vechi** și e **dezactivat în producție** prin `TICHETE_UI_ACTIVE` — de reconectat la firul de mesaje, vezi tabelul Săpt. 9-10
 - **Faza 2 (direcție de produs):** planificată — vezi secțiunea de la finalul fișierului. Decis în ședința din 12 august: jurnal de evenimente acum, repetiție spațiată cu **FSRS**, structura materiei în patru secțiuni, corectare stratificată (auto pe ce e fix, pre-notare pe text liber, mentor integral pe testele mari), public-țintă a XI-a + a XII-a
-- **Ultima actualizare:** 2026-08-12 (sarcini de Fază 2, din cercetarea de produs)
+- **Bottleneck:** reconectarea frontendului de tichete la contractul de mesaje (Bogdan)
+- **Ultima actualizare:** 2026-08-12 (Faza 2 + merge `main` → `teste-progres`)
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -62,7 +65,7 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Alegere și configurare librărie UI (ex: Tailwind CSS + shadcn/ui) | Bogdan | `setup-ui` | Momentan Tailwind curat (fără shadcn) — de decis dacă mai adăugăm shadcn. |
+| ✅ | Alegere și configurare librărie UI (ex: Tailwind CSS + shadcn/ui) | Bogdan | `setup-ui` | **Decis: Tailwind curat, fără shadcn.** Primitive de stil în `app/_components/ui.ts` (`btn`, `inputCls`, `cardCls`, `listCls`, `badgeCls`). Motivele + lista de componente: `docs/components.md`. |
 | ✅ | Layout de bază al aplicației (header, sidebar, footer) | Bogdan | `landing-si-pricing` | `app/_components/site-header.tsx` + `site-footer.tsx` (header adaptat la sesiune). Sidebar: când apare zona de elev. |
 | ✅ | Pagină de start / landing page placeholder | Bogdan | `landing-si-pricing` | `app/page.tsx` — hero + features. `/` făcută publică în `proxy.ts`. |
 
@@ -98,7 +101,7 @@
 | ✅ | Pagină lecție (text + embed video) | Bogdan | `dashboard-elev` | `app/lectii/[id]/` — conținut + buton video; tratează `402` (paywall) și `404`. Verificat în browser. |
 | ✅ | Autentificare profesor (rol distinct în Clerk/Supabase) | Andrei | `panel-profesor-capitole` | `users.role`; promovare din `/admin` (buton) via `POST /api/admin/set-role` |
 | ✅ | Panel profesor — formular "Capitol nou" | Bogdan | `dashboard-elev` | `app/profesor/` (gated pe rol teacher) — formular titlu/descriere/gratuit/publică → `POST /api/chapters` + listă capitole. Link „Profesor" în `AppHeader` doar pt. teacher. Verificat E2E în browser. |
-| ⬜ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `panel-profesor-capitole` | `POST /api/lessons` |
+| ✅ | Panel profesor — formular "Lecție nouă" cu editor text | Bogdan | `dashboard-elev` | `app/profesor/teacher-lessons.tsx` — select capitol / titlu / conținut (textarea + previzualizare) / link video / publică → `POST /api/lessons` + lista lecțiilor capitolului. Capitolele sunt încărcate o singură dată în `teacher-panel.tsx`. |
 | ✅ | API routes pentru CRUD capitole și lecții | Andrei | `panel-profesor-capitole` | `/api/chapters`, `/api/lessons` (+ `[id]`); detalii în `docs/api.md` |
 
 ---
@@ -109,26 +112,31 @@
 |---|---|---|---|---|
 | ✅ | Schema DB: tabele `questions`, `answers`, `student_progress` | Andrei | `teste-progres` | Migrare `20260806120000_teste_progres.sql` + tipuri; RLS activat, grant `service_role`. Detalii în `docs/database.md` |
 | ✅ | Date placeholder: 5-10 întrebări grilă per capitol | Andrei | `teste-progres` | `npm run seed:questions` — 6 întrebări × 4 variante per capitol (generic, NU întrebări reale BAC) |
-| ⬜ | Pagină test per capitol (UI grilă) | Bogdan | `teste-progres` | |
-| 🔄 | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | **API gata** (Andrei): `POST /api/chapters/[id]/submit` → `{ score, total, results }`. Rămâne afișarea (Bogdan) |
-| ⬜ | Statistici simple de progres per capitol (UI) | Bogdan | `teste-progres` | |
-| ⬜ | Panel profesor — formular "Întrebare test" | Bogdan | `teste-progres` | |
+| ✅ | Pagină test per capitol (UI grilă) | Bogdan | `teste-progres` | `/teste/[chapterId]` — grilă, paywall 402, feedback per întrebare |
+| ✅ | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | API: `POST /api/chapters/[id]/submit` (Andrei) · afișare scor + feedback per întrebare (Bogdan). Verificat cap-coadă cu date reale. |
+| ✅ | Statistici simple de progres per capitol (UI) | Bogdan | `teste-progres` | Secțiunea „Progresul tău" pe `/dashboard` (pe `GET /api/progress`) |
+| ✅ | Panel profesor — formular „Întrebare test" | Bogdan | `teste-progres` | Variante dinamice (2-6), marcarea răspunsului corect, explicație, draft |
 | ✅ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | `/api/questions` (+ `[id]`, `[id]/answers`), `/api/chapters/[id]/questions`, `/api/progress`. Detalii în `docs/api.md` |
 
 ---
 
 ## Săptămânile 9-10 — Sistem de mentorat (tichete)
 
+> ⚠️ **Tot UI-ul de tichete e dezactivat în producție** prin `TICHETE_UI_ACTIVE`
+> (`app/_components/feature-flags.ts`), fiindcă e scris pe contractul vechi și ar
+> arăta elevului date greșite fără să crape. Codul e la locul lui; reactivarea e o
+> singură linie, după reconectarea la `POST /api/tickets/[id]/messages`.
+
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
 | ✅ | Schema DB: tabel `tickets` | Andrei | `sistem-tichete-mentorat` | Două migrări (aplicate): tichete + `ticket_messages` (fir de discuție) și context de lecție. `docs/database.md` |
-| ⬜ | Buton "Nu am înțeles" în pagina de lecție/test (cu context automat) | Bogdan | `sistem-tichete-mentorat` | API gata. De trimis `lesson_id` + opțional `selection` (text selectat) și `scroll_percent` |
-| ⬜ | Mesaj așteptare afișat elevului (ex: "Răspuns în 24h") | Bogdan | `sistem-tichete-mentorat` | |
+| 🟡 | Buton "Nu am înțeles" în pagina de lecție/test (cu context automat) | Bogdan | `teste-progres` | UI gata (`app/_components/help-button.tsx`), dar scris pe contractul vechi. **De reconectat:** `lesson_id` e obligatoriu, deci butonul de pe `/teste/[chapterId]` (care n-are lecție) trebuie regândit; opțional `selection` + `scroll_percent` |
+| 🟡 | Mesaj așteptare afișat elevului (ex: "Răspuns în 24h") | Bogdan | `teste-progres` | Mesajul de confirmare („răspuns în cel mult 24h" + email) e deja în starea de succes a butonului. Notificarea pe email e însă blocată — de nuanțat textul. |
 | ✅ | API route — creare tichet | Andrei | `sistem-tichete-mentorat` | `POST /api/tickets` — **cere `lesson_id`**; capturează pe server lecția, capitolul, titlul și progresul la test; de la client doar selecția + poziția. `docs/api.md` |
-| ⬜ | Interfață profesor — listă tichete organizate pe capitol | Bogdan | `sistem-tichete-mentorat` | |
-| 🔄 | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `sistem-tichete-mentorat` | **API gata** (Andrei): `POST /api/tickets/[id]/messages` — fir de discuție, status după ultimul vorbitor. Rămâne UI (Bogdan) |
+| 🟡 | Interfață profesor — listă tichete organizate pe capitol | Bogdan | `teste-progres` | Secțiunea „Tichete" din `/profesor` — grupare, filtru, detaliu desfășurabil: gata. **De reconectat** la firul de mesaje și la contextul nou (poziție, fragment selectat, progres la test) |
+| 🟡 | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `teste-progres` | **API gata** (Andrei): `POST /api/tickets/[id]/messages` — fir de discuție, status după ultimul vorbitor. UI-ul lui Bogdan trimite încă la `/answer` și presupune un singur răspuns — **de rescris pe fir** |
 | ❌ | Notificare email elev la primirea răspunsului | Andrei | `sistem-tichete-mentorat` | **Blocat:** nu e ales/configurat un serviciu de email. Locul de apel e marcat în `POST /api/tickets/[id]/messages` |
-| ⬜ | Pagină elev — vizualizare răspuns primit | Bogdan | `sistem-tichete-mentorat` | |
+| 🟡 | Pagină elev — vizualizare răspuns primit | Bogdan | `teste-progres` | `/intrebari` — listă + link în antet: gata. **De reconectat** la fir (mai multe mesaje per tichet, nu un singur `answer`) |
 
 ---
 

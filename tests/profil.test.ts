@@ -68,6 +68,14 @@ describe("/profil", () => {
     expect(html).toContain('href="/upgrade"');
   });
 
+  it("profesor fara abonament: fara buton de upgrade, acces prin rol", async () => {
+    h.appUser = student({ role: "teacher", subscription_status: "free" });
+    const html = await render();
+    expect(html).not.toContain("Upgrade la Premium");
+    expect(html).not.toContain('href="/upgrade"');
+    expect(html).toContain("acces complet la conținut, fără abonament");
+  });
+
   it("premium activ: fara upgrade, arata data de valabilitate", async () => {
     const end = new Date(Date.now() + 30 * 86_400_000).toISOString();
     h.appUser = student({ subscription_status: "active", subscription_end_date: end });

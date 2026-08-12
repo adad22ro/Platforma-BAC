@@ -2,6 +2,7 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { getCurrentAppUser, isTeacher } from "@/lib/current-user";
 import { ThemeToggle } from "./theme-toggle";
+import { TICHETE_UI_ACTIVE } from "./feature-flags";
 
 // Header pentru zona logata (dashboard, lectii, profil).
 // Diferit de SiteHeader (public): are meniul de cont Clerk, nu CTA-uri de inregistrare.
@@ -28,6 +29,14 @@ export async function AppHeader() {
               className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
             >
               Profesor
+            </Link>
+          )}
+          {TICHETE_UI_ACTIVE && (
+            <Link
+              href="/intrebari"
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            >
+              Întrebările mele
             </Link>
           )}
           <Link

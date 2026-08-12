@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentAppUser, isTeacher } from "@/lib/current-user";
 import { AppHeader } from "../_components/app-header";
-import { TeacherChapters } from "./teacher-chapters";
+import { TeacherPanel } from "./teacher-panel";
 
 export const metadata: Metadata = {
   title: "Panel profesor — Platforma BAC",
@@ -23,7 +23,7 @@ export default async function TeacherPage() {
           Creează și organizează capitolele și lecțiile platformei.
         </p>
         <div className="mt-8">
-          <TeacherChapters />
+          <TeacherPanel />
         </div>
       </main>
     </div>

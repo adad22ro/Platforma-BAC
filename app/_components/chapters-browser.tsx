@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { btn, listCls } from "./ui";
 
 // Formele returnate de API (vezi app/api/chapters + app/api/chapters/[id]/lessons).
 type Chapter = {
@@ -122,7 +123,7 @@ export function ChaptersBrowser() {
   return (
     <section className="mt-8">
       <h2 className="text-xl font-semibold">Capitole</h2>
-      <ul className="mt-4 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+      <ul className={`mt-4 ${listCls}`}>
         {chapters.map((chapter) => {
           const isOpen = openId === chapter.id;
           const state = lessonsByChapter[chapter.id];
@@ -204,6 +205,15 @@ export function ChaptersBrowser() {
                         ))}
                       </ul>
                     ))}
+
+                  {/* Testul capitolului — gating-ul (Premium) e aplicat de API,
+                      deci linkul se afiseaza si pentru capitolele blocate. */}
+                  <Link
+                    href={`/teste/${chapter.id}`}
+                    className={btn("outline", "sm", "mt-2 hover:bg-white dark:hover:bg-zinc-800")}
+                  >
+                    ✎ Dă testul capitolului
+                  </Link>
                 </div>
               )}
             </li>

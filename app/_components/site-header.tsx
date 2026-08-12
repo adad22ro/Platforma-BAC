@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { ThemeToggle } from "./theme-toggle";
+import { btn } from "./ui";
 
 // Header-ul public (landing + /pricing). Server component: citeste sesiunea
 // direct din Clerk, fara flash de continut gresit la hidratare.
@@ -30,7 +31,7 @@ export async function SiteHeader() {
           {userId ? (
             <Link
               href="/dashboard"
-              className="rounded-full bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-500"
+              className={btn("primary", "md")}
             >
               Contul meu
             </Link>
@@ -44,7 +45,7 @@ export async function SiteHeader() {
               </Link>
               <Link
                 href="/sign-up"
-                className="rounded-full bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-500"
+                className={btn("primary", "md")}
               >
                 Începe gratuit
               </Link>
