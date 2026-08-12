@@ -2,13 +2,14 @@ import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 // GET /api/tickets/[id] — tichetul CU firul de mesaje. Doar autorul sau un profesor.
 // 404 (nu 403) pentru un tichet strain: nu confirmam existenta lui.
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   const user = await getCurrentAppUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
+  if (!user) return apiError(401, 'Unauthorized')
 
   const { data: ticket, error } = await supabaseAdmin
     .from('tickets')
@@ -18,9 +19,9 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     .eq('id', id)
     .single()
 
-  if (error || !ticket) return new Response('Not found', { status: 404 })
+  if (error || !ticket) return apiError(404, 'Not found')
   if (!isTeacher(user) && ticket.user_id !== user.id) {
-    return new Response('Not found', { status: 404 })
+    return apiError(404, 'Not found')
   }
 
   const { data: messages, error: mErr } = await supabaseAdmin
@@ -31,7 +32,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (mErr) {
     await logError('tickets', 'GET messages error', { code: mErr.code, message: mErr.message, id })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   return Response.json({ ticket: { ...ticket, messages: messages ?? [] } })
@@ -45,12 +46,12 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   const user = await getCurrentAppUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
+  if (!user) return apiError(401, 'Unauthorized')
 
   const body = await req.json().catch(() => ({}))
   const status = body?.status
   if (status !== 'closed' && status !== 'open') {
-    return new Response('Bad request: status must be "closed" or "open"', { status: 400 })
+    return apiError(400, 'Bad request: status must be "closed" or "open"')
   }
 
   const { data: ticket } = await supabaseAdmin
@@ -59,9 +60,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     .eq('id', id)
     .single()
 
-  if (!ticket) return new Response('Not found', { status: 404 })
+  if (!ticket) return apiError(404, 'Not found')
   if (!isTeacher(user) && ticket.user_id !== user.id) {
-    return new Response('Not found', { status: 404 })
+    return apiError(404, 'Not found')
   }
 
   const { data, error: uErr } = await supabaseAdmin
@@ -73,7 +74,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   if (uErr) {
     await logError('tickets', 'PATCH error', { code: uErr.code, message: uErr.message, id })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   return Response.json({ ticket: data })

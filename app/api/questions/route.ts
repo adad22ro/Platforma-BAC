@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 type AnswerInput = {
   text?: unknown
@@ -50,17 +51,17 @@ export function answerRow(a: AnswerInput, i: number, question_id: string) {
 // utila si ar strica testul, deci daca variantele esueaza stergem si intrebarea.
 export async function POST(req: Request) {
   const user = await getCurrentAppUser()
-  if (!isTeacher(user)) return new Response('Forbidden', { status: 403 })
+  if (!isTeacher(user)) return apiError(403, 'Forbidden')
 
   const body = await req.json().catch(() => ({}))
   const { chapter_id, text, explanation, order_index, published, answers } = body
   if (!chapter_id || !text || typeof text !== 'string') {
-    return new Response('Bad request: chapter_id and text required', { status: 400 })
+    return apiError(400, 'Bad request: chapter_id and text required')
   }
 
   const validated = validateAnswers(answers)
   if ('error' in validated) {
-    return new Response(`Bad request: ${validated.error}`, { status: 400 })
+    return apiError(400, `Bad request: ${validated.error}`)
   }
 
   const { data: question, error } = await supabaseAdmin
@@ -77,9 +78,9 @@ export async function POST(req: Request) {
 
   if (error || !question) {
     // 23503 = foreign key violation (chapter_id inexistent)
-    if (error?.code === '23503') return new Response('Bad request: chapter not found', { status: 400 })
+    if (error?.code === '23503') return apiError(400, 'Bad request: chapter not found')
     await logError('questions', 'POST error', { code: error?.code, message: error?.message })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   const rows = validated.answers.map((a, i) => answerRow(a, i, question.id))
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
   if (aErr) {
     await supabaseAdmin.from('questions').delete().eq('id', question.id)
     await logError('questions', 'POST answers error', { code: aErr.code, message: aErr.message })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   return Response.json({ question: { ...question, answers: created } }, { status: 201 })

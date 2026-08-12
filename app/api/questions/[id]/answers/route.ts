@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
 import { validateAnswers, answerRow } from '@/app/api/questions/route'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 // PUT /api/questions/[id]/answers — inlocuieste TOATE variantele unei intrebari.
 // Doar profesor.
@@ -14,12 +15,12 @@ import { logError } from '@/lib/log-error'
 export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   const user = await getCurrentAppUser()
-  if (!isTeacher(user)) return new Response('Forbidden', { status: 403 })
+  if (!isTeacher(user)) return apiError(403, 'Forbidden')
 
   const body = await req.json().catch(() => ({}))
   const validated = validateAnswers(body?.answers)
   if ('error' in validated) {
-    return new Response(`Bad request: ${validated.error}`, { status: 400 })
+    return apiError(400, `Bad request: ${validated.error}`)
   }
 
   const { data: question } = await supabaseAdmin
@@ -28,7 +29,7 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
     .eq('id', id)
     .single()
 
-  if (!question) return new Response('Not found', { status: 404 })
+  if (!question) return apiError(404, 'Not found')
 
   // Pastram vechiul set ca sa-l putem pune la loc daca inserarea celui nou esueaza.
   // Supabase-js nu ne da o tranzactie, iar o intrebare ramasa fara variante ar
@@ -48,7 +49,7 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
       message: delErr.message,
       id,
     })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   const rows = validated.answers.map((a, i) => answerRow(a, i, id))
@@ -75,7 +76,7 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
       message: insErr.message,
       id,
     })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   return Response.json({ answers: created })

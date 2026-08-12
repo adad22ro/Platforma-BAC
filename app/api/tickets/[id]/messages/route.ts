@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 const MAX_BODY = 5000
 
@@ -16,13 +17,13 @@ const MAX_BODY = 5000
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   const user = await getCurrentAppUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
+  if (!user) return apiError(401, 'Unauthorized')
 
   const payload = await req.json().catch(() => ({}))
   const body = typeof payload?.body === 'string' ? payload.body.trim() : ''
-  if (!body) return new Response('Bad request: body required', { status: 400 })
+  if (!body) return apiError(400, 'Bad request: body required')
   if (body.length > MAX_BODY) {
-    return new Response(`Bad request: body too long (max ${MAX_BODY})`, { status: 400 })
+    return apiError(400, `Bad request: body too long (max ${MAX_BODY})`)
   }
 
   const { data: ticket } = await supabaseAdmin
@@ -31,10 +32,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .eq('id', id)
     .single()
 
-  if (!ticket) return new Response('Not found', { status: 404 })
+  if (!ticket) return apiError(404, 'Not found')
 
   const teacher = isTeacher(user)
-  if (!teacher && ticket.user_id !== user.id) return new Response('Not found', { status: 404 })
+  if (!teacher && ticket.user_id !== user.id) return apiError(404, 'Not found')
 
   const now = new Date().toISOString()
   const { data: message, error } = await supabaseAdmin
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (error) {
     await logError('tickets', 'POST message error', { code: error.code, message: error.message, id })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   const { error: tErr } = await supabaseAdmin

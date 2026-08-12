@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser } from '@/lib/current-user'
 import { checkChapterAccess, accessErrorResponse } from '@/lib/chapter-access'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 // GET /api/chapters/[id]/questions — testul grila al unui capitol.
 // Profesor: toate intrebarile (inclusiv draft). Elev: doar publicate, si doar cu
@@ -33,7 +34,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const { data: questions, error } = await query
   if (error) {
     await logError('questions', 'GET by chapter error', { code: error.code, message: error.message, id })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   if (!questions?.length) return Response.json({ questions: [] })
@@ -50,7 +51,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (aErr) {
     await logError('questions', 'GET answers error', { code: aErr.code, message: aErr.message, id })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   const byQuestion = new Map<string, typeof answers>()

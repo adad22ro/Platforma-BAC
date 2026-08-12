@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser } from '@/lib/current-user'
 import { checkChapterAccess, accessErrorResponse } from '@/lib/chapter-access'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 type Submission = { question_id?: unknown; answer_id?: unknown }
 
@@ -14,14 +15,14 @@ type Submission = { question_id?: unknown; answer_id?: unknown }
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   const user = await getCurrentAppUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
+  if (!user) return apiError(401, 'Unauthorized')
 
   const access = await checkChapterAccess(id, user)
   if (!access.ok) return accessErrorResponse(access.status)
 
   const body = await req.json().catch(() => ({}))
   if (!Array.isArray(body?.answers)) {
-    return new Response('Bad request: answers array required', { status: 400 })
+    return apiError(400, 'Bad request: answers array required')
   }
 
   // Ce a bifat elevul, indexat pe intrebare (ultima bifa castiga).
@@ -41,10 +42,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (qErr) {
     await logError('questions', 'submit questions error', { code: qErr.code, message: qErr.message, id })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
   if (!questions?.length) {
-    return new Response('Bad request: chapter has no published questions', { status: 400 })
+    return apiError(400, 'Bad request: chapter has no published questions')
   }
 
   // Toate variantele, nu doar cele corecte: ne trebuie si explicatia celei alese
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (aErr) {
     await logError('questions', 'submit answers error', { code: aErr.code, message: aErr.message, id })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   const correctByQuestion = new Map(

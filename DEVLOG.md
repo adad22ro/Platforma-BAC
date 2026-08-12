@@ -6,6 +6,23 @@
 
 ---
 
+## 2026-08-12 — Andrei (Format unic de eroare în API)
+
+Pregătire pentru al doilea client (aplicația mobilă discutată). Rutele întorceau text simplu — `new Response('Forbidden', { status: 403 })`. Frontendul web se descurcă fiindcă se uită **doar la codul HTTP** (verificat: nicio componentă nu citește corpul erorii), dar un client mobil are nevoie de un cod stabil pe care să-l mapeze la un mesaj tradus.
+
+**86 de răspunsuri convertite**, în 16 fișiere, prin codemod — nu manual. Forma: `{ error: "<cod>", message?: "<text>" }`.
+
+Trei decizii:
+- **`error` e string la nivelul de sus**, nu obiect imbricat. Singurul corp de eroare care exista deja era `{ error: 'premium_required' }` de la 402, iar formatul nou e **superset** peste el — deci zero schimbări cu ruptură. Cele 128 de teste au trecut neatinse, ceea ce confirmă și raționamentul.
+- **Webhook-urile nu se ating.** `/api/webhooks/*` răspund lui Stripe și Clerk, care așteaptă text simplu și 2xx. Un format intern nu are ce căuta acolo.
+- **`message` e pentru dezvoltator**, nu pentru afișare — clientul își alege textul după `error`. De aceea nu se traduce.
+
+**O greșeală prinsă de teste:** codemod-ul adăuga importul cu un regex ancorat la începutul fișierului (`/^import .*\n/`, fără flag `m`), deci a sărit peste toate fișierele care încep cu un comentariu — adică toate 16. Typecheck-ul și 36 de teste au picat imediat. Notabil fiindcă e exact genul de eroare pe care un codemod o produce tăcut și în masă: dacă suita n-ar fi acoperit rutele, ar fi ajuns în producție ca 500 pe fiecare cale de eroare.
+
+**Verzi:** typecheck curat, lint curat, **134/134 teste** (+6).
+
+---
+
 ## 2026-08-12 — Andrei (Faza 2, grupa A — explicație per variantă)
 
 Migrare `20260812160000_explicatie_per_varianta.sql`, aplicată în producție prin CLI. Coloană opțională pe `answers`.
