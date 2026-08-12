@@ -26,9 +26,10 @@
 - **Backend Săpt. 7-8:** complet (schema + seed + API întrebări + corectare + progres) — în `main` prin PR #38
 - **Frontend Săpt. 7-8:** complet — pagină test grilă, scor, progres pe dashboard, formular „Întrebare test"; conectat la API-ul real și verificat E2E
 - **Backend Săpt. 9-10:** tichete ca **fir de mesaje**, deschise doar din fereastra lecției, cu context complet pentru profesor (lecție + poziție + fragment selectat + progres la test) — în `main` prin PR #39/#40; rămâne notificarea pe email (blocată de alegerea serviciului)
-- **Frontend Săpt. 9-10:** UI-ul există (buton „Nu am înțeles", tichete la profesor, `/intrebari`), dar e scris pe **contractul vechi** de tichete (pereche întrebare/răspuns, `POST /api/tickets/[id]/answer`). Backendul a trecut între timp pe fir de mesaje — **de reconectat**, vezi tabelul Săpt. 9-10.
+- **Frontend Săpt. 9-10:** UI-ul există (buton „Nu am înțeles", tichete la profesor, `/intrebari`), dar e scris pe **contractul vechi** și e **dezactivat în producție** prin `TICHETE_UI_ACTIVE` — de reconectat la firul de mesaje, vezi tabelul Săpt. 9-10
+- **Faza 2 (direcție de produs):** planificată — vezi secțiunea de la finalul fișierului. Decis în ședința din 12 august: jurnal de evenimente acum, repetiție spațiată cu **FSRS**, structura materiei în patru secțiuni, corectare stratificată (auto pe ce e fix, pre-notare pe text liber, mentor integral pe testele mari), public-țintă a XI-a + a XII-a
 - **Bottleneck:** reconectarea frontendului de tichete la contractul de mesaje (Bogdan)
-- **Ultima actualizare:** 2026-08-12 (merge `main` → `teste-progres`)
+- **Ultima actualizare:** 2026-08-12 (Faza 2 + merge `main` → `teste-progres`)
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -153,12 +154,152 @@
 
 ---
 
+## Faza 2 — direcție de produs (din cercetare, decizii din 12 august 2026)
+
+> Sursa: `docs/duolingo-research.md`, `docs/bac-barem-analiza.md`, `docs/viziune-produs.md`,
+> `docs/rezumat-sedinta.md`. Sarcinile de mai jos sunt **doar** cele pentru care există
+> decizie. Ce depinde de un punct încă nedecis stă în „Blocat / În așteptare", nu aici.
+>
+> **Regula de filtrare, asumată:** fiecare element trebuie să răspundă la „îl apropie pe
+> elev de o notă mai mare la BAC?". Dacă răspunsul e „nu, dar crește implicarea", nu intră.
+> **Nu facem:** vieți/hearts, ligi publice, XP ca metrică centrală, teste A/B, microservicii.
+
+### A. Jurnal de evenimente — **decis: acum** (blochează grupele B și E)
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Migrare `answer_events` — append-only: elev, întrebare, variantă aleasă, corect, timestamp | Andrei | `answer-events` | `student_progress` face upsert și pierde istoricul. Rămâne ca vedere agregată; evenimentele devin sursa de adevăr |
+| ⬜ | Scrierea evenimentelor din `POST /api/chapters/[id]/submit` | Andrei | `answer-events` | O linie per răspuns, nu per încercare. Atenție: nu se scrie pentru profesor (ca la progres) |
+| ⬜ | Explicație **per variantă** — coloană pe `answers` | Andrei | `answer-events` | Avem `questions.explanation` la nivel de întrebare, **nefolosit în UI**. Ideea: nu explici doar răspunsul corect, ci de ce fiecare variantă greșită e greșită |
+| ⬜ | Etichete pe întrebări (`tags`) pentru stăpânire per concept | Andrei | `answer-events` | Precondiție pentru „ce știi / ce nu știi". De decis dacă etichetele intră de la început sau după |
+
+### B. Ce iese din jurnal (ieftin, valoare mare)
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | **„Greșelile mele"** — pagină elev cu întrebările ratate, grupate pe capitol | Bogdan | `greselile-mele` | Cea mai utilă funcție pentru un elev de examen. Cere A |
+| ⬜ | API pentru „greșelile mele" | Andrei | `greselile-mele` | Interogare pe `answer_events`, ultimul răspuns per întrebare |
+| ⬜ | **Dificultate reală per întrebare** (% elevi care greșesc) în `/profesor` | Andrei + Bogdan | `statistici-intrebari` | Un `GROUP BY`, zero ML. Îi spune profesorului ce să reexplice |
+| ⬜ | Afișarea explicațiilor imediat după corectare | Bogdan | `greselile-mele` | Datele vin din A. Explicația greșelii e necesitate pedagogică, nu funcție premium |
+
+### C. Baremul ca date
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Codificarea baremului ca tabel de criterii cu praguri | Andrei | `barem-date` | Baremul e o **constantă**: rubrica de redactare e identică caracter cu caracter în 9 din 11 bareme oficiale |
+| ⬜ | Corectare **strat 1, determinist** — număr de cuvinte, conectori, părți componente, prezența citatului | Andrei | `barem-date` | ~20 din 90 de puncte, exact, fără ambiguitate. Nu cere AI |
+| ⬜ | Autoevaluare pe barem — elevul se notează pe grila oficială | Bogdan | `barem-date` | Cel mai ieftin mod de a preda baremul |
+| ⬜ | Lecție „cum se punctează" — cele ~32 de puncte care se iau pe formă | ❓ | — | Conținut, nu cod. Se învață în cinci minute și foarte puțini elevi o știu |
+
+### D. AI faza 1 — în lot, offline, fără cereri de la elevi
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Script de generare întrebări + explicații per variantă (generează → al doilea model evaluează → alege) | Andrei | `ai-generare-continut` | Costul e o singură dată, nu per elev. Necesită A (explicație per variantă) |
+| ⬜ | Pagină de revizie în `/profesor` — aprobă / editează / respinge | Bogdan | `ai-generare-continut` | **Profesorul devine revizor, nu autor** — asta deblochează gâtuirea de conținut |
+| ⬜ | Etichetare automată a conținutului existent | Andrei | `ai-generare-continut` | Depinde de etichetele din A |
+
+### E. Motivație — adaptat, nu copiat
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | **Streak cu îngheț** — cele două, obligatoriu împreună | Andrei + Bogdan | `motivatie` | Zile în care ai învățat ceva, nu zile pe aplicație. Fără îngheț devine pedeapsă: cine ratează duminica abandonează complet |
+| ⬜ | **Nota estimată** în loc de XP | Andrei + Bogdan | `motivatie` | Singura metrică pe care un elev de a XII-a o simte reală. Cere A |
+| ⬜ | Numărătoare inversă **cu plan** | Bogdan | `motivatie` | „47 de zile, n-ai atins Integralele" bate „mai sunt 47 de zile" |
+| ⬜ | Ecranul de revenire după absență | Bogdan | `motivatie` | „Hai să recuperăm", nu „ai pierdut 14 zile". Optimizăm pentru cel care a lipsit, nu doar pentru cel activ |
+
+### F. Gramatică și tehnic
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | **LanguageTool** self-hostat pentru ortografie/punctuație | Andrei | `gramatica` | Cost zero per corectare, explicabil, nu inventează. Se prezintă ca **sugestie**, nu verdict — orice corector dă fals-pozitive |
+| ⬜ | Cache pe `/api/chapters` (`use cache`, Next 16) | Andrei | `cache-continut` | ~200ms per cerere pentru date care se schimbă săptămânal |
+| ⬜ | Nivel intermediar în ierarhie (`chapters → units → lessons`) | Andrei | — | Doar dacă un capitol ajunge la ~30 de lecții. Momentan nu e nevoie |
+
+### G. Structura materiei — **structura decisă, ordinea nu**
+
+Patru secțiuni, fiecare cu **materie + exerciții**: **Gramatică**, **Subiectul I**,
+**Subiectul II**, **Subiectul III**. Cu care începem se discută încă cu profesorul
+(vezi „Blocat / În așteptare").
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Modelarea celor patru secțiuni în schema de conținut | Andrei | `structura-materie` | Azi avem `chapters → lessons`, plat. Secțiunea devine nivelul de deasupra capitolului — vezi și rândul „nivel intermediar" din F, care se rezolvă odată cu asta |
+| ⬜ | Separarea „materie" vs. „exerciții" în fiecare secțiune | Andrei | `structura-materie` | De decis dacă e un tip pe lecție sau două liste distincte per capitol |
+| ⬜ | Migrarea conținutului existent pe structura nouă | Andrei | `structura-materie` | Cele 3 capitole de seed sunt generice; migrarea e ieftină acum, cât nu există conținut real |
+| ⬜ | Navigare pe secțiuni în `/dashboard` | Bogdan | `structura-materie` | Patru secțiuni în loc de o listă plată de capitole |
+
+### H. Repetiție spațiată și teste recurente — **decis: FSRS**
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Integrare **FSRS** — planificator de repetiție per elev × concept | Andrei | `repetitie-fsrs` | Ales FSRS, nu HLR: mai modern și întreținut activ (HLR e din 2016). Cere jurnalul de evenimente (A) — fără istoric per răspuns nu are pe ce rula |
+| ⬜ | **Teste de recapitulare** generate din planificator | Andrei + Bogdan | `repetitie-fsrs` | Testul vine când modelul spune că elevul e pe cale să uite, nu la interval fix |
+| ⬜ | **Teste de gramatică** pe același planificator | Andrei | `repetitie-fsrs` | Decis: aceeași cadență ca restul, **un singur mecanism**, nu un al doilea sistem pe calendar |
+| ⬜ | **Test de nivel la început** — grilă inițială care stabilește de unde pornește elevul | Andrei + Bogdan | `test-nivel` | Primul contact cu platforma. Alimentează starea inițială din FSRS, ca elevul să nu reia ce știe deja |
+| ⬜ | **Test general la fiecare 3 capitole terminate** | Andrei + Bogdan | `teste-mari` | Declanșat de progres, nu de calendar. Corectare: vezi I |
+| ⬜ | **Simulare cronometrată de 3 ore** | Andrei + Bogdan | `teste-mari` | Mulți elevi nu pică din necunoaștere, ci din gestionarea timpului |
+
+### I. Corectarea — **regula decisă**
+
+> **Ce e fix și se poate automatiza fără ambiguitate, se autocorectează integral.**
+> **Textul liber nu primește niciodată notă automată** — AI-ul doar pre-notează, pentru mentor.
+> **Testele mari (la 3 capitole) și simulările se corectează integral de mentor** — sunt cele
+> care contează, iar acolo nu vrem greșeli de corectură.
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Autocorectare completă pe cerințele cu răspuns fix / structură fixă | Andrei | `corectare-straturi` | Grile, potriviri, cerințe cu răspuns unic. Extinde ce există deja la `POST /api/chapters/[id]/submit` |
+| ⬜ | **Pre-notare deterministă** pe text liber (număr de cuvinte, părți componente, conectori, prezența citatului) | Andrei | `corectare-straturi` | Vezi și C. **Limitat la criteriile cu prag verificabil fără interpretare** — restul rămân sugestii, nu verdicte |
+| ⬜ | **Pre-notare AI pe barem**, criteriu cu criteriu — **doar pentru mentor**, niciodată notă finală | Andrei | `corectare-straturi` | Baremul dă chiar vocabularul de notare („adecvată și nuanțată" = 2p). Nu-i cerem să „noteze eseul", ci să aplice un criteriu cu praguri |
+| ⬜ | Interfața mentorului pentru corectarea testelor mari | Bogdan | `corectare-straturi` | Lucrarea + pre-notările + autoevaluarea elevului, pe aceeași grilă oficială |
+| ⬜ | Autoevaluarea elevului ca **strat 0** pe text liber | Bogdan | `barem-date` | Elevul se notează pe grila oficială înainte să ajungă la mentor. Cost zero, scalează, și predă exact competența care aduce punctele pe formă. Diferența dintre autoevaluare și nota reală e cea mai bună lecție |
+| ⬜ | **Capacitatea de corectare** — câte lucrări pe săptămână duce un mentor | ❓ | — | Testul la 3 capitole + simulările, corectate integral de om, sunt articolul cu cel mai mare volum din sistem. La 20 de elevi merge; plafonul trebuie **calculat**, nu descoperit |
+
+### J. Secțiune remedială — greșelile frecvente
+
+> **Principiul:** dacă elevul a trecut prin lecția X și tot greșește, retrimiterea la
+> lecția X nu ajută. Are nevoie de **altă** explicație, nu de aceeași a doua oară.
+>
+> **Cum generăm — decis: în lot, per neînțelegere, nu live per elev.** Neînțelegerile
+> sunt un set mărginit (o confuzie e aceeași la 200 de elevi), deci se generează o dată,
+> se revizuiesc o dată și se **servesc** personalizat. Pentru elev e instant, fiindcă
+> lecția există deja în DB; generarea live l-ar pune să aștepte zeci de secunde exact
+> când e frustrat. E și modelul Duolingo: conținut generat offline, personalizare la
+> servire.
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Identificarea tiparelor de greșeală per elev | Andrei | `remediere` | Din `answer_events` (A) + etichete. Nu „ce a greșit o dată", ci ce se repetă |
+| ⬜ | **Catalogul de neînțelegeri** — set mărginit, derivat din variantele greșite și etichete | Andrei | `remediere` | Unitatea de remediere. Fără el, generarea n-are pe ce să se lege |
+| ⬜ | **Generator de lecții remediale, în lot** — una per neînțelegere, cu altă abordare decât lecția originală | Andrei | `remediere` | Extinde D. Intrarea: neînțelegerea + lecția pe care elevul a parcurs-o deja (ca să nu repete aceeași explicație) |
+| ⬜ | **Revizie triată** — al doilea model dă scor de încredere; profesorul vede doar ce e sub prag + un eșantion aleator | Andrei + Bogdan | `remediere` | Ca profesorul să revizuiască zeci, nu sute. Efortul e front-loaded: primul lot cere atenție, apoi devine marginal |
+| ⬜ | Servirea lecției potrivite tiparului elevului | Andrei | `remediere` | Personalizarea se face aici, la servire — conținutul rămâne static |
+| ⬜ | Teste țintite pe greșelile proprii | Andrei + Bogdan | `remediere` | Extinde „Greșelile mele" (B) de la listă la exercițiu |
+| ⬜ | Secțiune dedicată în UI | Bogdan | `remediere` | Separată de parcursul normal |
+| ⬜ | Control de calitate pe generator — eșantion verificat periodic | ❓ | — | Româna are interpretare, iar un model care sună convingător și e greșit e mai periculos decât unul absent. Eșantionul e singurul mod de a afla că pragul de încredere e prost calibrat |
+
+### Public-țintă — **decis**
+
+Principal: **elevii de clasa a XI-a și a XII-a.** Secundar: **promoțiile anterioare**
+(31,7% promovabilitate față de 79,7% la promoția curentă — cea mai mare nevoie și cea mai
+mare disponibilitate de a plăti). Includerea clasei a XI-a e o **extindere față de tot ce
+s-a documentat până acum**: documentele de programă și barem presupun exclusiv clasa a
+XII-a. De reevaluat fragmentarea materiei în consecință.
+
+---
+
 ## Blocat / În așteptare
 
 | Sarcină | Motiv blocare | Cine deblochează |
 |---|---|---|
 | Structura reală de capitole BAC | Profesorul partener nu este disponibil încă | Profesorul partener |
 | Conținut real lecții | Idem | Profesorul partener |
+| **Ordinea secțiunilor** — cu care dintre cele patru începem | Structura e decisă (vezi G); ordinea se discută cu profesorul | Gabi + profesorul partener |
+| **Model free vs. premium** | Nedecis. Se vrea **o formă de free**, dar nu e ales tipul: *free-tier permanent* (acces la învățare, se plătește pentru mentorat/AI/simulări) sau *trial pe durată limitată*. Blochează gating-ul funcțiilor noi (B, D) — nu se știe ce e gratuit și ce nu | Gabi |
+| **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Gabi |
+| **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Gabi |
+| Structura reală de capitole în interiorul secțiunilor | Cele patru secțiuni sunt decise; ce conține fiecare, nu | Profesorul partener |
 
 ---
 

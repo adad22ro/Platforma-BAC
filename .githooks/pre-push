@@ -4,15 +4,50 @@
 # (setat automat de scriptul `prepare` din package.json la `npm install`).
 #
 # Sari peste — rar, cand chiar stii ce faci: git push --no-verify
-set -e
+#
+# Toata iesirea se scrie SI in .githooks/last-run.log (gitignored). Motivul:
+# pe 12 aug 2026 hook-ul a picat de doua ori, s-a vindecat singur la a doua
+# incercare, iar cauza n-a mai putut fi aflata — log-urile npm se rotesc dupa
+# 10 rulari si disparusera pana sa le citim. Log-ul de aici supravietuieste
+# pana la urmatoarea rulare, deci esecul e diagnosticabil dupa ce s-a produs.
 
-echo "▶ pre-push: lint..."
-npm run lint
+ROOT=$(git rev-parse --show-toplevel)
+LOG="$ROOT/.githooks/last-run.log"
+FAILLOG="$ROOT/.githooks/last-failure.log"
+STATUS="$ROOT/.githooks/.last-status"
 
-echo "▶ pre-push: typecheck..."
-npm run typecheck
+{
+  echo "=== pre-push $(date '+%Y-%m-%d %H:%M:%S') ==="
+  echo "branch: $(git rev-parse --abbrev-ref HEAD)  commit: $(git rev-parse --short HEAD)"
+} > "$LOG"
 
-echo "▶ pre-push: test..."
-npm test
+# Ruleaza un pas, arata iesirea pe ecran SI o pune in log, pastrand codul de
+# iesire al comenzii (nu al lui tee — de aceea trece printr-un fisier de stare;
+# `sh` POSIX n-are PIPESTATUS).
+run() {
+  desc="$1"
+  shift
+  echo "▶ pre-push: $desc..."
+  echo "--- $desc ---" >> "$LOG"
+  { "$@" 2>&1; echo $? > "$STATUS"; } | tee -a "$LOG"
+  st=$(cat "$STATUS")
+  rm -f "$STATUS"
+  if [ "$st" -ne 0 ]; then
+    # Pastrat separat: $LOG e suprascris la urmatoarea rulare, iar daca
+    # reincerci push-ul si trece, dovada esecului dispare — exact ce s-a
+    # intamplat pe 12 aug 2026.
+    cp "$LOG" "$FAILLOG"
+    echo ""
+    echo "✗ pre-push: '$desc' a picat (cod $st). Push oprit."
+    echo "  Log pastrat: $FAILLOG"
+    echo "  Daca a mai trecut verde cu putin timp inainte, vezi ERRORS.md #019"
+    echo "  (cache vitest corupt): rm -rf node_modules/.vite node_modules/.vitest"
+    exit "$st"
+  fi
+}
 
-echo "✓ pre-push OK"
+run "lint" npm run lint
+run "typecheck" npm run typecheck
+run "test" npm test
+
+echo "✓ pre-push OK" | tee -a "$LOG"
