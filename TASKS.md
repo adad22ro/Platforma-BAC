@@ -225,7 +225,7 @@ XII-a. De reevaluat fragmentarea materiei în consecință.
 | Structura reală de capitole BAC | Profesorul partener nu este disponibil încă | Profesorul partener |
 | Conținut real lecții | Idem | Profesorul partener |
 | **Cu ce conținut începem** (Subiectul II vs. cronologic) | Se așteaptă consultarea cu profesorul | Gabi + profesorul partener |
-| **Model free vs. premium** | Nedecis. Blochează gating-ul funcțiilor noi (B, D) — nu se știe ce e gratuit și ce nu | Gabi |
+| **Model free vs. premium** | Nedecis. Se vrea **o formă de free**, dar nu e ales tipul: *free-tier permanent* (acces la învățare, se plătește pentru mentorat/AI/simulări) sau *trial pe durată limitată*. Blochează gating-ul funcțiilor noi (B, D) — nu se știe ce e gratuit și ce nu | Gabi |
 | **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Gabi |
 | **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Gabi |
 | Evaluarea textului liber (Subiectele I.B + III = 50 din 90 p.) | Propunerea e **stratificat** (determinist → AI pe barem → mentor), nevalidată | Gabi |
