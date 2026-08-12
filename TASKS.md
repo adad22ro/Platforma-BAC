@@ -23,11 +23,12 @@
 - **Frontend Săpt. 1-4:** complet (landing, `/pricing`, `/dashboard`, `/profil`, buton upgrade)
 - **Frontend Săpt. 5-6 (vedere elev):** complet — listă capitole (accordion pe `/dashboard`) + pagină lecție (`/lectii/[id]`) cu paywall. Plus buton temă zi/noapte pe toate paginile.
 - **Panel profesor (Săpt. 5-6):** complet — formulare „Capitol nou" și „Lecție nouă" pe `/profesor`
-- **Backend Săpt. 7-8:** complet — schema + date placeholder + API (întrebări, corectare, progres)
-- **Frontend Săpt. 7-8:** complet — pagină test grilă, scor, progres pe dashboard, formular „Întrebare test"
-- **Frontend Săpt. 9-10:** complet — buton „Nu am înțeles", listă tichete la profesor (+ formular de răspuns), pagina `/intrebari` a elevului
-- **Bottleneck:** backend Săpt. 9-10 (Andrei) — tabelul `tickets` + rutele de tichete din docs/api.md
-- **Ultima actualizare:** 2026-08-11
+- **Backend Săpt. 7-8:** complet (schema + seed + API întrebări + corectare + progres) — în `main` prin PR #38
+- **Frontend Săpt. 7-8:** complet — pagină test grilă, scor, progres pe dashboard, formular „Întrebare test"; conectat la API-ul real și verificat E2E
+- **Backend Săpt. 9-10:** tichete ca **fir de mesaje**, deschise doar din fereastra lecției, cu context complet pentru profesor (lecție + poziție + fragment selectat + progres la test) — în `main` prin PR #39/#40; rămâne notificarea pe email (blocată de alegerea serviciului)
+- **Frontend Săpt. 9-10:** UI-ul există (buton „Nu am înțeles", tichete la profesor, `/intrebari`), dar e scris pe **contractul vechi** de tichete (pereche întrebare/răspuns, `POST /api/tickets/[id]/answer`). Backendul a trecut între timp pe fir de mesaje — **de reconectat**, vezi tabelul Săpt. 9-10.
+- **Bottleneck:** reconectarea frontendului de tichete la contractul de mesaje (Bogdan)
+- **Ultima actualizare:** 2026-08-12 (merge `main` → `teste-progres`)
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -114,7 +115,7 @@
 | ✅ | Logică corectare automată + afișare scor | Andrei + Bogdan | `teste-progres` | API: `POST /api/chapters/[id]/submit` (Andrei) · afișare scor + feedback per întrebare (Bogdan). Verificat cap-coadă cu date reale. |
 | ✅ | Statistici simple de progres per capitol (UI) | Bogdan | `teste-progres` | Secțiunea „Progresul tău" pe `/dashboard` (pe `GET /api/progress`) |
 | ✅ | Panel profesor — formular „Întrebare test" | Bogdan | `teste-progres` | Variante dinamice (2-6), marcarea răspunsului corect, explicație, draft |
-| ✅ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | `/api/questions` (+ `[id]`), `/api/chapters/[id]/questions`, `/api/progress`. Detalii în `docs/api.md` |
+| ✅ | API routes pentru CRUD întrebări | Andrei | `teste-progres` | `/api/questions` (+ `[id]`, `[id]/answers`), `/api/chapters/[id]/questions`, `/api/progress`. Detalii în `docs/api.md` |
 
 ---
 
@@ -122,14 +123,14 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Schema DB: tabel `tickets` | Andrei | `sistem-tichete-mentorat` | |
-| ✅ | Buton "Nu am înțeles" în pagina de lecție/test (cu context automat) | Bogdan | `sistem-tichete-mentorat` | `app/_components/help-button.tsx` — în `/lectii/[id]` și `/teste/[chapterId]` (per întrebare greșită + pe capitol). Context automat, arătat elevului înainte de trimitere. Pe `POST /api/tickets` (neimplementat). |
-| 🟡 | Mesaj așteptare afișat elevului (ex: "Răspuns în 24h") | Bogdan | `sistem-tichete-mentorat` | Mesajul de confirmare („răspuns în cel mult 24h" + email) e deja în starea de succes a butonului. De confirmat dacă mai vrem și un indicator persistent al tichetelor deschise. |
-| ⬜ | API route — creare tichet | Andrei | `sistem-tichete-mentorat` | |
-| ✅ | Interfață profesor — listă tichete organizate pe capitol | Bogdan | `sistem-tichete-mentorat` | Secțiunea „Tichete" din `/profesor` — grupate pe capitol (în ordinea din curs), filtru „doar fără răspuns", detaliu desfășurabil cu contextul automat. Pe `GET /api/tickets` (neimplementat). |
-| 🟡 | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `sistem-tichete-mentorat` | UI: ✅ Bogdan — formular de răspuns în fiecare tichet, tichetul trece pe „Răspuns" fără refetch · API `POST /api/tickets/[id]/answer`: rămâne Andrei |
-| ⬜ | Notificare email elev la primirea răspunsului | Andrei | `sistem-tichete-mentorat` | |
-| ✅ | Pagină elev — vizualizare răspuns primit | Bogdan | `sistem-tichete-mentorat` | `/intrebari` — întrebările proprii + răspunsurile, cu răspunsurile primele; link în antet. Pe `GET /api/tickets` (neimplementat). |
+| ✅ | Schema DB: tabel `tickets` | Andrei | `sistem-tichete-mentorat` | Două migrări (aplicate): tichete + `ticket_messages` (fir de discuție) și context de lecție. `docs/database.md` |
+| 🟡 | Buton "Nu am înțeles" în pagina de lecție/test (cu context automat) | Bogdan | `teste-progres` | UI gata (`app/_components/help-button.tsx`), dar scris pe contractul vechi. **De reconectat:** `lesson_id` e obligatoriu, deci butonul de pe `/teste/[chapterId]` (care n-are lecție) trebuie regândit; opțional `selection` + `scroll_percent` |
+| 🟡 | Mesaj așteptare afișat elevului (ex: "Răspuns în 24h") | Bogdan | `teste-progres` | Mesajul de confirmare („răspuns în cel mult 24h" + email) e deja în starea de succes a butonului. Notificarea pe email e însă blocată — de nuanțat textul. |
+| ✅ | API route — creare tichet | Andrei | `sistem-tichete-mentorat` | `POST /api/tickets` — **cere `lesson_id`**; capturează pe server lecția, capitolul, titlul și progresul la test; de la client doar selecția + poziția. `docs/api.md` |
+| 🟡 | Interfață profesor — listă tichete organizate pe capitol | Bogdan | `teste-progres` | Secțiunea „Tichete" din `/profesor` — grupare, filtru, detaliu desfășurabil: gata. **De reconectat** la firul de mesaje și la contextul nou (poziție, fragment selectat, progres la test) |
+| 🟡 | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `teste-progres` | **API gata** (Andrei): `POST /api/tickets/[id]/messages` — fir de discuție, status după ultimul vorbitor. UI-ul lui Bogdan trimite încă la `/answer` și presupune un singur răspuns — **de rescris pe fir** |
+| ❌ | Notificare email elev la primirea răspunsului | Andrei | `sistem-tichete-mentorat` | **Blocat:** nu e ales/configurat un serviciu de email. Locul de apel e marcat în `POST /api/tickets/[id]/messages` |
+| 🟡 | Pagină elev — vizualizare răspuns primit | Bogdan | `teste-progres` | `/intrebari` — listă + link în antet: gata. **De reconectat** la fir (mai multe mesaje per tichet, nu un singur `answer`) |
 
 ---
 

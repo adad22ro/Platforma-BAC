@@ -103,11 +103,20 @@ Date placeholder: `npm run seed:content` (3 capitole + lecții demo, idempotent)
 | `/api/questions/[id]` | GET | întrebarea cu variantele, inclusiv `is_correct` | teacher |
 | `/api/questions/[id]` | PATCH | actualizează enunțul/metadatele | teacher |
 | `/api/questions/[id]` | DELETE | șterge (cascade variante) | teacher |
+| `/api/questions/[id]/answers` | PUT | **înlocuiește tot setul** de variante | teacher |
 | `/api/progress` | GET | progresul **propriu** al elevului, pe capitole | orice user logat |
 
 **Regula de aur:** `is_correct` pleacă spre client **doar** prin `GET /api/questions/[id]`
 (rută de profesor). `GET /api/chapters/[id]/questions` nici măcar nu selectează coloana.
 Corectarea se face exclusiv server-side în `submit` — un scor trimis de client e ignorat.
+
+**Editarea variantelor e înlocuire completă, nu PATCH pe variante individuale:**
+invariantul „exact un răspuns corect" nu poate fi menținut dacă variantele se editează
+una câte una — între două cereri întrebarea ar avea zero sau două răspunsuri corecte.
+`PUT` validează setul nou **întreg** înainte să atingă DB-ul. Cum `supabase-js` nu oferă
+tranzacții, setul vechi e păstrat în memorie și repus dacă inserarea celui nou eșuează;
+dacă nici restaurarea nu reușește, se loghează `critical` (alertă Discord) — întrebarea
+a rămas fără variante și trebuie reparată manual.
 
 **`POST /api/chapters/[id]/questions` nu există intenționat:** întrebarea și variantele
 se creează împreună (`POST /api/questions`), pentru că o întrebare fără variante ar strica
@@ -129,6 +138,58 @@ correct_answer_id, correct, explanation }] }`.
 - Progresul e o linie per `(elev, capitol)`: reîncercarea face upsert și incrementează `attempts`.
 
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol, idempotent).
+
+### Mentorat — tichete
+
+| Rută | Metodă | Scop | Acces |
+|---|---|---|---|
+| `/api/tickets` | GET | listă tichete, ordonate după ultima activitate | elev: **doar ale lui** · profesor: toate (`?status=`, `?chapter_id=`, `?lesson_id=`) |
+| `/api/tickets` | POST | elevul deschide un tichet **din fereastra lecției** | orice user logat |
+| `/api/tickets/[id]` | GET | tichetul **cu firul de mesaje** | autorul sau profesor |
+| `/api/tickets/[id]` | PATCH | închide / redeschide (`{ status }`) | autorul sau profesor |
+| `/api/tickets/[id]/messages` | POST | adaugă un mesaj în fir | autorul sau profesor |
+
+**Corp cerere (creare):** `{ lesson_id, message, selection?, scroll_percent? }` —
+`lesson_id` și `message` obligatorii (max 2000 caractere), `selection` max 1000,
+`scroll_percent` 0-100. **Corp mesaj:** `{ body }`, max 5000.
+
+**Discuția e un fir, nu o pereche întrebare/răspuns** (`ticket_messages`): elevul poate
+reveni cu „tot nu am înțeles", profesorul poate cere lămuriri. Statusul urmează ultimul
+vorbitor — mesaj de profesor → `answered`, revenire a elevului → `open`, deci tichetul
+reintră în coadă. `author_role` e înghețat la momentul scrierii: dacă un elev devine
+profesor, mesajele lui vechi nu devin retroactiv răspunsuri oficiale.
+
+**Contextul pe care îl vede profesorul** se captează la creare, aproape tot **pe server**:
+
+| Câmp | De unde vine |
+|---|---|
+| `lesson_id`, `chapter_id`, `lesson_title` | din DB, după `lesson_id` — nu din ce declară clientul |
+| `progress_score` / `_total` / `_attempts` | din `student_progress`, **înghețat** la momentul întrebării |
+| `selection`, `scroll_percent` | de la client — singurele lucruri pe care serverul n-are de unde să le știe |
+
+> `lesson_title` e snapshot pentru că `lesson_id` e `ON DELETE SET NULL`: după ștergerea
+> lecției, tichetul ar rămâne altfel fără niciun indiciu despre subiect. La fel, progresul
+> e înghețat pentru că profesorul trebuie să vadă cum stătea elevul **când a întrebat**,
+> nu cum stă când citește.
+
+**Trei reguli de autorizare care contează:**
+- Elevul e legat de `user.id` din sesiune; un `user_id` trimis în query string e ignorat.
+- Contextul se derivă din DB: dacă vine `lesson_id`, capitolul se ia din lecție, nu din
+  ce declară clientul.
+- Nu poți deschide tichet despre conținut la care n-ai acces (`404` draft / `402` premium)
+  — altfel tichetul devine o cale laterală de a afla ce e acolo.
+- Un tichet străin dă **`404`, nu `403`** — nu confirmăm că există.
+
+**Stări:** `open` ⇄ `answered` (automat, după cine a scris ultimul mesaj), plus `closed`
+prin `PATCH`. Prin PATCH se pot seta **doar** `closed` și `open` — `answered` nu e o stare
+pe care o alege cineva manual, ea rezultă din faptul că profesorul a scris în fir. Altfel
+un tichet ar putea apărea „răspuns" fără niciun răspuns.
+
+> **Neimplementat încă:** notificarea pe email a elevului la primirea răspunsului —
+> nu există serviciu de email configurat. Când va exista, se trimite din
+> `POST /api/tickets/[id]/messages` (doar la mesaj de profesor), **după** scrierea în DB
+> și fără să blocheze răspunsul: un email nelivrat nu trebuie să piardă munca profesorului.
+> Locul exact e marcat cu comentariu în rută.
 
 ### POST /api/admin/set-role
 Scop: schimbă rolul unui user (`student` ↔ `teacher`).
@@ -158,69 +219,14 @@ Rezultatul e cache-uit ~15s. Detalii în `docs/monitoring.md`.
 
 ---
 
-## Tichete de mentorat — contract convenit (Săpt. 9-10)
+## Tichete de mentorat — contract vechi (înlocuit)
 
-⚠️ **Neimplementat încă** (backend: Andrei). Butonul „Nu am înțeles"
-(`app/_components/help-button.tsx`, folosit în `/lectii/[id]` și `/teste/[chapterId]`)
-e deja scris pe această formă.
+⚠️ Secțiunea speculativă scrisă în avans de Bogdan (`POST /api/tickets`, `GET /api/tickets`,
+`POST /api/tickets/[id]/answer`, cu tichetul ca pereche întrebare/răspuns) a fost **ștearsă**:
+backendul e implementat, iar contractul real e documentat mai sus, în tabelul de rute și în
+secțiunea de tichete. Diferența esențială: tichetul e un **fir de mesaje**
+(`POST /api/tickets/[id]/messages`), nu un câmp `answer`, iar `lesson_id` e **obligatoriu** la
+creare.
 
-### POST /api/tickets
-Scop: elevul trimite o întrebare către profesor, cu contextul completat automat
-din pagină (nu-l scrie el).
-
-Request:
-```jsonc
-{
-  "message": "string, 1-1000 caractere",
-  "context": {
-    "source": "lesson" | "quiz",   // din ce ecran a venit
-    "chapter_id": "uuid?",
-    "chapter_title": "string?",
-    "lesson_id": "uuid?",
-    "lesson_title": "string?",
-    "question_id": "uuid?",        // doar la source=quiz, dacă e legat de o întrebare
-    "question_text": "string?"
-  }
-}
-```
-
-Response:
-- 201: `{ ticket: { id, created_at } }`
-- 400: mesaj gol / prea lung / context invalid
-- 401: neautentificat
-- 429: prea multe tichete deschise (limită anti-spam — UI-ul afișează deja mesajul)
-
-Note pentru implementare:
-- Titlurile din `context` sunt trimise de client **doar pentru afișare**; sursa de adevăr
-  rămân `chapter_id` / `lesson_id` / `question_id`, care se re-rezolvă pe server.
-- UI-ul promite elevului **răspuns în cel mult 24h** și **notificare pe email** — de
-  respectat în rândurile corespunzătoare din TASKS.md.
-
-### GET /api/tickets
-Scop: lista de tichete. **Profesor** → toate tichetele; **elev** → doar ale lui.
-Folosită de secțiunea „Tichete" din `/profesor` (`app/profesor/teacher-tickets.tsx`).
-
-Response:
-- 200: `{ tickets: [{ id, message, status: "open" | "answered", created_at,
-  student_name: string | null, student_email, chapter_id, chapter_title,
-  lesson_id, lesson_title, question_id, question_text,
-  answer: string | null, answered_at: string | null }] }`
-  (câmpurile de context pot fi `null` — lecția/întrebarea pot fi șterse ulterior;
-  UI-ul grupează tichetele fără capitol într-o grupă „Fără capitol")
-- 401: neautentificat
-
-Gruparea pe capitol și ordonarea (capitolele în ordinea din curs, tichetele noi
-întâi) se fac în client — API-ul poate întoarce lista plată.
-
-### POST /api/tickets/[id]/answer
-Scop: profesorul răspunde la un tichet. Doar `teacher`.
-
-Request: `{ answer: string }` (1-2000 caractere)
-
-Response:
-- 200: `{ ticket: { id, answer, answered_at, status: "answered" } }`
-- 400: răspuns gol / prea lung · 403: neprofesor · 404: tichet inexistent
-- 409: tichetul are deja răspuns (UI-ul cere reîmprospătarea paginii)
-
-Efect secundar așteptat: trimite emailul de notificare către elev (sarcină separată
-în TASKS.md). UI-ul îi promite deja elevului notificare pe email.
+Frontendul din `help-button.tsx`, `teacher-tickets.tsx` și `intrebari/my-tickets.tsx` e încă
+scris pe forma veche — vezi rândurile 🟡 din Săpt. 9-10 în `TASKS.md`.

@@ -1,5 +1,40 @@
 @AGENTS.md
 
+# Starea proiectului — verifică ÎNTOTDEAUNA și branch-urile
+
+> **Regulă obligatorie.** `main` nu spune adevărul întreg. Lucrăm pe branch-uri, iar
+> munca nemergeată e invizibilă dacă te uiți doar la istoricul lui `main`.
+
+La **începutul fiecărei conversații** și la **orice** întrebare despre starea
+proiectului, ce s-a lucrat, cine ce a făcut sau ce e pe GitHub — verifică toate
+branch-urile, nu doar `main`:
+
+```bash
+git fetch --all --prune
+for b in $(git branch -r --format='%(refname:short)' | grep -v 'HEAD\|origin/main'); do
+  printf "%-50s ahead:%-3s behind:%-4s %s\n" "$b" \
+    "$(git rev-list --count origin/main..$b)" \
+    "$(git rev-list --count $b..origin/main)" \
+    "$(git log -1 --format='%ad|%an|%s' --date=short $b)"
+done
+gh pr list --state all --limit 15
+```
+
+Ce urmărești, dincolo de „există commituri noi":
+
+- **`ahead`** — muncă nemergeată. Cine a scris-o și când.
+- **`behind`** — cât de veche e baza branch-ului. Un branch rămas mult în urmă
+  riscă conflicte și, mai grav, poate fi construit pe **contracte API care s-au
+  schimbat între timp** în `main`. Verifică asta explicit înainte de a spune că
+  ceva „e gata".
+- **PR-uri cu CI roșu**, inclusiv cele de la dependabot.
+
+**De ce există regula:** pe 2026-08-11 s-a raportat că „Bogdan n-a lucrat de două
+săptămâni", pentru că verificarea s-a oprit la `main`. În realitate avea ~2.600 de
+linii de frontend pe un branch nemergeat, iar o parte era scrisă pe un contract de
+API pe care backendul îl schimbase deja. Ambele lucruri se vedeau imediat din
+comanda de mai sus.
+
 # Jurnalul de erori (ERRORS.md)
 
 - **Înainte** de a investiga o eroare nouă, citește `ERRORS.md` — verifică dacă eroarea (sau una similară) a mai apărut și cum a fost rezolvată.

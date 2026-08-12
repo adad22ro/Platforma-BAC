@@ -61,7 +61,6 @@ function jsonReq(body: unknown) {
 function ctx(id: string) {
   return { params: Promise.resolve({ id }) };
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function eqCalls(table: string): unknown[][] {
   const rec = h.fromCalls.filter((c) => c.table === table).at(-1);
   return (rec?.calls ?? []).filter((c) => c[0] === "eq");

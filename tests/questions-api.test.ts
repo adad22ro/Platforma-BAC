@@ -56,6 +56,7 @@ vi.mock("@/lib/current-user", async (importActual) => {
 });
 
 import { POST as questionsPOST, validateAnswers } from "@/app/api/questions/route";
+import { PUT as answersPUT } from "@/app/api/questions/[id]/answers/route";
 import { GET as chapterQuestionsGET } from "@/app/api/chapters/[id]/questions/route";
 import { POST as submitPOST } from "@/app/api/chapters/[id]/submit/route";
 
@@ -359,5 +360,88 @@ describe("POST /api/chapters/[id]/submit", () => {
     expect(json.score).toBe(1);
     expect(json.saved).toBe(false);
     expect(h.fromCalls.some((c) => c.table === "student_progress")).toBe(false);
+  });
+});
+
+describe("PUT /api/questions/[id]/answers", () => {
+  const good = [
+    { text: "corect", is_correct: true },
+    { text: "gresit", is_correct: false },
+  ];
+  const previous = [
+    { id: "a-vechi", question_id: "q1", text: "vechi", is_correct: true, order_index: 0, created_at: "2026-01-01" },
+  ];
+
+  function putReq(body: unknown) {
+    return new Request("http://localhost/api", {
+      method: "PUT",
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    }) as never;
+  }
+
+  it("403 pentru elev", async () => {
+    h.state.user = studentFree;
+    const res = await answersPUT(putReq({ answers: good }), ctx("q1"));
+    expect(res.status).toBe(403);
+    expect(h.supabaseAdmin.from).not.toHaveBeenCalled();
+  });
+
+  it("400 daca setul nou nu are exact un raspuns corect", async () => {
+    h.state.user = teacher;
+    const res = await answersPUT(putReq({ answers: [{ text: "a" }, { text: "b" }] }), ctx("q1"));
+    expect(res.status).toBe(400);
+    // Validarea se face inainte sa se atinga DB-ul — nu stergem nimic degeaba.
+    expect(h.supabaseAdmin.from).not.toHaveBeenCalled();
+  });
+
+  it("404 daca intrebarea nu exista", async () => {
+    h.state.user = teacher;
+    setResults({ questions: [{ data: null, error: null }] });
+    const res = await answersPUT(putReq({ answers: good }), ctx("q1"));
+    expect(res.status).toBe(404);
+    expect(h.fromCalls.some((c) => c.table === "answers")).toBe(false);
+  });
+
+  it("inlocuieste setul: sterge vechiul, insereaza noul", async () => {
+    h.state.user = teacher;
+    setResults({
+      questions: [{ data: { id: "q1" }, error: null }],
+      answers: [
+        { data: previous, error: null },
+        { data: null, error: null },
+        { data: [{ id: "a1" }, { id: "a2" }], error: null },
+      ],
+    });
+
+    const res = await answersPUT(putReq({ answers: good }), ctx("q1"));
+    expect(res.status).toBe(200);
+    expect((await res.json()).answers).toHaveLength(2);
+
+    const answerCalls = h.fromCalls.filter((c) => c.table === "answers");
+    expect(answerCalls.some((c) => c.calls.some(([n]) => n === "delete"))).toBe(true);
+    expect(answerCalls.some((c) => c.calls.some(([n]) => n === "insert"))).toBe(true);
+  });
+
+  it("restaureaza setul vechi daca inserarea celui nou esueaza", async () => {
+    h.state.user = teacher;
+    setResults({
+      questions: [{ data: { id: "q1" }, error: null }],
+      answers: [
+        { data: previous, error: null },
+        { data: null, error: null },
+        { data: null, error: { code: "23505", message: "boom" } },
+        { data: previous, error: null },
+      ],
+    });
+
+    const res = await answersPUT(putReq({ answers: good }), ctx("q1"));
+    expect(res.status).toBe(500);
+
+    // Ultimul insert pe answers trebuie sa fie setul vechi pus la loc.
+    const inserts = h.fromCalls
+      .filter((c) => c.table === "answers")
+      .flatMap((c) => c.calls.filter(([n]) => n === "insert"));
+    expect(inserts.at(-1)?.[1]).toEqual(previous);
   });
 });
