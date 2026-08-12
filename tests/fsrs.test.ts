@@ -1,8 +1,29 @@
 import { describe, it, expect } from "vitest";
-import { reviewConcept, aggregateVerdict, ratingFor } from "@/lib/fsrs";
+import { reviewConcept, aggregateVerdict, ratingFor, type ConceptState } from "@/lib/fsrs";
 import { Rating, State } from "ts-fsrs";
 
 const NOW = new Date("2026-08-12T09:00:00Z");
+
+// Randul intors de reviewConcept e de tip Insert (campurile cu default sunt
+// optionale); starea citita din DB e de tip Row (toate prezente). Helperul face
+// conversia o data, ca lantul de recenzii sa fie tipat corect in teste.
+function caStare(row: ReturnType<typeof reviewConcept>): ConceptState {
+  return {
+    user_id: row.user_id,
+    tag_id: row.tag_id,
+    due: row.due,
+    stability: row.stability ?? 0,
+    difficulty: row.difficulty ?? 0,
+    elapsed_days: row.elapsed_days ?? 0,
+    scheduled_days: row.scheduled_days ?? 0,
+    learning_steps: row.learning_steps ?? 0,
+    reps: row.reps ?? 0,
+    lapses: row.lapses ?? 0,
+    state: row.state ?? 0,
+    last_review: row.last_review ?? null,
+    updated_at: row.updated_at ?? NOW.toISOString(),
+  };
+}
 
 describe("ratingFor", () => {
   it("foloseste doar Again si Good", () => {
@@ -59,7 +80,7 @@ describe("reviewConcept", () => {
       user_id: "u1",
       tag_id: "t1",
       correct: true,
-      previous: { ...(row as never), updated_at: NOW.toISOString() },
+      previous: caStare(row),
       now: peste_o_zi,
     });
     expect(row.state).toBe(State.Review);
@@ -69,7 +90,7 @@ describe("reviewConcept", () => {
       user_id: "u1",
       tag_id: "t1",
       correct: false,
-      previous: { ...(row as never), updated_at: NOW.toISOString() },
+      previous: caStare(row),
       now: peste_zece_zile,
     });
 
@@ -89,7 +110,7 @@ describe("reviewConcept", () => {
         user_id: "u1",
         tag_id: "t1",
         correct: true,
-        previous: { ...(row as never), updated_at: NOW.toISOString() },
+        previous: caStare(row),
         now: moment,
       });
       intervale.push(new Date(row.due).getTime() - anterior);
