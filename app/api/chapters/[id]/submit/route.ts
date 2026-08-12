@@ -81,7 +81,39 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const total = questions.length
 
   // Profesorul poate rula testul ca sa-l verifice, dar nu-i inregistram progres.
+  // Nici evenimente: altfel statisticile de dificultate per intrebare ar contine
+  // raspunsurile celui care a scris intrebarile.
   if (access.teacher) return Response.json({ score, total, results, saved: false })
+
+  // Jurnalul de raspunsuri — sursa de adevar. Se scrie INAINTE de progres: daca
+  // pica ceva, preferam sa avem evenimentele fara agregat (agregatul se poate
+  // reconstrui din ele) decat invers.
+  //
+  // `attempt_id` leaga raspunsurile dintr-o singura trimitere, ca o incercare sa
+  // poata fi reconstituita intreaga.
+  const attempt_id = crypto.randomUUID()
+  const { error: eErr } = await supabaseAdmin.from('answer_events').insert(
+    results.map((r) => ({
+      user_id: user.id,
+      chapter_id: id,
+      question_id: r.question_id,
+      chosen_answer_id: r.chosen_answer_id,
+      is_correct: r.correct,
+      attempt_id,
+    }))
+  )
+
+  if (eErr) {
+    // Nu intoarcem eroare: scorul e corect calculat si elevul are dreptul sa-l
+    // vada. Pierdem insa istoricul acestei incercari, iar din el se construiesc
+    // „greselile mele" si repetitia — de aceea se logheaza, nu se inghite.
+    await logError('progress', 'answer_events insert error', {
+      code: eErr.code,
+      message: eErr.message,
+      id,
+      attempt_id,
+    })
+  }
 
   const { data: existing } = await supabaseAdmin
     .from('student_progress')

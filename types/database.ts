@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      answer_events: {
+        Row: {
+          attempt_id: string
+          chapter_id: string
+          chosen_answer_id: string | null
+          created_at: string
+          id: string
+          is_correct: boolean
+          question_id: string | null
+          user_id: string
+        }
+        Insert: {
+          attempt_id: string
+          chapter_id: string
+          chosen_answer_id?: string | null
+          created_at?: string
+          id?: string
+          is_correct: boolean
+          question_id?: string | null
+          user_id: string
+        }
+        Update: {
+          attempt_id?: string
+          chapter_id?: string
+          chosen_answer_id?: string | null
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_events_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answer_events_chosen_answer_id_fkey"
+            columns: ["chosen_answer_id"]
+            isOneToOne: false
+            referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answer_events_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answer_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       answers: {
         Row: {
           created_at: string

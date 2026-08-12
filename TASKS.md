@@ -168,8 +168,8 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Migrare `answer_events` — append-only: elev, întrebare, variantă aleasă, corect, timestamp | Andrei | `answer-events` | `student_progress` face upsert și pierde istoricul. Rămâne ca vedere agregată; evenimentele devin sursa de adevăr |
-| ⬜ | Scrierea evenimentelor din `POST /api/chapters/[id]/submit` | Andrei | `answer-events` | O linie per răspuns, nu per încercare. Atenție: nu se scrie pentru profesor (ca la progres) |
+| ✅ | Migrare `answer_events` — append-only: elev, întrebare, variantă aleasă, corect, timestamp | Andrei | `answer-events` | `20260812150000_answer_events.sql`. Grant doar `select, insert` — append-only garantat de privilegii. `question_id` e SET NULL, nu CASCADE. Coloane în `docs/database.md` |
+| ✅ | Scrierea evenimentelor din `POST /api/chapters/[id]/submit` | Andrei | `answer-events` | O linie per răspuns, cu `attempt_id` comun pe trimitere. Scrise **înainte** de progres; eroarea se loghează, dar nu ascunde scorul elevului. Fără evenimente pentru profesor. 5 teste noi |
 | ⬜ | Explicație **per variantă** — coloană pe `answers` | Andrei | `answer-events` | Avem `questions.explanation` la nivel de întrebare, **nefolosit în UI**. Ideea: nu explici doar răspunsul corect, ci de ce fiecare variantă greșită e greșită |
 | ⬜ | Etichete pe întrebări (`tags`) pentru stăpânire per concept | Andrei | `answer-events` | Precondiție pentru „ce știi / ce nu știi". De decis dacă etichetele intră de la început sau după |
 

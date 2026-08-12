@@ -6,6 +6,29 @@
 
 ---
 
+## 2026-08-12 — Andrei (Faza 2, grupa A — jurnalul de răspunsuri)
+
+Prima bucată din Faza 2. PR #41 și #42 au intrat în `main` (plus #43, curățenie), deci baza e curată.
+
+**Migrare `20260812150000_answer_events.sql`** — o linie per răspuns, append-only. `student_progress` rămâne, dar ca vedere agregată; sursa de adevăr devine jurnalul.
+
+Deciziile care nu se văd din schemă:
+- **Grant doar `select, insert`**, fără `update`/`delete`. „Append-only" garantat de privilegii, nu de convenție — un `update` greșit dintr-o rută viitoare eșuează în loc să rescrie tăcut istoricul.
+- **`question_id` e ON DELETE SET NULL, nu CASCADE.** Dacă profesorul șterge o întrebare, faptul că elevul a dat testul nu trebuie să dispară. Același raționament ca la contextul tichetelor.
+- **`chapter_id` e stocat explicit**, nu dedus prin întrebare — altfel, la ștergerea întrebării, evenimentul rămâne fără nicio ancoră.
+- **`is_correct` e înghețat** la corectare, nu recalculat la citire. Dacă profesorul schimbă ulterior varianta corectă, istoricul trebuie să arate ce i s-a spus elevului atunci.
+- **`attempt_id`** grupează răspunsurile unei trimiteri, ca o încercare să poată fi reconstituită întreagă.
+
+**Scrierea, în `POST /api/chapters/[id]/submit`** — înainte de `student_progress`: dacă pică ceva la mijloc, preferăm evenimentele fără agregat (agregatul se reconstruiește din ele) decât invers. O eroare la scriere se loghează, dar **nu** schimbă răspunsul: scorul e corect calculat și elevul are dreptul să-l vadă. **Profesorul nu generează evenimente** — altfel statisticile de dificultate ar conține răspunsurile celui care a scris întrebările.
+
+`types/database.ts` completat **manual**: migrarea nu e încă aplicată în producție, deci `npm run db:types` ar întoarce schema veche (aceeași situație ca la Săpt. 7-8).
+
+**Verzi:** typecheck curat, lint curat, **121/121 teste** (+5).
+
+**Rămas din grupa A:** explicație per variantă și etichetele pe întrebări. **De aplicat migrarea în producție** înainte ca ruta să ajungă acolo — altfel fiecare corectare scrie o eroare în `error_logs`.
+
+---
+
 ## 2026-08-12 — Andrei (UI-ul de tichete, dezactivat temporar înainte de merge)
 
 `teste-progres` (PR #41) are ~2.600 de linii bune, dar zona de tichete e scrisă pe contractul vechi. **Nu crapă** — și de aceea e periculoasă: `GET /api/tickets` răspunde, doar că UI-ul citește `answer` / `answered_at`, câmpuri care nu mai există, deci **toate tichetele ar apărea „În așteptare", inclusiv cele la care profesorul a răspuns.** Butonul de răspuns din `/profesor` dă 404, iar „Nu am înțeles" dă 400 (lipsă `lesson_id`).
