@@ -217,6 +217,47 @@ DDL-ul canonic: [`supabase/migrations/20260806120000_teste_progres.sql`](../supa
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol;
 necesită `npm run seed:content` rulat înainte).
 
+### answer_events
+Scop: **jurnalul de răspunsuri** — o linie per răspuns dat de un elev la o întrebare,
+append-only. `student_progress` rămâne ca vedere agregată, dar **sursa de adevăr e
+aici**: agregatul suprascrie la fiecare reîncercare, jurnalul nu pierde nimic.
+
+Din el se construiesc „greșelile mele", dificultatea reală per întrebare, nota
+estimată și repetiția spațiată (FSRS) — vezi Faza 2 în `TASKS.md`.
+
+| Coloană | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK (`gen_random_uuid()`) |
+| user_id | uuid | FK → `users(id)` ON DELETE CASCADE |
+| chapter_id | uuid | FK → `chapters(id)` ON DELETE CASCADE — păstrat explicit, nu dedus prin întrebare |
+| question_id | uuid \| null | FK → `questions(id)` **ON DELETE SET NULL** |
+| chosen_answer_id | uuid \| null | FK → `answers(id)` ON DELETE SET NULL. `null` = întrebare lăsată fără răspuns |
+| is_correct | boolean | Verdictul, **înghețat** la momentul corectării |
+| attempt_id | uuid | Grupează răspunsurile dintr-o singură trimitere |
+| created_at | timestamptz | default `now()` |
+
+Fără constrângere de unicitate — același elev poate răspunde de mai multe ori la
+aceeași întrebare, iar asta e exact istoricul care ne trebuie.
+
+Trei decizii care se pierd ușor dacă nu sunt scrise:
+- **`question_id` e SET NULL, nu CASCADE.** Dacă profesorul șterge o întrebare, faptul
+  că elevul a dat testul nu dispare din istoric. Statisticile per întrebare ignoră
+  rândurile fără întrebare.
+- **`is_correct` nu se recalculează la citire.** Dacă profesorul schimbă ulterior
+  varianta corectă, istoricul trebuie să arate ce i s-a spus elevului atunci.
+- **Profesorul nu generează evenimente.** Altfel statisticile de dificultate ar
+  conține răspunsurile celui care a scris întrebările.
+
+Model de acces: RLS activat, fără politici pentru `anon` (deny), grant la
+`service_role` **doar `select, insert`** — fără `update`/`delete`, ca „append-only" să
+fie garantat de privilegii, nu doar de convenție.
+
+Scris din `POST /api/chapters/[id]/submit`, **înainte** de `student_progress`: dacă
+pică ceva, preferăm evenimentele fără agregat (agregatul se reconstruiește din ele)
+decât invers. O eroare la scriere se loghează dar nu ascunde scorul elevului.
+
+DDL-ul canonic: [`supabase/migrations/20260812150000_answer_events.sql`](../supabase/migrations/20260812150000_answer_events.sql).
+
 ### tickets
 Scop: sistemul de mentorat „Nu am înțeles". Elevul trimite o întrebare cu contextul
 paginii; profesorul răspunde.

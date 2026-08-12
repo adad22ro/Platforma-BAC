@@ -360,6 +360,128 @@ describe("POST /api/chapters/[id]/submit", () => {
     expect(json.score).toBe(1);
     expect(json.saved).toBe(false);
     expect(h.fromCalls.some((c) => c.table === "student_progress")).toBe(false);
+    // Nici evenimente: altfel statisticile de dificultate ar contine raspunsurile
+    // celui care a scris intrebarile.
+    expect(h.fromCalls.some((c) => c.table === "answer_events")).toBe(false);
+  });
+
+  // Helper: argumentul cu care s-a apelat insert pe answer_events.
+  function insertedEvents() {
+    const call = h.fromCalls
+      .find((c) => c.table === "answer_events")
+      ?.calls.find(([n]) => n === "insert");
+    return call?.[1] as
+      | {
+          user_id: string;
+          chapter_id: string;
+          question_id: string;
+          chosen_answer_id: string | null;
+          is_correct: boolean;
+          attempt_id: string;
+        }[]
+      | undefined;
+  }
+
+  it("scrie un eveniment per intrebare, cu ce a bifat elevul", async () => {
+    h.state.user = studentFree;
+    setTestData();
+
+    await submitPOST(
+      jsonReq({
+        answers: [
+          { question_id: "q1", answer_id: "a1" }, // corect
+          { question_id: "q2", answer_id: "a4" }, // gresit
+        ],
+      }),
+      ctx("c1")
+    );
+
+    const events = insertedEvents();
+    expect(events).toHaveLength(2);
+    expect(events?.[0]).toMatchObject({
+      user_id: "u-s",
+      chapter_id: "c1",
+      question_id: "q1",
+      chosen_answer_id: "a1",
+      is_correct: true,
+    });
+    expect(events?.[1]).toMatchObject({
+      question_id: "q2",
+      chosen_answer_id: "a4",
+      is_correct: false,
+    });
+  });
+
+  it("intrebarea lasata fara raspuns se scrie cu chosen_answer_id null", async () => {
+    h.state.user = studentFree;
+    setTestData();
+
+    await submitPOST(jsonReq({ answers: [{ question_id: "q1", answer_id: "a1" }] }), ctx("c1"));
+
+    const events = insertedEvents();
+    expect(events?.[1]).toMatchObject({ question_id: "q2", chosen_answer_id: null, is_correct: false });
+  });
+
+  it("toate raspunsurile unei trimiteri primesc acelasi attempt_id", async () => {
+    h.state.user = studentFree;
+    setTestData();
+
+    await submitPOST(
+      jsonReq({
+        answers: [
+          { question_id: "q1", answer_id: "a1" },
+          { question_id: "q2", answer_id: "a3" },
+        ],
+      }),
+      ctx("c1")
+    );
+
+    const events = insertedEvents();
+    const ids = new Set(events?.map((e) => e.attempt_id));
+    expect(ids.size).toBe(1);
+    expect([...ids][0]).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("evenimentele se scriu inainte de progres", async () => {
+    h.state.user = studentFree;
+    setTestData();
+
+    await submitPOST(jsonReq({ answers: [{ question_id: "q1", answer_id: "a1" }] }), ctx("c1"));
+
+    // Inainte de ORICE atingere a agregatului, nu doar de upsert: daca pica ceva
+    // la mijloc, preferam evenimentele fara agregat (agregatul se reconstruieste
+    // din ele) decat invers.
+    const tables = h.fromCalls.map((c) => c.table);
+    expect(tables.indexOf("answer_events")).toBeLessThan(tables.indexOf("student_progress"));
+  });
+
+  it("daca scrierea evenimentelor esueaza, elevul isi vede totusi scorul", async () => {
+    h.state.user = studentFree;
+    setResults({
+      chapters: [freeChapter],
+      questions: [{ data: questions, error: null }],
+      answers: [{ data: correct, error: null }],
+      answer_events: [{ data: null, error: { code: "42501", message: "permission denied" } }],
+      student_progress: [
+        { data: { attempts: 1 }, error: null },
+        { data: null, error: null },
+      ],
+    });
+
+    const res = await submitPOST(
+      jsonReq({ answers: [{ question_id: "q1", answer_id: "a1" }] }),
+      ctx("c1")
+    );
+
+    const json = await res.json();
+    expect(json.score).toBe(1);
+    // Progresul s-a salvat; doar istoricul acestei incercari s-a pierdut.
+    expect(json.saved).toBe(true);
+    expect(h.logError).toHaveBeenCalledWith(
+      "progress",
+      "answer_events insert error",
+      expect.objectContaining({ code: "42501" })
+    );
   });
 });
 
