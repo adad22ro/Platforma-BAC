@@ -4,6 +4,7 @@ import { getCurrentAppUser } from '@/lib/current-user'
 import { checkChapterAccess, accessErrorResponse } from '@/lib/chapter-access'
 import { logError } from '@/lib/log-error'
 import { apiError } from '@/lib/api-error'
+import { reviewConcept, aggregateVerdict } from '@/lib/fsrs'
 
 type Submission = { question_id?: unknown; answer_id?: unknown }
 
@@ -125,6 +126,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     })
   }
 
+  await updateConceptStates(user.id, results, id)
+
   const { data: existing } = await supabaseAdmin
     .from('student_progress')
     .select('attempts')
@@ -152,4 +155,85 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   return Response.json({ score, total, results, saved: true })
+}
+
+// Actualizeaza starea de repetitie spatiata pentru conceptele atinse de test.
+//
+// Nu blocheaza raspunsul: daca pica, elevul isi vede scorul, iar starea se poate
+// reconstrui din `answer_events`, care e sursa de adevar. Se logheaza insa —
+// planificarea recapitularilor devine tacut gresita altfel.
+async function updateConceptStates(
+  userId: string,
+  results: { question_id: string; correct: boolean }[],
+  chapterId: string
+): Promise<void> {
+  const questionIds = results.map((r) => r.question_id)
+
+  const { data: links, error: lErr } = await supabaseAdmin
+    .from('question_tags')
+    .select('question_id, tag_id')
+    .in('question_id', questionIds)
+
+  if (lErr) {
+    await logError('fsrs', 'question_tags lookup error', {
+      code: lErr.code,
+      message: lErr.message,
+      chapterId,
+    })
+    return
+  }
+  // Intrebari neetichetate inca: nu e o eroare, doar n-avem ce programa.
+  if (!links?.length) return
+
+  const correctByQuestion = new Map(results.map((r) => [r.question_id, r.correct]))
+
+  // Un concept atins de mai multe intrebari primeste O SINGURA recenzie — altfel
+  // un test cu 5 intrebari pe acelasi concept ar umfla stabilitatea de cinci ori.
+  const byTag = new Map<string, boolean[]>()
+  for (const l of links) {
+    const correct = correctByQuestion.get(l.question_id)
+    if (correct === undefined) continue
+    byTag.set(l.tag_id, [...(byTag.get(l.tag_id) ?? []), correct])
+  }
+
+  const tagIds = [...byTag.keys()]
+  const { data: previous, error: pErr } = await supabaseAdmin
+    .from('concept_states')
+    .select('*')
+    .eq('user_id', userId)
+    .in('tag_id', tagIds)
+
+  if (pErr) {
+    await logError('fsrs', 'concept_states read error', {
+      code: pErr.code,
+      message: pErr.message,
+      chapterId,
+    })
+    return
+  }
+
+  const previousByTag = new Map((previous ?? []).map((s) => [s.tag_id, s]))
+  const now = new Date()
+
+  const rows = tagIds.map((tag_id) =>
+    reviewConcept({
+      user_id: userId,
+      tag_id,
+      correct: aggregateVerdict(byTag.get(tag_id) ?? []),
+      previous: previousByTag.get(tag_id) ?? null,
+      now,
+    })
+  )
+
+  const { error: uErr } = await supabaseAdmin
+    .from('concept_states')
+    .upsert(rows, { onConflict: 'user_id,tag_id' })
+
+  if (uErr) {
+    await logError('fsrs', 'concept_states upsert error', {
+      code: uErr.code,
+      message: uErr.message,
+      chapterId,
+    })
+  }
 }

@@ -225,6 +225,27 @@ DDL-ul canonic: [`supabase/migrations/20260806120000_teste_progres.sql`](../supa
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol;
 necesită `npm run seed:content` rulat înainte).
 
+### concept_states
+Scop: starea de **repetiție spațiată** (FSRS-6, prin `ts-fsrs`), o linie per
+**(elev × etichetă)**. Cheia e conceptul, nu întrebarea: un elev care nimerește
+întrebarea #47 n-a demonstrat că știe întrebarea — n-o va mai vedea niciodată la
+examen — ci conceptul din spatele ei.
+
+Coloanele sunt cele ale unui „card" FSRS (`due`, `stability`, `difficulty`,
+`elapsed_days`, `scheduled_days`, `learning_steps`, `reps`, `lapses`, `state`,
+`last_review`), păstrate cu **numele din bibliotecă**: la citire se dau direct
+planificatorului, iar o redenumire ar fi doar un strat de mapare în plus și o ocazie
+de greșeală tăcută.
+
+Tabel de stare, deși există jurnalul: FSRS se actualizează incremental, iar
+recalcularea din tot istoricul la fiecare citire ar fi risipă. `answer_events`
+rămâne sursa de adevăr — starea se poate reconstrui din el oricând, ca
+`student_progress`. De aceea nici nu are grant de `delete`.
+
+Actualizat din `POST /api/chapters/[id]/submit`; citit de `GET /api/recapitulare`.
+Regulile de notare (doar `Again`/`Good`, o recenzie per concept per trimitere,
+verdict conservator) sunt în [`lib/fsrs.ts`](../lib/fsrs.ts).
+
 ### Vederi peste `answer_events`
 
 Două vederi, fiecare cu o capcană de semantică rezolvată o dată, în SQL:

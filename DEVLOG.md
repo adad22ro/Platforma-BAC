@@ -6,6 +6,29 @@
 
 ---
 
+## 2026-08-12 — Andrei (Grupa H — motorul de repetiție spațiată)
+
+`ts-fsrs` 5.4.1 (FSRS-6), migrare `20260812190000_stare_concept_fsrs.sql` (aplicată), plus `lib/fsrs.ts` și `GET /api/recapitulare`.
+
+**FSRS nu are cold start** — vine cu 17 parametri deja antrenați pe un set uriaș de recenzii reale și funcționează corect din primul elev. Antrenarea e rafinare opțională, iar recomandarea oficială e să **nu** optimizezi sub ~1.000 de recenzii: cu prea puține date ies parametri suprapotriviți, mai proști decât cei impliciti. Când ajungem la volum, optimizarea are sens **global** (parametri pentru populația noastră de elevi), nu per elev — un elev de BAC nu apucă să facă 1.000 de recenzii, toți la un loc, da.
+
+**Cheia e (elev × etichetă), nu (elev × întrebare).** Un elev care răspunde corect la întrebarea #47 n-a demonstrat că știe întrebarea — n-o va mai vedea niciodată la examen — ci conceptul. Recapitularea trebuie să-i dea altă întrebare despre același concept. De asta etichetele erau precondiție.
+
+**Trei decizii de modelare:**
+- **Doar `Again` și `Good`, fără `Hard`/`Easy`.** Acelea presupun că elevul își evaluează singur efortul, ca în Anki unde apeși tu butonul. Noi avem un singur semnal obiectiv — a nimerit sau nu. O granularitate pe care n-o măsurăm ar face graficul mai bogat și datele mai proaste.
+- **Un concept atins de mai multe întrebări primește o singură recenzie** per trimitere; altfel un test cu 5 întrebări pe același concept ar umfla stabilitatea de cinci ori.
+- **Verdictul agregat e conservator:** o singură greșeală face conceptul „neînsușit". 4 din 5 e tot un gol, iar o recapitulare în plus costă mult mai puțin decât o lacună descoperită la examen.
+
+Numele coloanelor sunt identice cu ale bibliotecii, deliberat: un strat de mapare ar fi doar o ocazie în plus de greșeală tăcută. Există un test care verifică asta, ca redenumirea să forțeze o discuție.
+
+**Nepotrivirea de fond, notată ca sarcină, nu rezolvată tacit:** FSRS optimizează retenția pe termen **nedefinit** — modelul lui de lume e „vrei să știi asta pentru totdeauna". Al nostru e „trebuie să știe pe 29 iunie, dimineața". Spre final vrem să *creștem* frecvența pe ce e fragil, chiar dacă modelul ar zice că e prea devreme, iar după examen programarea nu mai contează. Am lăsat planificatorul curat și am notat ponderarea după data examenului ca rând separat în TASKS — e decizie de produs, nu de implementare.
+
+Actualizarea stărilor nu blochează răspunsul: dacă pică, elevul își vede scorul, iar starea se poate reconstrui din `answer_events`. Se loghează însă — altfel planificarea devine tăcut greșită.
+
+**Verzi:** typecheck curat, lint curat, **156/156 teste** (+8).
+
+---
+
 ## 2026-08-12 — Andrei (Grupa B — backendul pentru „greșelile mele" și dificultate)
 
 Migrare `20260812180000_vederi_greseli_dificultate.sql` (aplicată) + două rute.

@@ -264,7 +264,8 @@ Patru secțiuni, fiecare cu **materie + exerciții**: **Gramatică**, **Subiectu
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Integrare **FSRS** — planificator de repetiție per elev × concept | Andrei | `repetitie-fsrs` | Ales FSRS, nu HLR: mai modern și întreținut activ (HLR e din 2016). Cere jurnalul de evenimente (A) — fără istoric per răspuns nu are pe ce rula |
+| ✅ | Integrare **FSRS** — planificator de repetiție per elev × concept | Andrei | `fsrs` | `ts-fsrs` (FSRS-6) + tabel `concept_states` (cheie: elev × **etichetă**, nu × întrebare). Actualizat din `submit`; `GET /api/recapitulare` dă conceptele scadente. **Nu cere antrenament**: parametrii impliciți sunt deja antrenați și sunt mai buni decât unii derivați din puține date |
+| ⬜ | **Ponderare după data examenului** — orizont fix, nu infinit | ❓ | — | FSRS optimizează retenția pe termen **nedefinit**; noi avem o dată fixă. Spre final vrem să creștem frecvența pe ce e fragil, chiar dacă modelul ar zice că e prea devreme. De decis cum ponderăm și de unde vine data examenului |
 | ⬜ | **Teste de recapitulare** generate din planificator | Andrei + Bogdan | `repetitie-fsrs` | Testul vine când modelul spune că elevul e pe cale să uite, nu la interval fix |
 | ⬜ | **Teste de gramatică** pe același planificator | Andrei | `repetitie-fsrs` | Decis: aceeași cadență ca restul, **un singur mecanism**, nu un al doilea sistem pe calendar |
 | ⬜ | **Test de nivel la început** — grilă inițială care stabilește de unde pornește elevul | Andrei + Bogdan | `test-nivel` | Primul contact cu platforma. Alimentează starea inițială din FSRS, ca elevul să nu reia ce știe deja |
