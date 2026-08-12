@@ -144,10 +144,12 @@ describe("POST /api/questions", () => {
     ],
   };
 
-  it("403 pentru elev", async () => {
+  it("403 pentru elev, cu corp JSON, nu text simplu", async () => {
     h.state.user = studentFree;
     const res = await questionsPOST(jsonReq(body));
     expect(res.status).toBe(403);
+    // Un client mobil are nevoie de un cod stabil, nu de text englezesc de parsat.
+    expect(await res.json()).toMatchObject({ error: "forbidden" });
     expect(h.supabaseAdmin.from).not.toHaveBeenCalled();
   });
 

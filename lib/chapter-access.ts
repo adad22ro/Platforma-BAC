@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { isTeacher, canAccessPremium, type AppUser } from '@/lib/current-user'
+import { apiError } from '@/lib/api-error'
 
 export type ChapterAccess =
   | { ok: true; teacher: boolean }
@@ -31,7 +32,8 @@ export async function checkChapterAccess(
 }
 
 export function accessErrorResponse(status: 404 | 402): Response {
-  return status === 402
-    ? Response.json({ error: 'premium_required' }, { status: 402 })
-    : new Response('Not found', { status: 404 })
+  // Corpul de la 402 ramane identic cu cel dinainte — `{ error: 'premium_required' }`.
+  // Formatul comun din `apiError` a fost ales ca superset peste el tocmai ca sa nu
+  // fie nevoie de o schimbare cu ruptura aici.
+  return status === 402 ? apiError(402) : apiError(404, 'Not found')
 }

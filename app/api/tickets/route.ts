@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
 import { checkChapterAccess, accessErrorResponse } from '@/lib/chapter-access'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 const MAX_MESSAGE = 2000
 const MAX_SELECTION = 1000
@@ -11,7 +12,7 @@ const MAX_SELECTION = 1000
 // ?lesson_id=), ordonate dupa ultima activitate — coada de lucru, nu arhiva.
 export async function GET(req: Request) {
   const user = await getCurrentAppUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
+  if (!user) return apiError(401, 'Unauthorized')
 
   const url = new URL(req.url)
   const status = url.searchParams.get('status')
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
   const { data, error } = await query
   if (error) {
     await logError('tickets', 'GET error', { code: error.code, message: error.message })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
   return Response.json({ tickets: data ?? [] })
 }
@@ -46,16 +47,16 @@ export async function GET(req: Request) {
 // pozitia in pagina si fragmentul selectat.
 export async function POST(req: Request) {
   const user = await getCurrentAppUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
+  if (!user) return apiError(401, 'Unauthorized')
 
   const body = await req.json().catch(() => ({}))
   const message = typeof body?.message === 'string' ? body.message.trim() : ''
   const lessonId = typeof body?.lesson_id === 'string' ? body.lesson_id : ''
 
-  if (!lessonId) return new Response('Bad request: lesson_id required', { status: 400 })
-  if (!message) return new Response('Bad request: message required', { status: 400 })
+  if (!lessonId) return apiError(400, 'Bad request: lesson_id required')
+  if (!message) return apiError(400, 'Bad request: message required')
   if (message.length > MAX_MESSAGE) {
-    return new Response(`Bad request: message too long (max ${MAX_MESSAGE})`, { status: 400 })
+    return apiError(400, `Bad request: message too long (max ${MAX_MESSAGE})`)
   }
 
   const selection =
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
     .eq('id', lessonId)
     .single()
 
-  if (!lesson) return new Response('Bad request: lesson not found', { status: 400 })
+  if (!lesson) return apiError(400, 'Bad request: lesson not found')
 
   // Nu se pot pune intrebari despre continut la care nu ai acces (capitol draft sau
   // premium fara abonament) — altfel tichetul devine o cale laterala de a afla ce e acolo.
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
 
   if (error || !ticket) {
     await logError('tickets', 'POST error', { code: error?.code, message: error?.message })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   // Mesajul initial al elevului e primul mesaj din fir — `tickets.message` ramane
@@ -128,7 +129,7 @@ export async function POST(req: Request) {
   if (mErr) {
     await supabaseAdmin.from('tickets').delete().eq('id', ticket.id)
     await logError('tickets', 'POST first message error', { code: mErr.code, message: mErr.message })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   return Response.json({ ticket }, { status: 201 })

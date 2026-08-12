@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 // GET /api/chapters — lista capitolelor.
 // Profesor: toate (inclusiv draft). Elev: doar publicate.
@@ -19,7 +20,7 @@ export async function GET() {
   const { data, error } = await query
   if (error) {
     await logError('chapters', 'GET error', { code: error.code, message: error.message })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
   return Response.json({ chapters: data })
 }
@@ -27,12 +28,12 @@ export async function GET() {
 // POST /api/chapters — creeaza un capitol. Doar profesor.
 export async function POST(req: Request) {
   const user = await getCurrentAppUser()
-  if (!isTeacher(user)) return new Response('Forbidden', { status: 403 })
+  if (!isTeacher(user)) return apiError(403, 'Forbidden')
 
   const body = await req.json().catch(() => ({}))
   const { title, description, order_index, is_free, published } = body
   if (!title || typeof title !== 'string') {
-    return new Response('Bad request: title required', { status: 400 })
+    return apiError(400, 'Bad request: title required')
   }
 
   const { data, error } = await supabaseAdmin
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
 
   if (error) {
     await logError('chapters', 'POST error', { code: error.code, message: error.message })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
   return Response.json({ chapter: data }, { status: 201 })
 }

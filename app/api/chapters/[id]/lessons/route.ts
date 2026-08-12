@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher, canAccessPremium } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 // GET /api/chapters/[id]/lessons — lectiile unui capitol.
 // Profesor: toate. Elev: doar publicate, si doar daca are acces (capitol free sau abonament activ).
@@ -15,10 +16,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     .eq('id', id)
     .single()
 
-  if (chErr || !chapter) return new Response('Not found', { status: 404 })
+  if (chErr || !chapter) return apiError(404, 'Not found')
 
   const teacher = isTeacher(user)
-  if (!teacher && !chapter.published) return new Response('Not found', { status: 404 })
+  if (!teacher && !chapter.published) return apiError(404, 'Not found')
 
   let query = supabaseAdmin
     .from('lessons')
@@ -31,7 +32,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   const { data, error } = await query
   if (error) {
     await logError('lessons', 'GET by chapter error', { code: error.code, message: error.message, id })
-    return new Response('Database error', { status: 500 })
+    return apiError(500, 'Database error')
   }
 
   // Gating premium: userul free vede lista de titluri, dar la capitol platit fara

@@ -1,6 +1,44 @@
 # Rute API
 
-> Actualizat la: 2026-07-01
+> Actualizat la: 2026-08-12
+
+## Formatul erorilor
+
+Toate rutele întorc erorile în aceeași formă JSON, prin `apiError()` din
+[`lib/api-error.ts`](../lib/api-error.ts):
+
+```jsonc
+{ "error": "forbidden", "message": "Forbidden" }   // `message` e opțional
+```
+
+| Status | `error` |
+|---|---|
+| 400 | `bad_request` |
+| 401 | `unauthorized` |
+| 402 | `premium_required` |
+| 403 | `forbidden` |
+| 404 | `not_found` |
+| 409 | `conflict` |
+| 429 | `rate_limited` |
+| 500 | `server_error` |
+
+Trei reguli:
+
+1. **Clientul se uită la `error`, nu la `message`.** `message` e pentru dezvoltator și
+   pentru log-uri; nu se traduce și nu se afișează utilizatorului.
+2. **`error` e string la nivelul de sus**, nu obiect imbricat — ca să fie superset peste
+   singurul corp de eroare care exista deja, `{ error: "premium_required" }` de la 402.
+   Nimic din ce funcționa nu s-a stricat.
+3. **Webhook-urile fac excepție** (`/api/webhooks/*`): răspund unor servicii externe
+   (Stripe, Clerk), care așteaptă text simplu și un 2xx. Nu se ating.
+
+**De ce există:** rutele întorceau text simplu (`new Response('Forbidden', …)`).
+Frontendul web se descurcă fiindcă se uită doar la codul HTTP, dar un al doilea client —
+o aplicație mobilă — are nevoie de un cod stabil pe care să-l mapeze la un mesaj tradus.
+Cât există un singur client, normalizarea e ieftină; cu doi devine schimbare cu ruptură
+în ambele.
+
+Răspunsurile `204 No Content` (DELETE) rămân fără corp, cum se cuvine.
 
 ## Cum sunt organizate
 

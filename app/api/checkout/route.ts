@@ -1,20 +1,21 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe'
 import { logError } from '@/lib/log-error'
+import { apiError } from '@/lib/api-error'
 
 // Creeaza o sesiune Stripe Checkout pentru abonamentul lunar premium.
 // Frontend-ul apeleaza POST /api/checkout si redirectioneaza userul la `url`.
 export async function POST() {
   const { userId } = await auth()
   if (!userId) {
-    return new Response('Unauthorized', { status: 401 })
+    return apiError(401, 'Unauthorized')
   }
 
   const priceId = process.env.STRIPE_PRICE_ID_MONTHLY
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
   if (!priceId) {
     await logError('stripe-checkout', 'STRIPE_PRICE_ID_MONTHLY lipseste')
-    return new Response('Stripe nu este configurat', { status: 500 })
+    return apiError(500, 'Stripe nu este configurat')
   }
 
   const user = await currentUser()
@@ -42,6 +43,6 @@ export async function POST() {
       { clerk_id: userId, error: err instanceof Error ? err.message : String(err) },
       'critical'
     )
-    return new Response('Eroare la crearea sesiunii de plata', { status: 500 })
+    return apiError(500, 'Eroare la crearea sesiunii de plata')
   }
 }
