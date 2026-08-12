@@ -34,6 +34,35 @@
 
 ---
 
+## Pentru Bogdan — de unde începe
+
+> Indicator, nu listă paralelă. Detaliile stau în secțiunile de mai jos; aici e doar
+> ordinea în care au sens și ce s-a schimbat în backend cât timp n-ai fost pe branch.
+
+1. **Reconectarea tichetelor** (Săpt. 9-10). Contractul s-a schimbat sub tine: tichetul
+   e acum **fir de mesaje**, nu pereche întrebare/răspuns. `POST /api/tickets/[id]/answer`
+   nu mai există — e `POST /api/tickets/[id]/messages`. `lesson_id` e obligatoriu la
+   creare. Tot UI-ul e **dezactivat în producție** prin `TICHETE_UI_ACTIVE`; ultimul pas
+   e să pui flag-ul pe `true`.
+2. **Afișarea explicației greșelii** (grupa B). `submit` întoarce acum `chosen_explanation`
+   — de ce e greșit exact ce a ales elevul, nu doar de ce e corect răspunsul bun.
+3. **Selectorul de etichete** în formularul „Întrebare test" (grupa A). Fără el, orice
+   întrebare nouă intră neetichetată, deci invizibilă pentru statistica pe concept și
+   pentru repetiția spațiată.
+4. **„Greșelile mele"** (grupa B) — cea mai utilă funcție pentru un elev de examen, și
+   una dintre cele mai ieftine acum că jurnalul de răspunsuri există.
+
+**Două schimbări transversale**, care nu sunt sarcini de sine stătătoare:
+
+- **Erorile din API sunt acum JSON**, nu text: `{ error: "forbidden", message?: "…" }`.
+  Codurile de status n-au fost atinse, deci nimic din UI nu s-a stricat — dar pentru
+  mesaje noi te poți lega de `error`, care e stabil, în loc de status. Vezi `docs/api.md`.
+- **`docs/surse-oficiale.md`** — programa în vigoare pentru BAC 2026 e cea din 2013, nu
+  cea din 2021 care apare prima în căutări. Contează dacă lucrezi la ceva legat de
+  structura materiei.
+
+---
+
 ## Legenda
 
 | Simbol | Semnificație |
@@ -137,6 +166,7 @@
 | 🟡 | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `teste-progres` | **API gata** (Andrei): `POST /api/tickets/[id]/messages` — fir de discuție, status după ultimul vorbitor. UI-ul lui Bogdan trimite încă la `/answer` și presupune un singur răspuns — **de rescris pe fir** |
 | ❌ | Notificare email elev la primirea răspunsului | Andrei | `sistem-tichete-mentorat` | **Blocat:** nu e ales/configurat un serviciu de email. Locul de apel e marcat în `POST /api/tickets/[id]/messages` |
 | 🟡 | Pagină elev — vizualizare răspuns primit | Bogdan | `teste-progres` | `/intrebari` — listă + link în antet: gata. **De reconectat** la fir (mai multe mesaje per tichet, nu un singur `answer`) |
+| ⬜ | **Pune `TICHETE_UI_ACTIVE` pe `true`** — ultimul pas al reconectării | Bogdan | — | Fără el, munca de mai sus rămâne invizibilă în producție. `app/_components/feature-flags.ts`. De verificat toate cele șase suprafețe: antet, `/profesor`, pagina de lecție, două în pagina de test, plus ruta `/intrebari` (care dă acum 404) |
 
 ---
 
@@ -180,7 +210,8 @@
 | ⬜ | **„Greșelile mele"** — pagină elev cu întrebările ratate, grupate pe capitol | Bogdan | `greselile-mele` | Cea mai utilă funcție pentru un elev de examen. Cere A |
 | ⬜ | API pentru „greșelile mele" | Andrei | `greselile-mele` | Interogare pe `answer_events`, ultimul răspuns per întrebare |
 | ⬜ | **Dificultate reală per întrebare** (% elevi care greșesc) în `/profesor` | Andrei + Bogdan | `statistici-intrebari` | Un `GROUP BY`, zero ML. Îi spune profesorului ce să reexplice |
-| ⬜ | Afișarea explicațiilor imediat după corectare | Bogdan | `greselile-mele` | Datele vin din A. Explicația greșelii e necesitate pedagogică, nu funcție premium |
+| ⬜ | Afișarea explicațiilor imediat după corectare | Bogdan | `greselile-mele` | `submit` întoarce acum **două** câmpuri per rezultat: `explanation` (de ce e corect răspunsul bun, de pe întrebare) și `chosen_explanation` (de ce e greșit exact ce a ales elevul). Al doilea e cel valoros la o greșeală. Ambele pot fi `null` |
+| ⬜ | **Selector de etichete** în formularul „Întrebare test" | Bogdan | `etichete-ui` | `GET /api/tags` dă vocabularul (`?axis=concept\|limba\|curent\|competenta`, `?profile=uman`). Se trimit ca `tags: ["slug", …]` la `POST /api/questions`. **Vocabular închis:** un slug inexistent dă 400 — nu e câmp liber de text. Fără el, întrebările intră neetichetate și rămân invizibile pentru statistica pe concept și pentru FSRS |
 
 ### C. Baremul ca date
 
