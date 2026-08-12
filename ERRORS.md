@@ -5,6 +5,19 @@
 
 ---
 
+## #021 — `git push` eșuat de două ori, reușit la reîncercare — **cauză neaflată**
+**Data:** 2026-08-12
+**Context:** Pe `docs-cercetare-produs`, două push-uri consecutive (nu la rând) au picat cu `error: failed to push some refs`, iar reîncercarea imediată, fără nicio schimbare, a trecut. Ambele au fost rulate ca `git add && git commit && git push ... 2>&1 | tail -2`.
+**Cauză:** **Neaflată.** Nereproductibil: 5 push-uri cu exact același tipar (inclusiv `commit` înlănțuit și output trecut prin `tail`) au reușit toate, iar cei trei pași ai hook-ului rulați separat au ieșit curați de 12 ori.
+**Diagnostic cheie:** Git n-a afișat blocul `hint:` pe care îl dă la respingere non-fast-forward → cel mai probabil a picat **hook-ul**, nu push-ul. Ieșirea hook-ului era deasupra, tăiată de `tail -2`.
+**De ce n-am putut merge mai departe:** log-urile npm din fereastra respectivă dispăruseră — npm păstrează doar ultimele 10 (`logs-max=10`), iar bucla de reproducere le-a rotit exact pe cele care contau. **Lecția de metodă: colectează dovezile înainte de a încerca reproducerea, nu după.**
+**Măsuri luate:**
+- `.githooks/pre-push` scrie acum toată ieșirea în `.githooks/last-run.log`, iar la eșec o copiază în `.githooks/last-failure.log` — care **supraviețuiește reîncercării reușite**. Ambele gitignored. Codul de ieșire al comenzii se păstrează corect (trece printr-un fișier de stare, fiindcă `sh` POSIX n-are `PIPESTATUS`).
+- Nu mai trunchia ieșirea lui `git push` prin `tail` — asta a ascuns cauza de ambele ori.
+**Dacă reapare:** citește `.githooks/last-failure.log`. Dacă arată `Tests: no tests` sau erori la import, e #019 (cache vitest), nu asta.
+
+---
+
 ## #020 — `Property 'user_id' does not exist on type 'GenericStringError'`
 **Data:** 2026-08-07
 **Context:** `tsc --noEmit` pică pe `app/api/tickets/[id]/route.ts` cu două erori ciudate: `Property 'user_id' does not exist on type 'GenericStringError'` și `Spread types may only be created from object types`. Codul părea corect, iar coloanele existau în `types/database.ts` (regenerate după migrare).

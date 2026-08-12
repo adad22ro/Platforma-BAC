@@ -50,3 +50,7 @@ next-env.d.ts
 .flaskenv*
 !.env.project
 !.env.vault
+# pre-push: jurnalul ultimei rulari a hook-ului (util la depanarea esecurilor)
+.githooks/last-run.log
+.githooks/last-failure.log
+.githooks/.last-status
