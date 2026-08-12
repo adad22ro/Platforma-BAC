@@ -6,6 +6,24 @@
 
 ---
 
+## 2026-08-12 — Andrei (Etichete — grupa A închisă)
+
+Ultimul rând din grupa A. Migrare `20260812170000_etichete.sql`, aplicată în producție.
+
+**Vocabular închis (tabel `tags` + join `question_tags`), nu `text[]`.** Documentul de programă sugera `text[]` ca variantă simplă de început; n-am mers pe ea, dintr-un motiv concret: „perspectiva narativa" și „perspectivă narativă" ar deveni două concepte diferite, tăcut. Stăpânirea elevului s-ar împărți în două, FSRS ar programa două lucruri în loc de unul, și nimeni n-ar observa luni de zile — n-ar fi o eroare, doar un număr ușor greșit.
+
+Bariera e dusă până la capăt: `tags` are grant doar `select`, nu există `POST /api/tags`, iar o etichetă nouă cere o migrare revizuită la PR. `POST /api/questions` acceptă `tags: [slug]`, le rezolvă **înainte** de orice scriere și dă **400** la un slug necunoscut, în loc să-l creeze din mers. Test dedicat verifică amândouă.
+
+**Vocabularul e derivat textual din programa oficială** verificată în sesiunea de documentare (Anexa 2 la OMEN 4.923/2013): 51 de etichete — 34 concepte de teorie literară, 9 curente, 5 niveluri de limbă, 3 competențe. Verificat în producție după aplicare, inclusiv că exact două sunt marcate `profile = 'uman'` (`drama`, `calitatile-stilului`) — cele două puncte în care diferă programele celor două profiluri. Deci **nu ne trebuie parcursuri separate real/uman, doar filtrare.**
+
+`tag_id` e ON DELETE **RESTRICT**, nu CASCADE: ștergerea unei etichete folosite ar rupe tăcut istoricul de stăpânire pe conceptul respectiv. Dacă chiar trebuie scoasă, se dezleagă întâi întrebările, conștient.
+
+**Verzi:** typecheck curat, lint curat, **138/138 teste** (+4).
+
+**Grupa A e închisă.** Deblocate: grupa B (greșelile mele, dificultate per întrebare), E (nota estimată), H (FSRS) și J (catalogul de neînțelegeri).
+
+---
+
 ## 2026-08-12 — Andrei (Format unic de eroare în API)
 
 Pregătire pentru al doilea client (aplicația mobilă discutată). Rutele întorceau text simplu — `new Response('Forbidden', { status: 403 })`. Frontendul web se descurcă fiindcă se uită **doar la codul HTTP** (verificat: nicio componentă nu citește corpul erorii), dar un client mobil are nevoie de un cod stabil pe care să-l mapeze la un mesaj tradus.

@@ -225,6 +225,36 @@ DDL-ul canonic: [`supabase/migrations/20260806120000_teste_progres.sql`](../supa
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol;
 necesită `npm run seed:content` rulat înainte).
 
+### tags · question_tags
+Scop: **etichete cu vocabular închis**, care traversează ierarhia `chapters → lessons`.
+Materia nu e unidimensională — un eseu despre *Ion* atinge simultan autorul, specia,
+curentul, perspectiva narativă și competența de redactare. Ierarhia nu poate exprima
+asta fără să dubleze conținut.
+
+| `tags` | Tip | Descriere |
+|---|---|---|
+| id | uuid | PK |
+| slug | text | Identificator stabil, **unique**. Folosit în cod și API; nu se schimbă la redenumire |
+| name | text | Ce vede omul; se poate schimba fără să atingă datele legate |
+| axis | text | `concept` (teorie literară) · `limba` (niveluri) · `curent` · `competenta` |
+| profile | text \| null | `null` = ambele profiluri · `uman` = doar umanist/pedagogic |
+
+`question_tags`: `(question_id, tag_id)` ca PK. `question_id` CASCADE,
+**`tag_id` RESTRICT** — ștergerea unei etichete folosite ar rupe tăcut istoricul de
+stăpânire pe conceptul respectiv.
+
+**Vocabularul se administrează prin migrări**, nu din aplicație: `tags` are grant doar
+`select`. O etichetă nouă = o migrare, revizuită la PR. Fără bariera asta,
+„perspectiva narativa" și „perspectivă narativă" ar deveni două concepte diferite,
+tăcut — iar stăpânirea elevului s-ar împărți în două fără ca cineva să observe.
+
+Vocabularul inițial (51 de etichete: 34 concepte, 9 curente, 5 niveluri de limbă,
+3 competențe) e derivat **textual** din programa oficială în vigoare — Anexa nr. 2 la
+OMEN 4.923/2013, valabilă pentru BAC 2026. Proveniența, verificată:
+[`surse-oficiale.md`](surse-oficiale.md).
+
+DDL: [`20260812170000_etichete.sql`](../supabase/migrations/20260812170000_etichete.sql).
+
 ### answer_events
 Scop: **jurnalul de răspunsuri** — o linie per răspuns dat de un elev la o întrebare,
 append-only. `student_progress` rămâne ca vedere agregată, dar **sursa de adevăr e

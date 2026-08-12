@@ -64,6 +64,31 @@ export async function POST(req: Request) {
     return apiError(400, `Bad request: ${validated.error}`)
   }
 
+  // Etichetele se dau ca slug-uri si se rezolva la id-uri INAINTE de a scrie ceva.
+  // Un slug necunoscut e 400, nu o eticheta creata din mers: vocabularul e inchis
+  // tocmai ca sa nu apara duplicate scrise gresit, care ar imparti tacut staparea
+  // elevului pe acelasi concept in doua.
+  const tagSlugs = Array.isArray(body?.tags) ? body.tags.filter((t: unknown) => typeof t === 'string') : []
+  let tagIds: string[] = []
+  if (tagSlugs.length) {
+    const { data: found, error: tErr } = await supabaseAdmin
+      .from('tags')
+      .select('id, slug')
+      .in('slug', tagSlugs)
+
+    if (tErr) {
+      await logError('questions', 'POST tags lookup error', { code: tErr.code, message: tErr.message })
+      return apiError(500, 'Database error')
+    }
+
+    const known = new Set((found ?? []).map((t) => t.slug))
+    const unknown = tagSlugs.filter((s: string) => !known.has(s))
+    if (unknown.length) {
+      return apiError(400, `Bad request: unknown tags: ${unknown.join(', ')}`)
+    }
+    tagIds = (found ?? []).map((t) => t.id)
+  }
+
   const { data: question, error } = await supabaseAdmin
     .from('questions')
     .insert({
@@ -92,5 +117,25 @@ export async function POST(req: Request) {
     return apiError(500, 'Database error')
   }
 
-  return Response.json({ question: { ...question, answers: created } }, { status: 201 })
+  if (tagIds.length) {
+    const { error: qtErr } = await supabaseAdmin
+      .from('question_tags')
+      .insert(tagIds.map((tag_id) => ({ question_id: question.id, tag_id })))
+
+    if (qtErr) {
+      // Intrebarea si variantele sunt deja scrise si sunt valide fara etichete.
+      // Nu le stergem pentru atat — dar o intrebare neetichetata e invizibila
+      // pentru FSRS si pentru statistica pe concept, deci se logheaza.
+      await logError('questions', 'POST question_tags error', {
+        code: qtErr.code,
+        message: qtErr.message,
+        question_id: question.id,
+      })
+    }
+  }
+
+  return Response.json(
+    { question: { ...question, answers: created, tags: tagSlugs } },
+    { status: 201 }
+  )
 }

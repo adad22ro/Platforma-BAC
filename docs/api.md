@@ -143,6 +143,17 @@ Date placeholder: `npm run seed:content` (3 capitole + lecții demo, idempotent)
 | `/api/questions/[id]` | DELETE | șterge (cascade variante) | teacher |
 | `/api/questions/[id]/answers` | PUT | **înlocuiește tot setul** de variante | teacher |
 | `/api/progress` | GET | progresul **propriu** al elevului, pe capitole | orice user logat |
+| `/api/tags` | GET | vocabularul de etichete (`?axis=`, `?profile=uman`) | orice user logat |
+
+**Etichetele au vocabular închis.** Nu există `POST /api/tags`: o etichetă nouă se adaugă
+printr-o **migrare**, revizuită la PR. `POST /api/questions` acceptă `tags: ["slug", …]`,
+le rezolvă la id-uri **înainte** de a scrie ceva și întoarce **400** la un slug necunoscut,
+în loc să creeze eticheta din mers.
+
+Bariera e intenționată: cu vocabular liber, „perspectiva narativa" și „perspectivă
+narativă" ar deveni două concepte diferite, tăcut. Stăpânirea elevului s-ar împărți în
+două, FSRS ar programa două lucruri în loc de unul, și nimeni n-ar observa — n-ar fi o
+eroare, doar un număr ușor greșit.
 
 **Regula de aur:** `is_correct` pleacă spre client **doar** prin `GET /api/questions/[id]`
 (rută de profesor). `GET /api/chapters/[id]/questions` nici măcar nu selectează coloana.
