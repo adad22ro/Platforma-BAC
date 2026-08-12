@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { btn } from "../../_components/ui";
 import { HelpButton } from "../../_components/help-button";
+import { TICHETE_UI_ACTIVE } from "../../_components/feature-flags";
 
 // Formele vin din GET /api/chapters/[id]/questions si POST .../submit
 // (vezi docs/api.md). Variantele sunt randuri in tabelul `answers`, cu id
@@ -283,7 +284,7 @@ export function QuizView({ chapterId }: { chapterId: string }) {
 
               {/* Doar la intrebarile gresite: acolo e blocajul real, si tichetul
                   pleaca cu intrebarea exacta atasata. */}
-              {result && !result.correct && (
+              {TICHETE_UI_ACTIVE && result && !result.correct && (
                 <HelpButton
                   label="Nu am înțeles întrebarea asta"
                   context={{
@@ -324,14 +325,16 @@ export function QuizView({ chapterId }: { chapterId: string }) {
 
       {/* Intrebare despre capitol in ansamblu — disponibila si inainte de
           corectare, cand elevul se blocheaza pe materie, nu pe o intrebare. */}
-      <HelpButton
-        label="Nu am înțeles capitolul"
-        context={{
-          source: "quiz",
-          chapter_id: chapterId,
-          chapter_title: chapterTitle ?? undefined,
-        }}
-      />
+      {TICHETE_UI_ACTIVE && (
+        <HelpButton
+          label="Nu am înțeles capitolul"
+          context={{
+            source: "quiz",
+            chapter_id: chapterId,
+            chapter_title: chapterTitle ?? undefined,
+          }}
+        />
+      )}
 
       <BackToDashboard />
     </div>

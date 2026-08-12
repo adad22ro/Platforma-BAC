@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { btn } from "../../_components/ui";
 import { HelpButton } from "../../_components/help-button";
+import { TICHETE_UI_ACTIVE } from "../../_components/feature-flags";
 
 type Lesson = {
   id: string;
@@ -131,14 +132,16 @@ export function LessonView({ id }: { id: string }) {
       )}
 
       {/* Contextul (ce lectie, din ce capitol) pleaca automat cu tichetul. */}
-      <HelpButton
-        context={{
-          source: "lesson",
-          lesson_id: lesson.id,
-          lesson_title: lesson.title,
-          chapter_id: lesson.chapter_id,
-        }}
-      />
+      {TICHETE_UI_ACTIVE && (
+        <HelpButton
+          context={{
+            source: "lesson",
+            lesson_id: lesson.id,
+            lesson_title: lesson.title,
+            chapter_id: lesson.chapter_id,
+          }}
+        />
+      )}
 
       <BackToDashboard />
     </article>

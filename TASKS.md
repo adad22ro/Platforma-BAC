@@ -121,6 +121,11 @@
 
 ## Săptămânile 9-10 — Sistem de mentorat (tichete)
 
+> ⚠️ **Tot UI-ul de tichete e dezactivat în producție** prin `TICHETE_UI_ACTIVE`
+> (`app/_components/feature-flags.ts`), fiindcă e scris pe contractul vechi și ar
+> arăta elevului date greșite fără să crape. Codul e la locul lui; reactivarea e o
+> singură linie, după reconectarea la `POST /api/tickets/[id]/messages`.
+
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
 | ✅ | Schema DB: tabel `tickets` | Andrei | `sistem-tichete-mentorat` | Două migrări (aplicate): tichete + `ticket_messages` (fir de discuție) și context de lecție. `docs/database.md` |

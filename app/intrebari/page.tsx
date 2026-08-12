@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { AppHeader } from "../_components/app-header";
 import { MyTickets } from "./my-tickets";
+import { TICHETE_UI_ACTIVE } from "../_components/feature-flags";
+import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Întrebările mele — Platforma BAC",
@@ -9,6 +11,9 @@ export const metadata: Metadata = {
 // Aici ajunge elevul ca sa-si vada raspunsurile primite de la profesor
 // (linkul din emailul de notificare duce tot aici).
 export default function MyTicketsPage() {
+  // Ruta nu mai e legata din antet, dar ramane accesibila pe URL direct. Fara
+  // asta ar arata date gresite (vezi TICHETE_UI_ACTIVE) — mai bine 404.
+  if (!TICHETE_UI_ACTIVE) notFound();
   return (
     <div className="flex flex-1 flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <AppHeader />

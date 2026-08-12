@@ -6,6 +6,7 @@ import { TeacherChapters } from "./teacher-chapters";
 import { TeacherLessons } from "./teacher-lessons";
 import { TeacherQuestions } from "./teacher-questions";
 import { TeacherTickets } from "./teacher-tickets";
+import { TICHETE_UI_ACTIVE } from "../_components/feature-flags";
 
 // Sursa unica a listei de capitole: formularul de lectie are nevoie de aceeasi
 // lista ca sectiunea de capitole, iar un capitol nou trebuie sa apara imediat
@@ -36,7 +37,7 @@ export function TeacherPanel() {
       <TeacherChapters list={list} onReload={loadChapters} />
       <TeacherLessons list={list} />
       <TeacherQuestions list={list} />
-      <TeacherTickets list={list} />
+      {TICHETE_UI_ACTIVE && <TeacherTickets list={list} />}
     </div>
   );
 }

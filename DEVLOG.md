@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-08-12 — Andrei (UI-ul de tichete, dezactivat temporar înainte de merge)
+
+`teste-progres` (PR #41) are ~2.600 de linii bune, dar zona de tichete e scrisă pe contractul vechi. **Nu crapă** — și de aceea e periculoasă: `GET /api/tickets` răspunde, doar că UI-ul citește `answer` / `answered_at`, câmpuri care nu mai există, deci **toate tichetele ar apărea „În așteptare", inclusiv cele la care profesorul a răspuns.** Butonul de răspuns din `/profesor` dă 404, iar „Nu am înțeles" dă 400 (lipsă `lesson_id`).
+
+**Soluție: un singur flag**, `TICHETE_UI_ACTIVE` din `app/_components/feature-flags.ts`, pe `false`. Acoperă cele cinci puncte de montare (antet, panel profesor, lecție, două în pagina de test) plus ruta `/intrebari`, care dă acum 404 — era accesibilă pe URL direct chiar fără link.
+
+**De ce flag și nu `git revert`:** codul lui Bogdan rămâne la vedere, reconectarea e o singură linie de întors, iar PR-ul poate intra acum cu partea verificată E2E — teste grilă, scor, progres, formularele din panelul profesor. Alternativa, să ținem tot PR-ul până se reconectează tichetele, e exact tiparul care a produs situația de azi: muncă bună care stă pe branch și se învechește.
+
+Tipul flag-ului e `boolean` explicit, nu literalul `false`, ca TypeScript să nu marcheze ramurile drept imposibile și să nu pară cod mort.
+
+**Verzi:** typecheck curat, lint curat, 116/116 teste.
+
+---
+
 ## 2026-08-11 — Bogdan (Sesiunea 7 frontend, partea 7 — integrarea cu API-ul real)
 
 **Contextul:** la push am descoperit că `origin/teste-progres` era cu 7 commit-uri înainte — Andrei împinsese pe 6 august backendul complet de Săpt. 7-8. Cele trei commit-uri ale mele din sesiunea 6 nu ajunseseră niciodată pe remote, deci istoriile divergeau. Rebase pe `origin/teste-progres`, cu conflictele din `TASKS.md` și `DEVLOG.md` rezolvate păstrând ambele relatări (jurnalul rămâne cronologic invers).
