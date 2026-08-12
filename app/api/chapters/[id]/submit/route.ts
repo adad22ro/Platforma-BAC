@@ -47,10 +47,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return new Response('Bad request: chapter has no published questions', { status: 400 })
   }
 
-  const { data: correctAnswers, error: aErr } = await supabaseAdmin
+  // Toate variantele, nu doar cele corecte: ne trebuie si explicatia celei alese
+  // de elev. Nimic din ce se citeste aici nu pleaca intreg spre client — vezi mai
+  // jos ce se compune in `results`.
+  const { data: allAnswers, error: aErr } = await supabaseAdmin
     .from('answers')
-    .select('id, question_id')
-    .eq('is_correct', true)
+    .select('id, question_id, is_correct, explanation')
     .in(
       'question_id',
       questions.map((q) => q.id)
@@ -61,7 +63,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return new Response('Database error', { status: 500 })
   }
 
-  const correctByQuestion = new Map((correctAnswers ?? []).map((a) => [a.question_id, a.id]))
+  const correctByQuestion = new Map(
+    (allAnswers ?? []).filter((a) => a.is_correct).map((a) => [a.question_id, a.id])
+  )
+  const explanationByAnswer = new Map((allAnswers ?? []).map((a) => [a.id, a.explanation]))
 
   const results = questions.map((q) => {
     const correct_answer_id = correctByQuestion.get(q.id) ?? null
@@ -74,6 +79,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       // o marcam gresita, nu corecta — nu dam puncte pe necunoscut.
       correct: correct_answer_id !== null && chosen_answer_id === correct_answer_id,
       explanation: q.explanation,
+      // De ce e gresit exact ce a ales elevul. Doar pentru varianta lui — celelalte
+      // explicatii raman pe server, altfel testul devine o cheie de raspunsuri.
+      // Se trimite abia acum, dupa ce a raspuns.
+      chosen_explanation: chosen_answer_id ? explanationByAnswer.get(chosen_answer_id) ?? null : null,
     }
   })
 

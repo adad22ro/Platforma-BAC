@@ -115,6 +115,23 @@ describe("validateAnswers", () => {
   it("cere text pe fiecare varianta", () => {
     expect(validateAnswers([{ is_correct: true }, { text: "b" }])).toHaveProperty("error");
   });
+
+  it("explicatia per varianta e optionala, dar daca vine trebuie sa fie text", () => {
+    expect(validateAnswers(ok)).not.toHaveProperty("error");
+    expect(
+      validateAnswers([
+        { text: "a", is_correct: true, explanation: "pentru ca da" },
+        { text: "b", is_correct: false, explanation: null },
+      ])
+    ).not.toHaveProperty("error");
+    // Un obiect trimis din greseala ar ajunge in DB si s-ar randa "[object Object]".
+    expect(
+      validateAnswers([
+        { text: "a", is_correct: true, explanation: { ro: "text" } },
+        { text: "b", is_correct: false },
+      ])
+    ).toHaveProperty("error");
+  });
 });
 
 describe("POST /api/questions", () => {
@@ -148,6 +165,47 @@ describe("POST /api/questions", () => {
     expect(res.status).toBe(400);
     // Validarea se face inainte de orice scriere in DB.
     expect(h.supabaseAdmin.from).not.toHaveBeenCalled();
+  });
+
+  it("salveaza explicatia fiecarei variante", async () => {
+    h.state.user = teacher;
+    setResults({
+      questions: [{ data: { id: "q1", chapter_id: "c1", text: "Intrebare?" }, error: null }],
+      answers: [{ data: [{ id: "a1" }, { id: "a2" }], error: null }],
+    });
+
+    await questionsPOST(
+      jsonReq({
+        ...body,
+        answers: [
+          { text: "corect", is_correct: true, explanation: "pentru ca X" },
+          { text: "gresit", is_correct: false, explanation: "confuzia tipica" },
+        ],
+      })
+    );
+
+    const insert = h.fromCalls
+      .find((c) => c.table === "answers")
+      ?.calls.find(([n]) => n === "insert");
+    const rows = insert?.[1] as { explanation: string | null }[];
+    expect(rows[0].explanation).toBe("pentru ca X");
+    expect(rows[1].explanation).toBe("confuzia tipica");
+  });
+
+  it("varianta fara explicatie se scrie cu null, nu undefined", async () => {
+    h.state.user = teacher;
+    setResults({
+      questions: [{ data: { id: "q1", chapter_id: "c1", text: "Intrebare?" }, error: null }],
+      answers: [{ data: [{ id: "a1" }, { id: "a2" }], error: null }],
+    });
+
+    await questionsPOST(jsonReq(body));
+
+    const insert = h.fromCalls
+      .find((c) => c.table === "answers")
+      ?.calls.find(([n]) => n === "insert");
+    const rows = insert?.[1] as { explanation: string | null }[];
+    expect(rows[0].explanation).toBeNull();
   });
 
   it("201 creeaza intrebarea si variantele", async () => {
@@ -202,6 +260,30 @@ describe("GET /api/chapters/[id]/questions", () => {
     expect(String(select?.[1])).not.toContain("is_correct");
   });
 
+  it("nu trimite nici explicatiile variantelor inainte de corectare", async () => {
+    h.state.user = studentFree;
+    setResults({
+      chapters: [freeChapter],
+      questions: [{ data: questions, error: null }],
+      answers: [
+        {
+          data: [{ id: "a1", question_id: "q1", text: "corect", order_index: 0 }],
+          error: null,
+        },
+      ],
+    });
+
+    const res = await chapterQuestionsGET({} as never, ctx("c1"));
+    const json = await res.json();
+    // „Varianta asta e gresita pentru ca…" dezvaluie raspunsul la fel de sigur
+    // ca is_correct.
+    expect(JSON.stringify(json)).not.toContain("explanation");
+
+    const answersCall = h.fromCalls.find((c) => c.table === "answers");
+    const select = answersCall?.calls.find(([name]) => name === "select");
+    expect(String(select?.[1])).not.toContain("explanation");
+  });
+
   it("elevul free primeste 402 pe capitol premium", async () => {
     h.state.user = studentFree;
     setResults({ chapters: [premiumChapter] });
@@ -254,9 +336,13 @@ describe("POST /api/chapters/[id]/submit", () => {
     { id: "q1", explanation: "pentru ca da", order_index: 0 },
     { id: "q2", explanation: null, order_index: 1 },
   ];
+  // Ruta cere acum TOATE variantele (ii trebuie explicatia celei alese), nu doar
+  // pe cele corecte — de aceea fixture-ul le contine si pe cele gresite.
   const correct = [
-    { id: "a1", question_id: "q1" },
-    { id: "a3", question_id: "q2" },
+    { id: "a1", question_id: "q1", is_correct: true, explanation: null },
+    { id: "a2", question_id: "q1", is_correct: false, explanation: "confunzi cu altceva" },
+    { id: "a3", question_id: "q2", is_correct: true, explanation: null },
+    { id: "a4", question_id: "q2", is_correct: false, explanation: "aici gresesc multi" },
   ];
 
   function setTestData(chapter = freeChapter) {
@@ -381,6 +467,39 @@ describe("POST /api/chapters/[id]/submit", () => {
         }[]
       | undefined;
   }
+
+  it("intoarce explicatia variantei alese, nu pe a celorlalte", async () => {
+    h.state.user = studentFree;
+    setTestData();
+
+    const res = await submitPOST(
+      jsonReq({
+        answers: [
+          { question_id: "q1", answer_id: "a1" }, // corect
+          { question_id: "q2", answer_id: "a4" }, // gresit
+        ],
+      }),
+      ctx("c1")
+    );
+
+    const json = await res.json();
+    expect(json.results[1]).toMatchObject({
+      question_id: "q2",
+      correct: false,
+      chosen_explanation: "aici gresesc multi",
+    });
+    // Explicatia variantei gresite de la q1 (pe care elevul NU a ales-o) nu pleaca.
+    expect(JSON.stringify(json)).not.toContain("confunzi cu altceva");
+  });
+
+  it("fara raspuns ales, chosen_explanation e null", async () => {
+    h.state.user = studentFree;
+    setTestData();
+
+    const res = await submitPOST(jsonReq({ answers: [] }), ctx("c1"));
+    const json = await res.json();
+    expect(json.results[0]).toMatchObject({ chosen_answer_id: null, chosen_explanation: null });
+  });
 
   it("scrie un eveniment per intrebare, cu ce a bifat elevul", async () => {
     h.state.user = studentFree;
@@ -507,6 +626,33 @@ describe("PUT /api/questions/[id]/answers", () => {
     const res = await answersPUT(putReq({ answers: good }), ctx("q1"));
     expect(res.status).toBe(403);
     expect(h.supabaseAdmin.from).not.toHaveBeenCalled();
+  });
+
+  it("scrie explicatiile si le citeste in setul pastrat pentru restaurare", async () => {
+    h.state.user = teacher;
+    setResults({
+      questions: [{ data: { id: "q1" }, error: null }],
+      answers: [
+        { data: previous, error: null }, // select-ul setului vechi
+        { data: null, error: null }, // delete
+        { data: [{ id: "a-nou" }], error: null }, // insert
+      ],
+    });
+
+    await answersPUT(
+      putReq({ answers: [{ ...good[0], explanation: "de asta" }, good[1]] }),
+      ctx("q1")
+    );
+
+    const answersCalls = h.fromCalls.filter((c) => c.table === "answers");
+    const insert = answersCalls.flatMap((c) => c.calls).find(([n]) => n === "insert");
+    expect((insert?.[1] as { explanation: string | null }[])[0].explanation).toBe("de asta");
+
+    // Capcana: setul vechi se citeste cu o lista explicita de coloane. Daca
+    // `explanation` lipseste de acolo, o restaurare dupa insert esuat ar sterge
+    // tacut toate explicatiile.
+    const select = answersCalls.flatMap((c) => c.calls).find(([n]) => n === "select");
+    expect(String(select?.[1])).toContain("explanation");
   });
 
   it("400 daca setul nou nu are exact un raspuns corect", async () => {

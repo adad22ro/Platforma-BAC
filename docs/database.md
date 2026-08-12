@@ -181,9 +181,17 @@ Scop: variantele de răspuns ale unei întrebări (grilă cu **răspuns unic**).
 | text | text | Textul variantei (NOT NULL) |
 | is_correct | boolean | Varianta corectă; default `false` |
 | order_index | int | Ordinea de afișare (NOT NULL default 0) |
+| explanation | text \| null | **De ce e greșită exact această variantă** (opțional) |
 | created_at | timestamptz | default `now()` |
 
+`explanation` per variantă e altceva decât `questions.explanation`: aceea spune de ce
+răspunsul corect e corect, aceasta de ce e greșit exact ce a ales elevul. Un elev care
+alege „perspectivă obiectivă" în loc de „subiectivă" are o confuzie *specifică*; dacă îi
+arăți doar răspunsul bun, o repetă. Se întoarce din `submit`, **doar pentru varianta lui**.
+
 > **Securitate — regula de aur:** `is_correct` **nu se trimite niciodată către client**.
+> Același lucru pentru `explanation`: „varianta asta e greșită pentru că…" dezvăluie
+> răspunsul corect la fel de sigur ca `is_correct`.
 > Variantele stau în tabel separat (nu `jsonb` în `questions`) tocmai ca filtrarea să fie
 > explicită la fiecare citire, iar corectarea să se facă exclusiv pe server.
 >

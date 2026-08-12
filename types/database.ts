@@ -79,6 +79,7 @@ export type Database = {
       answers: {
         Row: {
           created_at: string
+          explanation: string | null
           id: string
           is_correct: boolean
           order_index: number
@@ -87,6 +88,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          explanation?: string | null
           id?: string
           is_correct?: boolean
           order_index?: number
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          explanation?: string | null
           id?: string
           is_correct?: boolean
           order_index?: number

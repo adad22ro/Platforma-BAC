@@ -11,6 +11,10 @@ import { logError } from '@/lib/log-error'
 // REGULA: `is_correct` NU pleaca niciodata catre client de aici — nici pentru
 // profesor (el are GET /api/questions/[id] pentru asta). Corectarea se face
 // server-side, in POST /api/chapters/[id]/submit.
+//
+// Aceeasi regula pentru `answers.explanation`: un text de forma "varianta asta e
+// gresita pentru ca…" dezvaluie raspunsul corect la fel de sigur ca `is_correct`.
+// Explicatia variantei alese se intoarce doar din submit, dupa ce elevul a raspuns.
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   const user = await getCurrentAppUser()
@@ -36,7 +40,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
   const { data: answers, error: aErr } = await supabaseAdmin
     .from('answers')
-    // fara is_correct — vezi regula de mai sus
+    // fara is_correct si fara explanation — vezi regula de mai sus
     .select('id, question_id, text, order_index')
     .in(
       'question_id',
