@@ -144,6 +144,22 @@ Date placeholder: `npm run seed:content` (3 capitole + lecții demo, idempotent)
 | `/api/questions/[id]/answers` | PUT | **înlocuiește tot setul** de variante | teacher |
 | `/api/progress` | GET | progresul **propriu** al elevului, pe capitole | orice user logat |
 | `/api/tags` | GET | vocabularul de etichete (`?axis=`, `?profile=uman`) | orice user logat |
+| `/api/greseli` | GET | întrebările la care elevul stă prost **acum** (`?chapter_id=`) | orice user logat, **doar ale lui** |
+| `/api/questions/dificultate` | GET | % elevi care greșesc, per întrebare (`?chapter_id=`) | teacher |
+
+**Două semantici care par evidente și nu sunt** — definite în vederi SQL, nu în rute,
+ca să nu fie reinterpretate diferit:
+
+- **`/api/greseli` = starea curentă, nu istoricul.** Se ia **ultimul** răspuns per
+  întrebare (`latest_answer_per_question`) și se păstrează doar cele greșite. Dacă
+  elevul a greșit, a înțeles și a nimerit data următoare, întrebarea **iese** din listă
+  — altfel lista crește la nesfârșit și descurajează exact elevul care progresează.
+- **`/api/questions/dificultate` se calculează pe PRIMA întâlnire** a fiecărui elev cu
+  întrebarea (`question_difficulty`), nu pe toate răspunsurile: reluările de test umflă
+  rata de succes și fac întrebarea să pară mai ușoară decât e. `students` numără elevi
+  distincți — un elev, un vot.
+  `wrong_pct` e **`null`**, nu `0`, pentru o întrebare pe care n-a încercat-o nimeni:
+  „n-a încercat-o nimeni" și „n-a greșit-o nimeni" sunt lucruri opuse.
 
 **Etichetele au vocabular închis.** Nu există `POST /api/tags`: o etichetă nouă se adaugă
 printr-o **migrare**, revizuită la PR. `POST /api/questions` acceptă `tags: ["slug", …]`,

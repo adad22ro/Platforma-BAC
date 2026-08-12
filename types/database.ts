@@ -526,7 +526,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      latest_answer_per_question: {
+        Row: {
+          chapter_id: string | null
+          chosen_answer_id: string | null
+          created_at: string | null
+          is_correct: boolean | null
+          question_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_events_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answer_events_chosen_answer_id_fkey"
+            columns: ["chosen_answer_id"]
+            isOneToOne: false
+            referencedRelation: "answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answer_events_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answer_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_difficulty: {
+        Row: {
+          question_id: string | null
+          students: number | null
+          wrong: number | null
+          wrong_pct: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_events_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never

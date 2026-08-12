@@ -225,6 +225,18 @@ DDL-ul canonic: [`supabase/migrations/20260806120000_teste_progres.sql`](../supa
 Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capitol;
 necesită `npm run seed:content` rulat înainte).
 
+### Vederi peste `answer_events`
+
+Două vederi, fiecare cu o capcană de semantică rezolvată o dată, în SQL:
+[`20260812180000_vederi_greseli_dificultate.sql`](../supabase/migrations/20260812180000_vederi_greseli_dificultate.sql).
+
+| Vedere | Ce dă | Capcana evitată |
+|---|---|---|
+| `latest_answer_per_question` | ultimul răspuns al fiecărui elev, per întrebare | „greșelile mele" **nu** e „tot ce am greșit vreodată" — o întrebare pe care elevul a nimerit-o ulterior iese din listă |
+| `question_difficulty` | `students`, `wrong`, `wrong_pct` per întrebare | se numără **prima întâlnire** a fiecărui elev; reluările ar umfla rata de succes |
+
+Ambele au grant doar pentru `service_role` — autorizarea rămâne în rutele API.
+
 ### tags · question_tags
 Scop: **etichete cu vocabular închis**, care traversează ierarhia `chapters → lessons`.
 Materia nu e unidimensională — un eseu despre *Ion* atinge simultan autorul, specia,

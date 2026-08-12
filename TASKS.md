@@ -207,9 +207,9 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | **„Greșelile mele"** — pagină elev cu întrebările ratate, grupate pe capitol | Bogdan | `greselile-mele` | Cea mai utilă funcție pentru un elev de examen. Cere A |
-| ⬜ | API pentru „greșelile mele" | Andrei | `greselile-mele` | Interogare pe `answer_events`, ultimul răspuns per întrebare |
-| ⬜ | **Dificultate reală per întrebare** (% elevi care greșesc) în `/profesor` | Andrei + Bogdan | `statistici-intrebari` | Un `GROUP BY`, zero ML. Îi spune profesorului ce să reexplice |
+| ⬜ | **„Greșelile mele"** — pagină elev cu întrebările ratate, grupate pe capitol | Bogdan | `greselile-mele` | **API gata:** `GET /api/greseli` → `{ mistakes: [{ question_id, question_text, explanation, chapter_id, chapter_title, chosen_answer_id, answered_at }] }`. Cea mai utilă funcție pentru un elev de examen |
+| ✅ | API pentru „greșelile mele" | Andrei | `greseli-si-dificultate` | `GET /api/greseli` (+ `?chapter_id=`). Semantica — **ultimul** răspuns per întrebare, doar cele greșite — e in vederea `latest_answer_per_question`, nu in ruta |
+| 🟡 | **Dificultate reală per întrebare** (% elevi care greșesc) în `/profesor` | Andrei + Bogdan | `greseli-si-dificultate` | **API gata** (Andrei): `GET /api/questions/dificultate`, calculat pe **prima** întâlnire a fiecărui elev — reluările ar umfla rata de succes. Rămâne afișarea în `/profesor` (Bogdan) |
 | ⬜ | Afișarea explicațiilor imediat după corectare | Bogdan | `greselile-mele` | `submit` întoarce acum **două** câmpuri per rezultat: `explanation` (de ce e corect răspunsul bun, de pe întrebare) și `chosen_explanation` (de ce e greșit exact ce a ales elevul). Al doilea e cel valoros la o greșeală. Ambele pot fi `null` |
 | ⬜ | **Selector de etichete** în formularul „Întrebare test" | Bogdan | `etichete-ui` | `GET /api/tags` dă vocabularul (`?axis=concept\|limba\|curent\|competenta`, `?profile=uman`). Se trimit ca `tags: ["slug", …]` la `POST /api/questions`. **Vocabular închis:** un slug inexistent dă 400 — nu e câmp liber de text. Fără el, întrebările intră neetichetate și rămân invizibile pentru statistica pe concept și pentru FSRS |
 
