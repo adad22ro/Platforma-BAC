@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-08-12 — Andrei (Deciziile de produs → sarcini în TASKS)
+
+Cercetarea din sesiunea precedentă s-a spart în sarcini. **Secțiune nouă „Faza 2"** în `TASKS.md`, cu 18 sarcini în șase grupe (jurnal de evenimente, ce iese din el, baremul ca date, AI în lot, motivație, gramatică/tehnic).
+
+**Decizii luate:**
+- **Trecem pe `answer_events` acum.** Migrarea e mică azi, cu 5 utilizatori; peste un an, cu date reale, e operație pe cord deschis. Blochează grupele B și E — fără istoric la nivel de răspuns nu există „greșelile mele", statistici per întrebare, notă estimată.
+- **Public-țintă: a XI-a și a XII-a principal, promoțiile anterioare secundar.** Clasa a XI-a e o **extindere față de tot ce s-a documentat** — `bac-romana-programa` și `bac-barem-analiza` presupun exclusiv clasa a XII-a. Fragmentarea materiei trebuie reevaluată.
+
+**Rămase nedecise, mutate explicit în „Blocat / În așteptare"** ca să nu pară uitate: cu ce conținut începem (se consultă profesorul), modelul free/premium (blochează gating-ul funcțiilor noi), serviciul de email, drepturile de autor pe textele de la Subiectul I, evaluarea textului liber.
+
+N-am scris sarcini pentru punctele nedecise. Un rând „⬜ de făcut" pe o decizie neluată e mai rău decât absența lui: arată ca muncă planificată, când de fapt e o întrebare fără răspuns.
+
+---
+
 ## 2026-08-11 — Andrei (Sesiune de cercetare și direcție de produs)
 
 **Fără cod de aplicație.** Sesiune de documentare, plus o regulă de proces.

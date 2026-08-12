@@ -25,7 +25,8 @@
 - **Backend Săpt. 7-8:** complet (schema + seed + API întrebări + corectare + progres) — în `main` prin PR #38
 - **Backend Săpt. 9-10:** tichete ca **fir de mesaje**, deschise doar din fereastra lecției, cu context complet pentru profesor (lecție + poziție + fragment selectat + progres la test) — gata; rămâne notificarea pe email (blocată de alegerea serviciului)
 - **Bottleneck:** frontend (Bogdan) — urmează formularul „Lecție nouă" și UI-ul de test grilă (Săpt. 7-8)
-- **Ultima actualizare:** 2026-08-07 (backend: Săpt. 7-8 și 9-10 în `main`; restanțe închise)
+- **Faza 2 (direcție de produs):** planificată — vezi secțiunea de la finalul fișierului. Decis: trecem pe jurnal de evenimente (`answer_events`) acum; public-țintă a XI-a + a XII-a, promoțiile anterioare secundar
+- **Ultima actualizare:** 2026-08-12 (sarcini de Fază 2, din cercetarea de produs)
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -145,12 +146,89 @@
 
 ---
 
+## Faza 2 — direcție de produs (din cercetare, decizii din 12 august 2026)
+
+> Sursa: `docs/duolingo-research.md`, `docs/bac-barem-analiza.md`, `docs/viziune-produs.md`,
+> `docs/rezumat-sedinta.md`. Sarcinile de mai jos sunt **doar** cele pentru care există
+> decizie. Ce depinde de un punct încă nedecis stă în „Blocat / În așteptare", nu aici.
+>
+> **Regula de filtrare, asumată:** fiecare element trebuie să răspundă la „îl apropie pe
+> elev de o notă mai mare la BAC?". Dacă răspunsul e „nu, dar crește implicarea", nu intră.
+> **Nu facem:** vieți/hearts, ligi publice, XP ca metrică centrală, teste A/B, microservicii.
+
+### A. Jurnal de evenimente — **decis: acum** (blochează grupele B și E)
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Migrare `answer_events` — append-only: elev, întrebare, variantă aleasă, corect, timestamp | Andrei | `answer-events` | `student_progress` face upsert și pierde istoricul. Rămâne ca vedere agregată; evenimentele devin sursa de adevăr |
+| ⬜ | Scrierea evenimentelor din `POST /api/chapters/[id]/submit` | Andrei | `answer-events` | O linie per răspuns, nu per încercare. Atenție: nu se scrie pentru profesor (ca la progres) |
+| ⬜ | Explicație **per variantă** — coloană pe `answers` | Andrei | `answer-events` | Avem `questions.explanation` la nivel de întrebare, **nefolosit în UI**. Ideea: nu explici doar răspunsul corect, ci de ce fiecare variantă greșită e greșită |
+| ⬜ | Etichete pe întrebări (`tags`) pentru stăpânire per concept | Andrei | `answer-events` | Precondiție pentru „ce știi / ce nu știi". De decis dacă etichetele intră de la început sau după |
+
+### B. Ce iese din jurnal (ieftin, valoare mare)
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | **„Greșelile mele"** — pagină elev cu întrebările ratate, grupate pe capitol | Bogdan | `greselile-mele` | Cea mai utilă funcție pentru un elev de examen. Cere A |
+| ⬜ | API pentru „greșelile mele" | Andrei | `greselile-mele` | Interogare pe `answer_events`, ultimul răspuns per întrebare |
+| ⬜ | **Dificultate reală per întrebare** (% elevi care greșesc) în `/profesor` | Andrei + Bogdan | `statistici-intrebari` | Un `GROUP BY`, zero ML. Îi spune profesorului ce să reexplice |
+| ⬜ | Afișarea explicațiilor imediat după corectare | Bogdan | `greselile-mele` | Datele vin din A. Explicația greșelii e necesitate pedagogică, nu funcție premium |
+
+### C. Baremul ca date
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Codificarea baremului ca tabel de criterii cu praguri | Andrei | `barem-date` | Baremul e o **constantă**: rubrica de redactare e identică caracter cu caracter în 9 din 11 bareme oficiale |
+| ⬜ | Corectare **strat 1, determinist** — număr de cuvinte, conectori, părți componente, prezența citatului | Andrei | `barem-date` | ~20 din 90 de puncte, exact, fără ambiguitate. Nu cere AI |
+| ⬜ | Autoevaluare pe barem — elevul se notează pe grila oficială | Bogdan | `barem-date` | Cel mai ieftin mod de a preda baremul |
+| ⬜ | Lecție „cum se punctează" — cele ~32 de puncte care se iau pe formă | ❓ | — | Conținut, nu cod. Se învață în cinci minute și foarte puțini elevi o știu |
+
+### D. AI faza 1 — în lot, offline, fără cereri de la elevi
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Script de generare întrebări + explicații per variantă (generează → al doilea model evaluează → alege) | Andrei | `ai-generare-continut` | Costul e o singură dată, nu per elev. Necesită A (explicație per variantă) |
+| ⬜ | Pagină de revizie în `/profesor` — aprobă / editează / respinge | Bogdan | `ai-generare-continut` | **Profesorul devine revizor, nu autor** — asta deblochează gâtuirea de conținut |
+| ⬜ | Etichetare automată a conținutului existent | Andrei | `ai-generare-continut` | Depinde de etichetele din A |
+
+### E. Motivație — adaptat, nu copiat
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | **Streak cu îngheț** — cele două, obligatoriu împreună | Andrei + Bogdan | `motivatie` | Zile în care ai învățat ceva, nu zile pe aplicație. Fără îngheț devine pedeapsă: cine ratează duminica abandonează complet |
+| ⬜ | **Nota estimată** în loc de XP | Andrei + Bogdan | `motivatie` | Singura metrică pe care un elev de a XII-a o simte reală. Cere A |
+| ⬜ | Numărătoare inversă **cu plan** | Bogdan | `motivatie` | „47 de zile, n-ai atins Integralele" bate „mai sunt 47 de zile" |
+| ⬜ | Ecranul de revenire după absență | Bogdan | `motivatie` | „Hai să recuperăm", nu „ai pierdut 14 zile". Optimizăm pentru cel care a lipsit, nu doar pentru cel activ |
+
+### F. Gramatică și tehnic
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | **LanguageTool** self-hostat pentru ortografie/punctuație | Andrei | `gramatica` | Cost zero per corectare, explicabil, nu inventează. Se prezintă ca **sugestie**, nu verdict — orice corector dă fals-pozitive |
+| ⬜ | Cache pe `/api/chapters` (`use cache`, Next 16) | Andrei | `cache-continut` | ~200ms per cerere pentru date care se schimbă săptămânal |
+| ⬜ | Nivel intermediar în ierarhie (`chapters → units → lessons`) | Andrei | — | Doar dacă un capitol ajunge la ~30 de lecții. Momentan nu e nevoie |
+
+### Public-țintă — **decis**
+
+Principal: **elevii de clasa a XI-a și a XII-a.** Secundar: **promoțiile anterioare**
+(31,7% promovabilitate față de 79,7% la promoția curentă — cea mai mare nevoie și cea mai
+mare disponibilitate de a plăti). Includerea clasei a XI-a e o **extindere față de tot ce
+s-a documentat până acum**: documentele de programă și barem presupun exclusiv clasa a
+XII-a. De reevaluat fragmentarea materiei în consecință.
+
+---
+
 ## Blocat / În așteptare
 
 | Sarcină | Motiv blocare | Cine deblochează |
 |---|---|---|
 | Structura reală de capitole BAC | Profesorul partener nu este disponibil încă | Profesorul partener |
 | Conținut real lecții | Idem | Profesorul partener |
+| **Cu ce conținut începem** (Subiectul II vs. cronologic) | Se așteaptă consultarea cu profesorul | Gabi + profesorul partener |
+| **Model free vs. premium** | Nedecis. Blochează gating-ul funcțiilor noi (B, D) — nu se știe ce e gratuit și ce nu | Gabi |
+| **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Gabi |
+| **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Gabi |
+| Evaluarea textului liber (Subiectele I.B + III = 50 din 90 p.) | Propunerea e **stratificat** (determinist → AI pe barem → mentor), nevalidată | Gabi |
 
 ---
 
