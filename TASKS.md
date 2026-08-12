@@ -171,7 +171,7 @@
 | ✅ | Migrare `answer_events` — append-only: elev, întrebare, variantă aleasă, corect, timestamp | Andrei | `answer-events` | `20260812150000_answer_events.sql`, **aplicată în producție prin Supabase CLI**. Grant doar `select, insert` — append-only garantat de privilegii. `question_id` e SET NULL, nu CASCADE. Coloane în `docs/database.md` |
 | ✅ | Scrierea evenimentelor din `POST /api/chapters/[id]/submit` | Andrei | `answer-events` | O linie per răspuns, cu `attempt_id` comun pe trimitere. Scrise **înainte** de progres; eroarea se loghează, dar nu ascunde scorul elevului. Fără evenimente pentru profesor. 5 teste noi |
 | ✅ | Explicație **per variantă** — coloană pe `answers` | Andrei | `explicatie-per-varianta` | `20260812160000`, aplicată în producție. Scrisă din `POST /api/questions` și `PUT .../answers`; întoarsă din `submit` ca `chosen_explanation`, **doar pentru varianta aleasă** — textul dezvăluie răspunsul la fel ca `is_correct`. Rămâne de afișat în UI (Bogdan) |
-| ⬜ | Etichete pe întrebări (`tags`) pentru stăpânire per concept | Andrei | `answer-events` | Precondiție pentru „ce știi / ce nu știi". De decis dacă etichetele intră de la început sau după |
+| ✅ | Etichete pe întrebări (`tags`) pentru stăpânire per concept | Andrei | `etichete` | `20260812170000`, aplicată. **Vocabular închis** (tabel + join, nu `text[]`): 51 de etichete derivate textual din programa oficială. `GET /api/tags`; `POST /api/questions` acceptă `tags: [slug]` și dă **400** la slug necunoscut. Grupa A **închisă** |
 
 ### B. Ce iese din jurnal (ieftin, valoare mare)
 

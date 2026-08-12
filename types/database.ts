@@ -227,6 +227,36 @@ export type Database = {
         }
         Relationships: []
       }
+      question_tags: {
+        Row: {
+          question_id: string
+          tag_id: string
+        }
+        Insert: {
+          question_id: string
+          tag_id: string
+        }
+        Update: {
+          question_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_tags_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       questions: {
         Row: {
           chapter_id: string
@@ -309,6 +339,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tags: {
+        Row: {
+          axis: string
+          created_at: string
+          id: string
+          name: string
+          profile: string | null
+          slug: string
+        }
+        Insert: {
+          axis: string
+          created_at?: string
+          id?: string
+          name: string
+          profile?: string | null
+          slug: string
+        }
+        Update: {
+          axis?: string
+          created_at?: string
+          id?: string
+          name?: string
+          profile?: string | null
+          slug?: string
+        }
+        Relationships: []
       }
       ticket_messages: {
         Row: {

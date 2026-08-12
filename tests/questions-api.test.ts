@@ -210,6 +210,71 @@ describe("POST /api/questions", () => {
     expect(rows[0].explanation).toBeNull();
   });
 
+  it("leaga etichetele date ca slug-uri", async () => {
+    h.state.user = teacher;
+    setResults({
+      tags: [{ data: [{ id: "t1", slug: "perspectiva-narativa" }], error: null }],
+      questions: [{ data: { id: "q1", chapter_id: "c1", text: "Intrebare?" }, error: null }],
+      answers: [{ data: [{ id: "a1" }, { id: "a2" }], error: null }],
+      question_tags: [{ data: null, error: null }],
+    });
+
+    const res = await questionsPOST(jsonReq({ ...body, tags: ["perspectiva-narativa"] }));
+    expect(res.status).toBe(201);
+
+    const insert = h.fromCalls
+      .find((c) => c.table === "question_tags")
+      ?.calls.find(([n]) => n === "insert");
+    expect(insert?.[1]).toEqual([{ question_id: "q1", tag_id: "t1" }]);
+  });
+
+  it("400 la un slug necunoscut, fara sa scrie nimic", async () => {
+    h.state.user = teacher;
+    setResults({ tags: [{ data: [], error: null }] });
+
+    const res = await questionsPOST(jsonReq({ ...body, tags: ["inventat-de-mine"] }));
+    expect(res.status).toBe(400);
+    // Vocabularul e inchis: eticheta NU se creeaza din mers. Altfel "perspectiva
+    // narativa" si "perspectivă narativă" ar deveni doua concepte diferite, tacit.
+    expect(h.fromCalls.some((c) => c.table === "questions")).toBe(false);
+    expect(h.fromCalls.some((c) => c.table === "question_tags")).toBe(false);
+  });
+
+  it("etichetele se rezolva inainte de a scrie intrebarea", async () => {
+    h.state.user = teacher;
+    setResults({
+      tags: [{ data: [{ id: "t1", slug: "roman" }], error: null }],
+      questions: [{ data: { id: "q1", chapter_id: "c1", text: "Intrebare?" }, error: null }],
+      answers: [{ data: [{ id: "a1" }, { id: "a2" }], error: null }],
+      question_tags: [{ data: null, error: null }],
+    });
+
+    await questionsPOST(jsonReq({ ...body, tags: ["roman"] }));
+
+    const tables = h.fromCalls.map((c) => c.table);
+    expect(tables.indexOf("tags")).toBeLessThan(tables.indexOf("questions"));
+  });
+
+  it("o eroare la legarea etichetelor nu anuleaza intrebarea", async () => {
+    h.state.user = teacher;
+    setResults({
+      tags: [{ data: [{ id: "t1", slug: "roman" }], error: null }],
+      questions: [{ data: { id: "q1", chapter_id: "c1", text: "Intrebare?" }, error: null }],
+      answers: [{ data: [{ id: "a1" }, { id: "a2" }], error: null }],
+      question_tags: [{ data: null, error: { code: "23503", message: "fk" } }],
+    });
+
+    const res = await questionsPOST(jsonReq({ ...body, tags: ["roman"] }));
+    // Intrebarea si variantele sunt valide fara etichete — dar se logheaza, fiindca
+    // o intrebare neetichetata e invizibila pentru FSRS si pentru statistica.
+    expect(res.status).toBe(201);
+    expect(h.logError).toHaveBeenCalledWith(
+      "questions",
+      "POST question_tags error",
+      expect.objectContaining({ code: "23503" })
+    );
+  });
+
   it("201 creeaza intrebarea si variantele", async () => {
     h.state.user = teacher;
     setResults({
