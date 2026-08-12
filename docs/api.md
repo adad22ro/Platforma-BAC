@@ -146,6 +146,7 @@ Date placeholder: `npm run seed:content` (3 capitole + lecții demo, idempotent)
 | `/api/tags` | GET | vocabularul de etichete (`?axis=`, `?profile=uman`) | orice user logat |
 | `/api/greseli` | GET | întrebările la care elevul stă prost **acum** (`?chapter_id=`) | orice user logat, **doar ale lui** |
 | `/api/questions/dificultate` | GET | % elevi care greșesc, per întrebare (`?chapter_id=`) | teacher |
+| `/api/recapitulare` | GET | conceptele scadente pentru recapitulare (`?limit=`) | orice user logat, **doar ale lui** |
 
 **Două semantici care par evidente și nu sunt** — definite în vederi SQL, nu în rute,
 ca să nu fie reinterpretate diferit:

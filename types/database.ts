@@ -144,6 +144,69 @@ export type Database = {
         }
         Relationships: []
       }
+      concept_states: {
+        Row: {
+          difficulty: number
+          due: string
+          elapsed_days: number
+          lapses: number
+          last_review: string | null
+          learning_steps: number
+          reps: number
+          scheduled_days: number
+          stability: number
+          state: number
+          tag_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          difficulty?: number
+          due: string
+          elapsed_days?: number
+          lapses?: number
+          last_review?: string | null
+          learning_steps?: number
+          reps?: number
+          scheduled_days?: number
+          stability?: number
+          state?: number
+          tag_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          difficulty?: number
+          due?: string
+          elapsed_days?: number
+          lapses?: number
+          last_review?: string | null
+          learning_steps?: number
+          reps?: number
+          scheduled_days?: number
+          stability?: number
+          state?: number
+          tag_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concept_states_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concept_states_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       error_logs: {
         Row: {
           context: Json | null
