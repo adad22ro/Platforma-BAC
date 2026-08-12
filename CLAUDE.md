@@ -35,6 +35,37 @@ linii de frontend pe un branch nemergeat, iar o parte era scrisă pe un contract
 API pe care backendul îl schimbase deja. Ambele lucruri se vedeau imediat din
 comanda de mai sus.
 
+# Ce afectează pe altcineva se notează ȘI se urcă în `main`
+
+> **Regulă de echipă.** Lucrăm pe branch-uri lungi și în domenii separate — Andrei
+> backend, Bogdan frontend. Ce rămâne pe un branch nemergeat, pentru celălalt **nu
+> există**.
+
+Orice schimbare care afectează munca celuilalt se **notează concret** și se **duce în
+`main`**, nu se lasă pe branch. Intră aici:
+
+- contracte de API schimbate sau rute care dispar;
+- câmpuri noi în răspunsuri, sau câmpuri care nu mai există;
+- feature flag-uri care ascund UI;
+- formate de eroare;
+- coloane noi pe care formularele trebuie să le trimită.
+
+Cum se notează, ca să folosească:
+
+- **Numele exact**, nu descrierea. „De reconectat" nu ajută pe nimeni. „`POST
+  /api/tickets/[id]/answer` nu mai există, e `/messages`, iar `lesson_id` e obligatoriu
+  la creare" ajută.
+- **`TASKS.md`** primește rândul de sarcină; **`DEVLOG.md`**, motivul deciziei.
+- **Dacă ceva rămâne ascuns după un feature flag, reactivarea e un rând separat în
+  TASKS.** Altfel se face reconectarea corect și munca rămâne invizibilă în producție,
+  fără ca cineva să înțeleagă de ce.
+
+**De ce există regula:** pe 2026-08-12, UI-ul de tichete al lui Bogdan (~2.600 de linii)
+era scris pe contractul vechi — `POST /api/tickets/[id]/answer`, câmpuri
+`answer`/`answered_at` — înlocuit între timp de firul de mesaje. **Nu crăpa**, și de
+aceea era periculos: `GET /api/tickets` răspundea, dar UI-ul citea câmpuri inexistente,
+deci toate tichetele apăreau „În așteptare", inclusiv cele la care profesorul răspunsese.
+
 # Jurnalul de erori (ERRORS.md)
 
 - **Înainte** de a investiga o eroare nouă, citește `ERRORS.md` — verifică dacă eroarea (sau una similară) a mai apărut și cum a fost rezolvată.
