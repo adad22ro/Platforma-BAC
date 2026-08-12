@@ -20,21 +20,37 @@ supabase/migrations/
 
 ## Cum aplici o migrare
 
-### Varianta simplă (fără CLI) — ce folosim acum
-Deschide fișierul, copiază SQL-ul în **Supabase → SQL Editor → Run**.
-Baseline-ul e idempotent, deci rularea peste producția existentă nu strică nimic.
+### Cu Supabase CLI — ce folosim (de la 2026-08-12)
 
-### Varianta cu Supabase CLI (recomandată pe viitor)
-Setup unic (creează `supabase/config.toml` + leagă proiectul; sunt gitignored):
+Proiectul e deja legat. La fiecare migrare nouă:
+```bash
+npx supabase migration list --linked   # ce e local vs. ce e aplicat in productie
+npx supabase db push --dry-run         # ce s-ar aplica, fara sa aplice
+npx supabase db push                   # aplica migrarile nerulate
+```
+
+**Rulează întotdeauna `--dry-run` întâi.** `db push` scrie direct în producție și
+poate aplica mai multe migrări deodată, dacă cineva a uitat una în urmă — vrei să
+vezi lista înainte, nu după.
+
+Un avertisment despre Docker (`failed to cache migrations catalog`) la `db push` e
+normal pe o mașină fără Docker Desktop: e doar cache-ul local de catalog, migrarea
+se aplică oricum. Verifică cu `migration list` că `local` și `remote` coincid.
+
+Setup unic, dacă cineva pornește de la zero (creează `supabase/config.toml` + leagă
+proiectul; sunt gitignored):
 ```bash
 npx supabase login
 npx supabase init               # detectează migrările existente din supabase/migrations
 npx supabase link --project-ref <PROJECT_REF>   # PROJECT_REF = din URL-ul proiectului Supabase
 ```
-Apoi, la fiecare migrare nouă:
-```bash
-npx supabase db push            # aplică migrările nerulate în producție
-```
+
+### Varianta fără CLI (de avarie)
+Deschide fișierul, copiază SQL-ul în **Supabase → SQL Editor → Run**. Merge, dar
+**nu înregistrează migrarea** în evidența Supabase, deci `migration list` va arăta în
+continuare `remote` gol și următorul `db push` va încerca s-o aplice din nou. Cu
+migrări idempotente nu strică nimic, dar evidența rămâne mincinoasă — folosește-o
+doar dacă CLI-ul nu e disponibil.
 
 ## Regenerarea tipurilor TypeScript
 

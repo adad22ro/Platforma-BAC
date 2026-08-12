@@ -21,11 +21,13 @@ Deciziile care nu se văd din schemă:
 
 **Scrierea, în `POST /api/chapters/[id]/submit`** — înainte de `student_progress`: dacă pică ceva la mijloc, preferăm evenimentele fără agregat (agregatul se reconstruiește din ele) decât invers. O eroare la scriere se loghează, dar **nu** schimbă răspunsul: scorul e corect calculat și elevul are dreptul să-l vadă. **Profesorul nu generează evenimente** — altfel statisticile de dificultate ar conține răspunsurile celui care a scris întrebările.
 
-`types/database.ts` completat **manual**: migrarea nu e încă aplicată în producție, deci `npm run db:types` ar întoarce schema veche (aceeași situație ca la Săpt. 7-8).
+**Migrarea e aplicată în producție**, prin **Supabase CLI** (`db push`), nu prin SQL Editor. E prima dată când folosim CLI-ul pentru asta, deci am actualizat `supabase/README.md`: fluxul devine `migration list` → `db push --dry-run` → `db push`. Diferența față de SQL Editor nu e comoditatea, ci **evidența**: `db push` înregistrează migrarea la Supabase, deci `migration list` arată adevărul. SQL rulat manual în editor aplică schimbarea dar lasă evidența să spună că migrarea n-a rulat niciodată.
+
+`types/database.ts` fusese completat manual (migrarea nu era încă aplicată). După aplicare l-am **regenerat cu `npm run db:types` din producție: zero diferențe** — deci schema reală corespunde exact intenției, inclusiv nullability și numele cheilor străine. E o verificare gratuită pe care o vom repeta.
 
 **Verzi:** typecheck curat, lint curat, **121/121 teste** (+5).
 
-**Rămas din grupa A:** explicație per variantă și etichetele pe întrebări. **De aplicat migrarea în producție** înainte ca ruta să ajungă acolo — altfel fiecare corectare scrie o eroare în `error_logs`.
+**Rămas din grupa A:** explicație per variantă și etichetele pe întrebări.
 
 ---
 
