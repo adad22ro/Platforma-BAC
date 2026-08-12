@@ -110,6 +110,11 @@ Date placeholder: `npm run seed:content` (3 capitole + lecții demo, idempotent)
 (rută de profesor). `GET /api/chapters/[id]/questions` nici măcar nu selectează coloana.
 Corectarea se face exclusiv server-side în `submit` — un scor trimis de client e ignorat.
 
+**Aceeași regulă pentru `answers.explanation`** (explicația per variantă): un text de forma
+„varianta asta e greșită pentru că…" dezvăluie răspunsul corect la fel de sigur ca
+`is_correct`. Nu se selectează în `GET /api/chapters/[id]/questions`; se întoarce din
+`submit`, după ce elevul a răspuns, și **doar pentru varianta pe care a ales-o el**.
+
 **Editarea variantelor e înlocuire completă, nu PATCH pe variante individuale:**
 invariantul „exact un răspuns corect" nu poate fi menținut dacă variantele se editează
 una câte una — între două cereri întrebarea ar avea zero sau două răspunsuri corecte.
@@ -131,8 +136,14 @@ sau draft · `402` `{ error: "premium_required" }` la capitol premium fără abo
 { "answers": [{ "question_id": "...", "answer_id": "..." }] }
 ```
 Răspuns: `{ score, total, saved, results: [{ question_id, chosen_answer_id,
-correct_answer_id, correct, explanation }] }`.
+correct_answer_id, correct, explanation, chosen_explanation }] }`.
+- `explanation` = de ce răspunsul corect e corect (de pe întrebare).
+  `chosen_explanation` = de ce e greșit exact ce a ales elevul (de pe varianta lui).
+  `null` dacă n-a răspuns sau dacă varianta n-are explicație scrisă.
 - O întrebare fără răspuns corect în DB (date incomplete) se punctează **greșit**, nu corect.
+- Fiecare răspuns se scrie și în `answer_events` (jurnal append-only, sursa de adevăr),
+  **înainte** de `student_progress`. O eroare acolo se loghează dar nu ascunde scorul.
+  Profesorul nu generează evenimente.
 - `saved: false` = scorul e valid, dar progresul nu s-a înregistrat (profesor, sau eroare
   de scriere — nu ascundem rezultatul elevului pentru o eroare de salvare).
 - Progresul e o linie per `(elev, capitol)`: reîncercarea face upsert și incrementează `attempts`.

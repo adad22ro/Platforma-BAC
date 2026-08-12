@@ -6,6 +6,24 @@
 
 ---
 
+## 2026-08-12 — Andrei (Faza 2, grupa A — explicație per variantă)
+
+Migrare `20260812160000_explicatie_per_varianta.sql`, aplicată în producție prin CLI. Coloană opțională pe `answers`.
+
+**De ce nu era destul `questions.explanation`:** aceea spune de ce răspunsul corect e corect. Un elev care alege „perspectivă obiectivă" în loc de „subiectivă" are o confuzie *specifică* — dacă îi arăți doar răspunsul bun, o repetă.
+
+**Decizia de securitate, cea mai importantă de aici:** explicația per variantă e la fel de periculoasă ca `is_correct`. Un text de forma „varianta asta e greșită pentru că…" dezvăluie răspunsul corect fără să spună niciodată care e. Deci coloana **nu se selectează** în `GET /api/chapters/[id]/questions`, iar din `submit` se întoarce `chosen_explanation` — **doar pentru varianta pe care a ales-o elevul**, nu pentru toate. Un test verifică explicit că explicația unei variante nealese nu apare în răspuns.
+
+**O capcană evitată:** `PUT /api/questions/[id]/answers` păstrează setul vechi ca plasă de siguranță, citit cu o listă explicită de coloane. Adăugarea unei coloane fără actualizarea acelui select ar fi însemnat că o restaurare după insert eșuat **șterge tăcut toate explicațiile**. Există acum un test care verifică selectul, nu doar comportamentul — bug-ul s-ar fi manifestat doar pe o cale de eroare, deci probabil în producție, la un profesor, fără mesaj.
+
+Rândurile pentru DB au fost extrase într-o funcție comună (`answerRow`), fiindcă cele două rute care scriu variante trebuie să scrie exact aceleași coloane; altfel una uită explicația și o pierde tăcut.
+
+**Verzi:** typecheck curat, lint curat, **128/128 teste** (+7).
+
+**Rămas din grupa A:** etichetele pe întrebări. Afișarea explicației în UI e sarcină de frontend (Bogdan).
+
+---
+
 ## 2026-08-12 — Andrei (Faza 2, grupa A — jurnalul de răspunsuri)
 
 Prima bucată din Faza 2. PR #41 și #42 au intrat în `main` (plus #43, curățenie), deci baza e curată.

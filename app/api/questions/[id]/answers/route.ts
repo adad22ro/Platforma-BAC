@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
-import { validateAnswers } from '@/app/api/questions/route'
+import { validateAnswers, answerRow } from '@/app/api/questions/route'
 import { logError } from '@/lib/log-error'
 
 // PUT /api/questions/[id]/answers — inlocuieste TOATE variantele unei intrebari.
@@ -33,9 +33,11 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
   // Pastram vechiul set ca sa-l putem pune la loc daca inserarea celui nou esueaza.
   // Supabase-js nu ne da o tranzactie, iar o intrebare ramasa fara variante ar
   // strica testul pentru toti elevii — deci restaurarea manuala e plasa de siguranta.
+  // Selectul trebuie sa contina TOATE coloanele: ce lipseste de aici se pierde
+  // tacut la restaurare. (`explanation` a fost adaugata ulterior — de aceea nota.)
   const { data: previous } = await supabaseAdmin
     .from('answers')
-    .select('id, question_id, text, is_correct, order_index, created_at')
+    .select('id, question_id, text, is_correct, order_index, explanation, created_at')
     .eq('question_id', id)
     .order('order_index', { ascending: true })
 
@@ -49,12 +51,7 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
     return new Response('Database error', { status: 500 })
   }
 
-  const rows = validated.answers.map((a, i) => ({
-    question_id: id,
-    text: a.text as string,
-    is_correct: a.is_correct === true,
-    order_index: Number.isInteger(a.order_index) ? (a.order_index as number) : i,
-  }))
+  const rows = validated.answers.map((a, i) => answerRow(a, i, id))
 
   const { data: created, error: insErr } = await supabaseAdmin.from('answers').insert(rows).select()
 

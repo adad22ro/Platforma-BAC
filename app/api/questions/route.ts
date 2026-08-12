@@ -2,7 +2,12 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
 
-type AnswerInput = { text?: unknown; is_correct?: unknown; order_index?: unknown }
+type AnswerInput = {
+  text?: unknown
+  is_correct?: unknown
+  order_index?: unknown
+  explanation?: unknown
+}
 
 // Validare variante: minim 2, exact una corecta. Indexul unic partial din DB
 // garanteaza "cel mult una"; "cel putin una" se poate exprima doar aici.
@@ -15,7 +20,29 @@ export function validateAnswers(input: unknown): { error: string } | { answers: 
   if (input.some((a: AnswerInput) => !a?.text || typeof a.text !== 'string')) {
     return { error: 'each answer needs a text' }
   }
+  // Explicatia e optionala, dar daca vine trebuie sa fie text — altfel un obiect
+  // trimis din greseala ar ajunge in DB si ar fi randat ca "[object Object]".
+  if (
+    input.some(
+      (a: AnswerInput) => a?.explanation != null && typeof a.explanation !== 'string'
+    )
+  ) {
+    return { error: 'answer explanation must be a string' }
+  }
   return { answers: input as AnswerInput[] }
+}
+
+// Randul de `answers` pentru DB, din varianta validata. Extras aici pentru ca
+// POST /api/questions si PUT /api/questions/[id]/answers trebuie sa scrie exact
+// aceleasi coloane — altfel una din ele uita explicatia si o pierde tacut.
+export function answerRow(a: AnswerInput, i: number, question_id: string) {
+  return {
+    question_id,
+    text: a.text as string,
+    is_correct: a.is_correct === true,
+    order_index: Number.isInteger(a.order_index) ? (a.order_index as number) : i,
+    explanation: (a.explanation as string | undefined) ?? null,
+  }
 }
 
 // POST /api/questions — creeaza o intrebare CU variantele ei. Doar profesor.
@@ -55,12 +82,7 @@ export async function POST(req: Request) {
     return new Response('Database error', { status: 500 })
   }
 
-  const rows = validated.answers.map((a, i) => ({
-    question_id: question.id,
-    text: a.text as string,
-    is_correct: a.is_correct === true,
-    order_index: Number.isInteger(a.order_index) ? (a.order_index as number) : i,
-  }))
+  const rows = validated.answers.map((a, i) => answerRow(a, i, question.id))
 
   const { data: created, error: aErr } = await supabaseAdmin.from('answers').insert(rows).select()
   if (aErr) {
