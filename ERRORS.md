@@ -5,6 +5,19 @@
 
 ---
 
+## #021 — `git push` eșuat de două ori, reușit la reîncercare — **cauză neaflată**
+**Data:** 2026-08-12
+**Context:** Pe `docs-cercetare-produs`, două push-uri consecutive (nu la rând) au picat cu `error: failed to push some refs`, iar reîncercarea imediată, fără nicio schimbare, a trecut. Ambele au fost rulate ca `git add && git commit && git push ... 2>&1 | tail -2`.
+**Cauză:** **Neaflată.** Nereproductibil: 5 push-uri cu exact același tipar (inclusiv `commit` înlănțuit și output trecut prin `tail`) au reușit toate, iar cei trei pași ai hook-ului rulați separat au ieșit curați de 12 ori.
+**Diagnostic cheie:** Git n-a afișat blocul `hint:` pe care îl dă la respingere non-fast-forward → cel mai probabil a picat **hook-ul**, nu push-ul. Ieșirea hook-ului era deasupra, tăiată de `tail -2`.
+**De ce n-am putut merge mai departe:** log-urile npm din fereastra respectivă dispăruseră — npm păstrează doar ultimele 10 (`logs-max=10`), iar bucla de reproducere le-a rotit exact pe cele care contau. **Lecția de metodă: colectează dovezile înainte de a încerca reproducerea, nu după.**
+**Măsuri luate:**
+- `.githooks/pre-push` scrie acum toată ieșirea în `.githooks/last-run.log`, iar la eșec o copiază în `.githooks/last-failure.log` — care **supraviețuiește reîncercării reușite**. Ambele gitignored. Codul de ieșire al comenzii se păstrează corect (trece printr-un fișier de stare, fiindcă `sh` POSIX n-are `PIPESTATUS`).
+- Nu mai trunchia ieșirea lui `git push` prin `tail` — asta a ascuns cauza de ambele ori.
+**Dacă reapare:** citește `.githooks/last-failure.log`. Dacă arată `Tests: no tests` sau erori la import, e #019 (cache vitest), nu asta.
+
+---
+
 ## #020 — `Property 'user_id' does not exist on type 'GenericStringError'`
 **Data:** 2026-08-07
 **Context:** `tsc --noEmit` pică pe `app/api/tickets/[id]/route.ts` cu două erori ciudate: `Property 'user_id' does not exist on type 'GenericStringError'` și `Spread types may only be created from object types`. Codul părea corect, iar coloanele existau în `types/database.ts` (regenerate după migrare).
@@ -21,6 +34,7 @@
 **Diagnostic cheie:** Toate suitele pică simultan la **import** (0 teste rulate) cu mesaj despre „runner", nu erori de assertion → nu e o regresie de cod, ci stare/cache corupt. Un run verde urmat brusc de run-uri roșii pe aceleași fișiere confirmă.
 **Soluție:** `rm -rf node_modules/.vite node_modules/.vitest` apoi `npm test` → verde din nou; push-ul a trecut.
 **Recidivă 2026-08-06** (branch `teste-progres`): exact același tipar — 75/75 verde, apoi toate cele 9 suite roșii la pre-push cu `Tests: no tests`. Aceeași soluție, aceeași durată. Nu e un incident izolat: dacă se mai repetă, merită un `pretest` care curăță cache-ul.
+**Recidivă 2026-08-11** (a treia oară, pe `main`): `Tests: no tests`, în timp ce `typecheck` și `lint` treceau curat. Aceeași soluție. **Recomandare fermă acum, după trei apariții:** un script `pretest` care rulează `rimraf node_modules/.vite node_modules/.vitest` înainte de `vitest run`. Costă ~1 secundă per rulare și elimină o capcană care a consumat de fiecare dată timp de diagnostic. Neimplementat încă — decizie de luat.
 
 ---
 

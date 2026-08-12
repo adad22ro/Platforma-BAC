@@ -6,6 +6,64 @@
 
 ---
 
+## 2026-08-12 — Andrei (Deciziile din ședință → sarcini, partea 2)
+
+Lista din ședință comparată cu ce era deja în TASKS: **1 din 9 acoperit, 2 parțial, 6 lipseau complet.** Diferența vine din faptul că prima trecere a fost scrisă din documentele de cercetare, iar ședința a mers mai departe — mai ales pe structura materiei și pe testele recurente.
+
+**Grupe noi în „Faza 2":** G (structura materiei), H (repetiție + teste recurente), I (corectarea), J (secțiunea remedială).
+
+**Decizii:**
+- **FSRS, nu HLR.** HLR e din 2016 și nemenținut; FSRS e întreținut activ și folosit de Anki. Ambele cer jurnalul de evenimente.
+- **Structura materiei:** patru secțiuni — Gramatică, Subiectul I, II, III — fiecare cu materie + exerciții. **Ordinea** (cu care începem) rămâne la blocate, se discută cu profesorul.
+- **Testele de gramatică intră în același planificator** ca restul. Un singur mecanism de repetiție, nu unul pe calendar în paralel.
+- **Regula de corectare:** ce e fix și neambiguu se autocorectează integral; textul liber nu primește niciodată notă automată, doar pre-notare pentru mentor; testele mari (la 3 capitole) și simulările se corectează integral de om.
+
+**Lecțiile remediale — generare în lot, nu live.** Clarificat după discuție: elevul care a trecut prin lecția X și tot greșește are nevoie de **altă** explicație. Generarea se face însă **per neînțelegere, offline**, nu per elev la cerere. Motivele, în ordinea importanței: (1) conținut nerevizuit ar ajunge direct la un elev care se pregătește de examen, ceea ce anulează regula „profesorul e revizor"; (2) e mai **rapid** pentru elev — lecția există deja în DB, față de zeci de secunde de așteptare exact când e frustrat; (3) costul e o singură dată, nu per elev. Neînțelegerile sunt un set mărginit — aceeași confuzie apare la 200 de elevi. E și modelul Duolingo: DuoFactory generează offline, Session Generator personalizează la servire; nimic nu se generează live per user.
+
+Ca profesorul să nu fie încărcat: **revizie triată** — al doilea model dă un scor de încredere, omul vede doar ce e sub prag plus un eșantion aleator. Eșantionul rămâne obligatoriu: româna are interpretare, iar un model care sună convingător și e greșit e mai periculos decât unul absent.
+
+**Obiecții pe care le-am ridicat, notate ca sarcini, nu ca păreri:**
+- **Volumul.** Testele mari corectate integral de om sunt articolul cu cel mai mare volum din sistem. La 20 de elevi merge, la 200 nu — plafonul trebuie calculat înainte. Rând dedicat în grupa I.
+- **„Fix și automatizabil" are nevoie de definiție îngustă.** Și numărătoarea de cuvinte greșește (cratime, cifre, titluri citate). Automatizarea completă se limitează la criteriile cu prag verificabil fără interpretare; restul rămân sugestii.
+- **Autoevaluarea pe barem ca strat 0** pe text liber, înainte de mentor. Cost zero, scalează, și predă exact competența care aduce cele ~32 de puncte pe formă.
+
+---
+
+## 2026-08-12 — Andrei (Deciziile de produs → sarcini în TASKS)
+
+Cercetarea din sesiunea precedentă s-a spart în sarcini. **Secțiune nouă „Faza 2"** în `TASKS.md`, cu 18 sarcini în șase grupe (jurnal de evenimente, ce iese din el, baremul ca date, AI în lot, motivație, gramatică/tehnic).
+
+**Decizii luate:**
+- **Trecem pe `answer_events` acum.** Migrarea e mică azi, cu 5 utilizatori; peste un an, cu date reale, e operație pe cord deschis. Blochează grupele B și E — fără istoric la nivel de răspuns nu există „greșelile mele", statistici per întrebare, notă estimată.
+- **Public-țintă: a XI-a și a XII-a principal, promoțiile anterioare secundar.** Clasa a XI-a e o **extindere față de tot ce s-a documentat** — `bac-romana-programa` și `bac-barem-analiza` presupun exclusiv clasa a XII-a. Fragmentarea materiei trebuie reevaluată.
+
+**Rămase nedecise, mutate explicit în „Blocat / În așteptare"** ca să nu pară uitate: cu ce conținut începem (se consultă profesorul), modelul free/premium (blochează gating-ul funcțiilor noi), serviciul de email, drepturile de autor pe textele de la Subiectul I, evaluarea textului liber.
+
+N-am scris sarcini pentru punctele nedecise. Un rând „⬜ de făcut" pe o decizie neluată e mai rău decât absența lui: arată ca muncă planificată, când de fapt e o întrebare fără răspuns.
+
+---
+
+## 2026-08-11 — Andrei (Sesiune de cercetare și direcție de produs)
+
+**Fără cod de aplicație.** Sesiune de documentare, plus o regulă de proces.
+
+**Cinci documente noi în `docs/`** (fiecare cu markdown + PDF, PDF-urile generate din markdown cu `marked` + Chrome headless):
+- `duolingo-research` — modelul de arhitectură. Concluzia principală: **ei rețin evenimente, noi reținem stări**; aproape tot ce e valoros la ei derivă din păstrarea fiecărei interacțiuni. Plus: ei fabrică motivația, noi o primim gratis de la examen — deci nu copiem mecanicile de retenție (hearts, ligi, XP).
+- `bac-romana-programa` — programa oficială și o propunere de fragmentare a materiei pe trei axe (conținut literar ca ierarhie; concepte de teorie literară și competențe de examen ca etichete).
+- `bac-barem-analiza` — **analiză pe 21 de documente oficiale** (subiecte + bareme, ambele profiluri, 2021-2026), descărcate și comparate automat. Descoperirea centrală: **baremul e o constantă**, iar ~32 din 90 de puncte se dau pe formă, nu pe literatură. Subiectul II are 3 tipuri de cerință în 6 ani; rubrica de redactare a eseului e identică caracter cu caracter în 9 din 11 bareme.
+- `viziune-produs` — cei patru piloni discutați: parcurs diferențiat, motivație/abandon, AI progresiv, gramatică.
+- `rezumat-sedinta` — sinteză de prezentat colegilor, cu 7 puncte de decizie.
+
+**Regulă nouă în `CLAUDE.md`** (comisă direct pe `main`, ca să ajungă repede la toată lumea): la fiecare conversație nouă și la orice întrebare despre starea proiectului, **se verifică toate branch-urile**, nu doar `main` — cu `ahead`/`behind`, autor și dată. Motivul: în această sesiune s-a raportat greșit că frontendul n-a avansat de două săptămâni, când de fapt existau ~2.600 de linii pe branch nemergeat.
+
+**Constatare importantă, de rezolvat:** UI-ul de tichete al lui Bogdan e scris pe contractul vechi (`POST /api/tickets/[id]/answer`, câmpuri `answer`/`answered_at`, `lesson_id` opțional), înlocuit între timp de firul de mesaje. Branch-ul lui pornește de la `a62b283` și e în urmă cu PR #38, #39, #40. **De discutat contractul înainte ca cineva să repare cod.**
+
+**Nimic notat în TASKS.md** — direcția se sparge în sarcini după ședința cu colegii.
+
+**Verzi:** typecheck curat, 114/114 teste, lint curat. (Eroarea #019 a reapărut a treia oară; vezi recomandarea de `pretest` din `ERRORS.md`.)
+
+---
+
 ## 2026-08-07 — Andrei (Sesiunea backend — restanțe)
 
 Trei lucruri mici rămase în urmă, pe `backend-restante`. Săpt. 9-10 intrase deja în `main` (PR #39, producție verificată: landing 200, `/api/health` ok).
