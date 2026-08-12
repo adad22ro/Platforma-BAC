@@ -25,7 +25,7 @@
 - **Backend Săpt. 7-8:** complet (schema + seed + API întrebări + corectare + progres) — în `main` prin PR #38
 - **Backend Săpt. 9-10:** tichete ca **fir de mesaje**, deschise doar din fereastra lecției, cu context complet pentru profesor (lecție + poziție + fragment selectat + progres la test) — gata; rămâne notificarea pe email (blocată de alegerea serviciului)
 - **Bottleneck:** frontend (Bogdan) — urmează formularul „Lecție nouă" și UI-ul de test grilă (Săpt. 7-8)
-- **Faza 2 (direcție de produs):** planificată — vezi secțiunea de la finalul fișierului. Decis: trecem pe jurnal de evenimente (`answer_events`) acum; public-țintă a XI-a + a XII-a, promoțiile anterioare secundar
+- **Faza 2 (direcție de produs):** planificată — vezi secțiunea de la finalul fișierului. Decis în ședința din 12 august: jurnal de evenimente acum, repetiție spațiată cu **FSRS**, structura materiei în patru secțiuni, corectare stratificată (auto pe ce e fix, pre-notare pe text liber, mentor integral pe testele mari), public-țintă a XI-a + a XII-a
 - **Ultima actualizare:** 2026-08-12 (sarcini de Fază 2, din cercetarea de produs)
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
@@ -208,6 +208,55 @@
 | ⬜ | Cache pe `/api/chapters` (`use cache`, Next 16) | Andrei | `cache-continut` | ~200ms per cerere pentru date care se schimbă săptămânal |
 | ⬜ | Nivel intermediar în ierarhie (`chapters → units → lessons`) | Andrei | — | Doar dacă un capitol ajunge la ~30 de lecții. Momentan nu e nevoie |
 
+### G. Structura materiei — **structura decisă, ordinea nu**
+
+Patru secțiuni, fiecare cu **materie + exerciții**: **Gramatică**, **Subiectul I**,
+**Subiectul II**, **Subiectul III**. Cu care începem se discută încă cu profesorul
+(vezi „Blocat / În așteptare").
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Modelarea celor patru secțiuni în schema de conținut | Andrei | `structura-materie` | Azi avem `chapters → lessons`, plat. Secțiunea devine nivelul de deasupra capitolului — vezi și rândul „nivel intermediar" din F, care se rezolvă odată cu asta |
+| ⬜ | Separarea „materie" vs. „exerciții" în fiecare secțiune | Andrei | `structura-materie` | De decis dacă e un tip pe lecție sau două liste distincte per capitol |
+| ⬜ | Migrarea conținutului existent pe structura nouă | Andrei | `structura-materie` | Cele 3 capitole de seed sunt generice; migrarea e ieftină acum, cât nu există conținut real |
+| ⬜ | Navigare pe secțiuni în `/dashboard` | Bogdan | `structura-materie` | Patru secțiuni în loc de o listă plată de capitole |
+
+### H. Repetiție spațiată și teste recurente — **decis: FSRS**
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Integrare **FSRS** — planificator de repetiție per elev × concept | Andrei | `repetitie-fsrs` | Ales FSRS, nu HLR: mai modern și întreținut activ (HLR e din 2016). Cere jurnalul de evenimente (A) — fără istoric per răspuns nu are pe ce rula |
+| ⬜ | **Teste de recapitulare** generate din planificator | Andrei + Bogdan | `repetitie-fsrs` | Testul vine când modelul spune că elevul e pe cale să uite, nu la interval fix |
+| ⬜ | **Teste de gramatică** pe același planificator | Andrei | `repetitie-fsrs` | Decis: aceeași cadență ca restul, **un singur mecanism**, nu un al doilea sistem pe calendar |
+| ⬜ | **Test de nivel la început** — grilă inițială care stabilește de unde pornește elevul | Andrei + Bogdan | `test-nivel` | Primul contact cu platforma. Alimentează starea inițială din FSRS, ca elevul să nu reia ce știe deja |
+| ⬜ | **Test general la fiecare 3 capitole terminate** | Andrei + Bogdan | `teste-mari` | Declanșat de progres, nu de calendar. Corectare: vezi I |
+| ⬜ | **Simulare cronometrată de 3 ore** | Andrei + Bogdan | `teste-mari` | Mulți elevi nu pică din necunoaștere, ci din gestionarea timpului |
+
+### I. Corectarea — **regula decisă**
+
+> **Ce e fix și se poate automatiza fără ambiguitate, se autocorectează integral.**
+> **Textul liber nu primește niciodată notă automată** — AI-ul doar pre-notează, pentru mentor.
+> **Testele mari (la 3 capitole) și simulările se corectează integral de mentor** — sunt cele
+> care contează, iar acolo nu vrem greșeli de corectură.
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Autocorectare completă pe cerințele cu răspuns fix / structură fixă | Andrei | `corectare-straturi` | Grile, potriviri, cerințe cu răspuns unic. Extinde ce există deja la `POST /api/chapters/[id]/submit` |
+| ⬜ | **Pre-notare deterministă** pe text liber (număr de cuvinte, părți componente, conectori, prezența citatului) | Andrei | `corectare-straturi` | Vezi și C. **Limitat la criteriile cu prag verificabil fără interpretare** — restul rămân sugestii, nu verdicte |
+| ⬜ | **Pre-notare AI pe barem**, criteriu cu criteriu — **doar pentru mentor**, niciodată notă finală | Andrei | `corectare-straturi` | Baremul dă chiar vocabularul de notare („adecvată și nuanțată" = 2p). Nu-i cerem să „noteze eseul", ci să aplice un criteriu cu praguri |
+| ⬜ | Interfața mentorului pentru corectarea testelor mari | Bogdan | `corectare-straturi` | Lucrarea + pre-notările + autoevaluarea elevului, pe aceeași grilă oficială |
+| ⬜ | Autoevaluarea elevului ca **strat 0** pe text liber | Bogdan | `barem-date` | Elevul se notează pe grila oficială înainte să ajungă la mentor. Cost zero, scalează, și predă exact competența care aduce punctele pe formă. Diferența dintre autoevaluare și nota reală e cea mai bună lecție |
+| ⬜ | **Capacitatea de corectare** — câte lucrări pe săptămână duce un mentor | ❓ | — | Testul la 3 capitole + simulările, corectate integral de om, sunt articolul cu cel mai mare volum din sistem. La 20 de elevi merge; plafonul trebuie **calculat**, nu descoperit |
+
+### J. Secțiune remedială — greșelile frecvente
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Identificarea greșelilor frecvente per elev | Andrei | `remediere` | Din `answer_events` (A) + etichete. Nu „ce a greșit o dată", ci tiparul care se repetă |
+| ⬜ | **Lecții remediale generate diferit** față de lecția prin care a trecut deja | Andrei | `remediere` | Punctul esențial: dacă elevul n-a înțeles dintr-o explicație, aceeași explicație a doua oară nu ajută. Altă abordare, alt exemplu |
+| ⬜ | Teste țintite pe greșelile proprii | Andrei + Bogdan | `remediere` | Extinde „Greșelile mele" (B) de la listă la exercițiu |
+| ⬜ | Secțiune dedicată în UI | Bogdan | `remediere` | Separată de parcursul normal |
+
 ### Public-țintă — **decis**
 
 Principal: **elevii de clasa a XI-a și a XII-a.** Secundar: **promoțiile anterioare**
@@ -224,11 +273,11 @@ XII-a. De reevaluat fragmentarea materiei în consecință.
 |---|---|---|
 | Structura reală de capitole BAC | Profesorul partener nu este disponibil încă | Profesorul partener |
 | Conținut real lecții | Idem | Profesorul partener |
-| **Cu ce conținut începem** (Subiectul II vs. cronologic) | Se așteaptă consultarea cu profesorul | Gabi + profesorul partener |
+| **Ordinea secțiunilor** — cu care dintre cele patru începem | Structura e decisă (vezi G); ordinea se discută cu profesorul | Gabi + profesorul partener |
 | **Model free vs. premium** | Nedecis. Se vrea **o formă de free**, dar nu e ales tipul: *free-tier permanent* (acces la învățare, se plătește pentru mentorat/AI/simulări) sau *trial pe durată limitată*. Blochează gating-ul funcțiilor noi (B, D) — nu se știe ce e gratuit și ce nu | Gabi |
 | **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Gabi |
 | **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Gabi |
-| Evaluarea textului liber (Subiectele I.B + III = 50 din 90 p.) | Propunerea e **stratificat** (determinist → AI pe barem → mentor), nevalidată | Gabi |
+| Structura reală de capitole în interiorul secțiunilor | Cele patru secțiuni sunt decise; ce conține fiecare, nu | Profesorul partener |
 
 ---
 

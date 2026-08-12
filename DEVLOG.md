@@ -6,6 +6,25 @@
 
 ---
 
+## 2026-08-12 — Andrei (Deciziile din ședință → sarcini, partea 2)
+
+Lista din ședință comparată cu ce era deja în TASKS: **1 din 9 acoperit, 2 parțial, 6 lipseau complet.** Diferența vine din faptul că prima trecere a fost scrisă din documentele de cercetare, iar ședința a mers mai departe — mai ales pe structura materiei și pe testele recurente.
+
+**Grupe noi în „Faza 2":** G (structura materiei), H (repetiție + teste recurente), I (corectarea), J (secțiunea remedială).
+
+**Decizii:**
+- **FSRS, nu HLR.** HLR e din 2016 și nemenținut; FSRS e întreținut activ și folosit de Anki. Ambele cer jurnalul de evenimente.
+- **Structura materiei:** patru secțiuni — Gramatică, Subiectul I, II, III — fiecare cu materie + exerciții. **Ordinea** (cu care începem) rămâne la blocate, se discută cu profesorul.
+- **Testele de gramatică intră în același planificator** ca restul. Un singur mecanism de repetiție, nu unul pe calendar în paralel.
+- **Regula de corectare:** ce e fix și neambiguu se autocorectează integral; textul liber nu primește niciodată notă automată, doar pre-notare pentru mentor; testele mari (la 3 capitole) și simulările se corectează integral de om.
+
+**Obiecții pe care le-am ridicat, notate ca sarcini, nu ca păreri:**
+- **Volumul.** Testele mari corectate integral de om sunt articolul cu cel mai mare volum din sistem. La 20 de elevi merge, la 200 nu — plafonul trebuie calculat înainte. Rând dedicat în grupa I.
+- **„Fix și automatizabil" are nevoie de definiție îngustă.** Și numărătoarea de cuvinte greșește (cratime, cifre, titluri citate). Automatizarea completă se limitează la criteriile cu prag verificabil fără interpretare; restul rămân sugestii.
+- **Autoevaluarea pe barem ca strat 0** pe text liber, înainte de mentor. Cost zero, scalează, și predă exact competența care aduce cele ~32 de puncte pe formă.
+
+---
+
 ## 2026-08-12 — Andrei (Deciziile de produs → sarcini în TASKS)
 
 Cercetarea din sesiunea precedentă s-a spart în sarcini. **Secțiune nouă „Faza 2"** în `TASKS.md`, cu 18 sarcini în șase grupe (jurnal de evenimente, ce iese din el, baremul ca date, AI în lot, motivație, gramatică/tehnic).
