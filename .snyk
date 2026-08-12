@@ -1,0 +1,15 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.1
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  8f204b12-fb7e-4489-afe3-225bc9f391a5:
+    - '*':
+        reason: >-
+          Redirectul e validat in lib/safe-redirect.ts: doar https si doar gazda
+          stripe.com sau subdomenii. Sursa nu e input de utilizator — e
+          session.url creat server-side de Stripe SDK in /api/checkout. Snyk nu
+          recunoaste garda din alt modul ca sanitizator. Acoperit de
+          tests/safe-redirect.test.ts.
+        expires: 2027-02-12T00:00:00.000Z
+        created: 2026-08-12T15:20:02.313Z
+patch: {}
