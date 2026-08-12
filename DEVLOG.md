@@ -18,6 +18,10 @@ Lista din ședință comparată cu ce era deja în TASKS: **1 din 9 acoperit, 2 
 - **Testele de gramatică intră în același planificator** ca restul. Un singur mecanism de repetiție, nu unul pe calendar în paralel.
 - **Regula de corectare:** ce e fix și neambiguu se autocorectează integral; textul liber nu primește niciodată notă automată, doar pre-notare pentru mentor; testele mari (la 3 capitole) și simulările se corectează integral de om.
 
+**Lecțiile remediale — generare în lot, nu live.** Clarificat după discuție: elevul care a trecut prin lecția X și tot greșește are nevoie de **altă** explicație. Generarea se face însă **per neînțelegere, offline**, nu per elev la cerere. Motivele, în ordinea importanței: (1) conținut nerevizuit ar ajunge direct la un elev care se pregătește de examen, ceea ce anulează regula „profesorul e revizor"; (2) e mai **rapid** pentru elev — lecția există deja în DB, față de zeci de secunde de așteptare exact când e frustrat; (3) costul e o singură dată, nu per elev. Neînțelegerile sunt un set mărginit — aceeași confuzie apare la 200 de elevi. E și modelul Duolingo: DuoFactory generează offline, Session Generator personalizează la servire; nimic nu se generează live per user.
+
+Ca profesorul să nu fie încărcat: **revizie triată** — al doilea model dă un scor de încredere, omul vede doar ce e sub prag plus un eșantion aleator. Eșantionul rămâne obligatoriu: româna are interpretare, iar un model care sună convingător și e greșit e mai periculos decât unul absent.
+
 **Obiecții pe care le-am ridicat, notate ca sarcini, nu ca păreri:**
 - **Volumul.** Testele mari corectate integral de om sunt articolul cu cel mai mare volum din sistem. La 20 de elevi merge, la 200 nu — plafonul trebuie calculat înainte. Rând dedicat în grupa I.
 - **„Fix și automatizabil" are nevoie de definiție îngustă.** Și numărătoarea de cuvinte greșește (cratime, cifre, titluri citate). Automatizarea completă se limitează la criteriile cu prag verificabil fără interpretare; restul rămân sugestii.

@@ -250,12 +250,26 @@ Patru secțiuni, fiecare cu **materie + exerciții**: **Gramatică**, **Subiectu
 
 ### J. Secțiune remedială — greșelile frecvente
 
+> **Principiul:** dacă elevul a trecut prin lecția X și tot greșește, retrimiterea la
+> lecția X nu ajută. Are nevoie de **altă** explicație, nu de aceeași a doua oară.
+>
+> **Cum generăm — decis: în lot, per neînțelegere, nu live per elev.** Neînțelegerile
+> sunt un set mărginit (o confuzie e aceeași la 200 de elevi), deci se generează o dată,
+> se revizuiesc o dată și se **servesc** personalizat. Pentru elev e instant, fiindcă
+> lecția există deja în DB; generarea live l-ar pune să aștepte zeci de secunde exact
+> când e frustrat. E și modelul Duolingo: conținut generat offline, personalizare la
+> servire.
+
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Identificarea greșelilor frecvente per elev | Andrei | `remediere` | Din `answer_events` (A) + etichete. Nu „ce a greșit o dată", ci tiparul care se repetă |
-| ⬜ | **Lecții remediale generate diferit** față de lecția prin care a trecut deja | Andrei | `remediere` | Punctul esențial: dacă elevul n-a înțeles dintr-o explicație, aceeași explicație a doua oară nu ajută. Altă abordare, alt exemplu |
+| ⬜ | Identificarea tiparelor de greșeală per elev | Andrei | `remediere` | Din `answer_events` (A) + etichete. Nu „ce a greșit o dată", ci ce se repetă |
+| ⬜ | **Catalogul de neînțelegeri** — set mărginit, derivat din variantele greșite și etichete | Andrei | `remediere` | Unitatea de remediere. Fără el, generarea n-are pe ce să se lege |
+| ⬜ | **Generator de lecții remediale, în lot** — una per neînțelegere, cu altă abordare decât lecția originală | Andrei | `remediere` | Extinde D. Intrarea: neînțelegerea + lecția pe care elevul a parcurs-o deja (ca să nu repete aceeași explicație) |
+| ⬜ | **Revizie triată** — al doilea model dă scor de încredere; profesorul vede doar ce e sub prag + un eșantion aleator | Andrei + Bogdan | `remediere` | Ca profesorul să revizuiască zeci, nu sute. Efortul e front-loaded: primul lot cere atenție, apoi devine marginal |
+| ⬜ | Servirea lecției potrivite tiparului elevului | Andrei | `remediere` | Personalizarea se face aici, la servire — conținutul rămâne static |
 | ⬜ | Teste țintite pe greșelile proprii | Andrei + Bogdan | `remediere` | Extinde „Greșelile mele" (B) de la listă la exercițiu |
 | ⬜ | Secțiune dedicată în UI | Bogdan | `remediere` | Separată de parcursul normal |
+| ⬜ | Control de calitate pe generator — eșantion verificat periodic | ❓ | — | Româna are interpretare, iar un model care sună convingător și e greșit e mai periculos decât unul absent. Eșantionul e singurul mod de a afla că pragul de încredere e prost calibrat |
 
 ### Public-țintă — **decis**
 
