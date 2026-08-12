@@ -21,6 +21,7 @@
 **Diagnostic cheie:** Toate suitele pică simultan la **import** (0 teste rulate) cu mesaj despre „runner", nu erori de assertion → nu e o regresie de cod, ci stare/cache corupt. Un run verde urmat brusc de run-uri roșii pe aceleași fișiere confirmă.
 **Soluție:** `rm -rf node_modules/.vite node_modules/.vitest` apoi `npm test` → verde din nou; push-ul a trecut.
 **Recidivă 2026-08-06** (branch `teste-progres`): exact același tipar — 75/75 verde, apoi toate cele 9 suite roșii la pre-push cu `Tests: no tests`. Aceeași soluție, aceeași durată. Nu e un incident izolat: dacă se mai repetă, merită un `pretest` care curăță cache-ul.
+**Recidivă 2026-08-11** (a treia oară, pe `main`): `Tests: no tests`, în timp ce `typecheck` și `lint` treceau curat. Aceeași soluție. **Recomandare fermă acum, după trei apariții:** un script `pretest` care rulează `rimraf node_modules/.vite node_modules/.vitest` înainte de `vitest run`. Costă ~1 secundă per rulare și elimină o capcană care a consumat de fiecare dată timp de diagnostic. Neimplementat încă — decizie de luat.
 
 ---
 

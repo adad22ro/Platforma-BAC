@@ -6,6 +6,27 @@
 
 ---
 
+## 2026-08-11 — Andrei (Sesiune de cercetare și direcție de produs)
+
+**Fără cod de aplicație.** Sesiune de documentare, plus o regulă de proces.
+
+**Cinci documente noi în `docs/`** (fiecare cu markdown + PDF, PDF-urile generate din markdown cu `marked` + Chrome headless):
+- `duolingo-research` — modelul de arhitectură. Concluzia principală: **ei rețin evenimente, noi reținem stări**; aproape tot ce e valoros la ei derivă din păstrarea fiecărei interacțiuni. Plus: ei fabrică motivația, noi o primim gratis de la examen — deci nu copiem mecanicile de retenție (hearts, ligi, XP).
+- `bac-romana-programa` — programa oficială și o propunere de fragmentare a materiei pe trei axe (conținut literar ca ierarhie; concepte de teorie literară și competențe de examen ca etichete).
+- `bac-barem-analiza` — **analiză pe 21 de documente oficiale** (subiecte + bareme, ambele profiluri, 2021-2026), descărcate și comparate automat. Descoperirea centrală: **baremul e o constantă**, iar ~32 din 90 de puncte se dau pe formă, nu pe literatură. Subiectul II are 3 tipuri de cerință în 6 ani; rubrica de redactare a eseului e identică caracter cu caracter în 9 din 11 bareme.
+- `viziune-produs` — cei patru piloni discutați: parcurs diferențiat, motivație/abandon, AI progresiv, gramatică.
+- `rezumat-sedinta` — sinteză de prezentat colegilor, cu 7 puncte de decizie.
+
+**Regulă nouă în `CLAUDE.md`** (comisă direct pe `main`, ca să ajungă repede la toată lumea): la fiecare conversație nouă și la orice întrebare despre starea proiectului, **se verifică toate branch-urile**, nu doar `main` — cu `ahead`/`behind`, autor și dată. Motivul: în această sesiune s-a raportat greșit că frontendul n-a avansat de două săptămâni, când de fapt existau ~2.600 de linii pe branch nemergeat.
+
+**Constatare importantă, de rezolvat:** UI-ul de tichete al lui Bogdan e scris pe contractul vechi (`POST /api/tickets/[id]/answer`, câmpuri `answer`/`answered_at`, `lesson_id` opțional), înlocuit între timp de firul de mesaje. Branch-ul lui pornește de la `a62b283` și e în urmă cu PR #38, #39, #40. **De discutat contractul înainte ca cineva să repare cod.**
+
+**Nimic notat în TASKS.md** — direcția se sparge în sarcini după ședința cu colegii.
+
+**Verzi:** typecheck curat, 114/114 teste, lint curat. (Eroarea #019 a reapărut a treia oară; vezi recomandarea de `pretest` din `ERRORS.md`.)
+
+---
+
 ## 2026-08-07 — Andrei (Sesiunea backend — restanțe)
 
 Trei lucruri mici rămase în urmă, pe `backend-restante`. Săpt. 9-10 intrase deja în `main` (PR #39, producție verificată: landing 200, `/api/health` ok).
