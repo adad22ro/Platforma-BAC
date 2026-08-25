@@ -36,6 +36,19 @@ steagul, ca o rulare întreruptă să lase baremul vechi intact.
 adică fix estimarea din `bac-barem-analiza.md` §6, făcută independent, prin numărare pe
 document. Cele două s-au întâlnit fără să fie potrivite.
 
+**Stratul 1 determinist**, în aceeași sesiune: `lib/corectare-strat1.ts`, 6 verificatoare
+(număr de cuvinte, conectori, părți componente, concluzie, citat, răspuns în enunț) + 24 de
+teste. Decizia care contează aici: **un criteriu pe care nu-l putem verifica nu primește 0**,
+ci `stare: 'indisponibil'` și `puncte: null`. Un 0 nemeritat, dat tăcut fiindcă unealta
+lipsește, e mai rău decât un criteriu lăsat nenotat — elevul crede că a greșit ceva ce n-a
+fost măsurat. `dinCatePosibile` exclude punctele acelea, deci se afișează „5 din 5", nu
+„5 din 7". Cele 4 puncte de ortografie/punctuație rămân așa până la LanguageTool.
+
+A doua nuanță, scrisă explicit în cod: stratul 1 verifică **prezența și forma**, nu calitatea.
+Putem spune că există trei paragrafe, nu că introducerea e bună. La conectori putem măsura
+prezența și varietatea, nu potrivirea în frază — iar explicația întoarsă elevului spune asta
+pe față, ca să nu citească mai mult decât e.
+
 **Rămâne deschis:** migrarea **nu e aplicată în producție** — o aplic la următoarea sesiune,
 împreună cu `npm run db:types`. Până atunci, `lib/barem-db.ts` conține un cast documentat
 (tipurile generate nu cunosc încă tabelele), de scos imediat după regenerare. Pasul următor

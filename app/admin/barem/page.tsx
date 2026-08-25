@@ -82,7 +82,8 @@ export default async function BaremPage() {
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
             Doar citire. Corecturile se fac in <code>data/barem.json</code>, apoi{" "}
-            <code>npm run barem:import</code>.
+            <code>npm run barem:import</code> — cum, in{" "}
+            <code>docs/barem-cum-modifici.md</code>.
           </p>
         </header>
 

@@ -218,7 +218,7 @@
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
 | ✅ | Codificarea baremului ca tabel de criterii cu praguri | Andrei | `barem-date` | Sursa de adevăr: [`data/barem.json`](data/barem.json) — 6 rubrici, 33 de criterii, cu praguri. În DB prin `npm run barem:import`, **versionat** (notele rămân explicabile după o corectură). Validare: `npm run barem:check` (16 teste). Vizualizare doar-citire: `/admin/barem`. Din cele 90 de puncte, **20 sunt pe stratul `auto`** — confirmă estimarea din analiză |
-| ⬜ | Corectare **strat 1, determinist** — număr de cuvinte, conectori, părți componente, prezența citatului | Andrei | `barem-date` | ~20 din 90 de puncte, exact, fără ambiguitate. Nu cere AI |
+| ✅ | Corectare **strat 1, determinist** — număr de cuvinte, conectori, părți componente, prezența citatului | Andrei | `barem-date` | [`lib/corectare-strat1.ts`](lib/corectare-strat1.ts) — `corecteazaStrat1(rubrica, { text, textSuport })`. 6 verificatoare + 24 de teste. **Un criteriu nenotat NU primește 0**: întoarce `stare: 'indisponibil'` și `puncte: null`, iar `dinCatePosibile` exclude acele puncte, ca elevul să nu creadă că le-a pierdut. Cele 4 puncte de ortografie/punctuație rămân indisponibile până la LanguageTool (grupa F) |
 | ⬜ | Autoevaluare pe barem — elevul se notează pe grila oficială | Bogdan | `barem-date` | Cel mai ieftin mod de a preda baremul. **Criteriile există acum ca date** — nu le rescrie în UI. Formatul e în [`lib/barem.ts`](lib/barem.ts) (tipurile `Rubrica`/`Criteriu`/`Prag`), datele în `data/barem.json`, iar `/admin/barem` arată exact ce e în sistem. Fiecare criteriu are `puncte_max` și `praguri` cu textul oficial |
 | ⬜ | Lecție „cum se punctează" — cele ~32 de puncte care se iau pe formă | ❓ | — | Conținut, nu cod. Se învață în cinci minute și foarte puțini elevi o știu |
 
@@ -243,7 +243,7 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | **LanguageTool** self-hostat pentru ortografie/punctuație | Andrei | `gramatica` | Cost zero per corectare, explicabil, nu inventează. Se prezintă ca **sugestie**, nu verdict — orice corector dă fals-pozitive |
+| ⬜ | **LanguageTool** self-hostat pentru ortografie/punctuație | Andrei | `gramatica` | Cost zero per corectare, explicabil, nu inventează. Se prezintă ca **sugestie**, nu verdict — orice corector dă fals-pozitive. **Deblochează 4 puncte** care acum ies `indisponibil` din stratul 1: `verificaLanguageTool` din [`lib/corectare-strat1.ts`](lib/corectare-strat1.ts) e singurul loc de schimbat |
 | ⬜ | Cache pe `/api/chapters` (`use cache`, Next 16) | Andrei | `cache-continut` | ~200ms per cerere pentru date care se schimbă săptămânal |
 | ⬜ | Nivel intermediar în ierarhie (`chapters → units → lessons`) | Andrei | — | Doar dacă un capitol ajunge la ~30 de lecții. Momentan nu e nevoie |
 

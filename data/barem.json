@@ -1,7 +1,7 @@
 {
   "versiune_document": "2026-08-25",
   "sursa": "docs/bac-barem-analiza.md — corpus 2021-2026, sesiuni de vara. Rubrica de redactare de la Subiectul III e identica caracter cu caracter in 9 din 11 bareme analizate.",
-  "note": "Punctajele si pragurile sunt transcrise din baremele oficiale. Nu adauga criterii fara trimitere la barem. Dupa orice modificare: npm run barem:check",
+  "note": "Punctajele si pragurile sunt transcrise din baremele oficiale. Nu adauga criterii fara trimitere la barem. Cum se modifica fisierul: docs/barem-cum-modifici.md. Dupa orice modificare: npm run barem:check, apoi npm run barem:import",
   "rubrici": [
     {
       "slug": "s1a-cerinta",
