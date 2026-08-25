@@ -6,6 +6,43 @@
 
 ---
 
+## 2026-08-25 — Andrei (Grupa C — baremul ca date)
+
+Curățenie și întreținere întâi: mergeat PR #56 (9 pachete, blocat de 6 zile de un
+`typecheck` roșu — SDK-ul `stripe` fixează versiunea de API în tipuri, deci bump-ul cerea
+`apiVersion: '2026-07-29.dahlia'`; intrarea #022 în ERRORS). Corectată atribuirea deciziilor
+blocate (#57) și notat blocajul TypeScript 7 cu semnalul lui de deblocare (#58).
+
+**Baremul oficial e acum date, nu logică.** 6 rubrici, 33 de criterii, cu praguri, în
+`data/barem.json`; migrarea `20260825200000_barem_criterii.sql` și importul versionat prin
+`npm run barem:import`.
+
+**Decizia care contează: JSON în repo ca sursă de adevăr, nu ecran de administrare.**
+Baremul produce note. Un prag schimbat dintr-un click, fără diff și fără review, modifică
+tăcut punctajele — inclusiv retroactiv. În JSON, fiecare corectură trece prin commit, se
+vede la review și se poate da înapoi; iar `npm run barem:check` prinde greșeala de
+transcriere înainte de push. Adminul primește doar **vizualizare** (`/admin/barem`), care
+răspunde la singura întrebare rămasă: „ce e în sistem acum, și e corect?". Dacă se dovedește
+că profesorul chiar vrea să ajusteze criterii des, editarea se adaugă atunci — nu preventiv.
+
+**A doua decizie: importul versionează, nu suprascrie.** Fiecare corectură creează o
+versiune nouă și o marchează activă; cele vechi rămân. Altfel, prima corectură ar face
+notele deja acordate imposibil de explicat — elevul vede 7, sistemul recalculează 8. Costă
+o coloană acum și e foarte scump de adăugat mai târziu. Un index parțial unic garantează o
+singură versiune activă, iar importul scrie tot conținutul inactiv și abia la final mută
+steagul, ca o rulare întreruptă să lase baremul vechi intact.
+
+**Confirmare neașteptată:** suma punctelor de pe stratul `auto` a ieșit exact **20 din 90**,
+adică fix estimarea din `bac-barem-analiza.md` §6, făcută independent, prin numărare pe
+document. Cele două s-au întâlnit fără să fie potrivite.
+
+**Rămâne deschis:** migrarea **nu e aplicată în producție** — o aplic la următoarea sesiune,
+împreună cu `npm run db:types`. Până atunci, `lib/barem-db.ts` conține un cast documentat
+(tipurile generate nu cunosc încă tabelele), de scos imediat după regenerare. Pasul următor
+din grupa C e stratul 1 determinist, care consumă exact aceste date.
+
+---
+
 ## 2026-08-12 — Andrei (Grupa H — motorul de repetiție spațiată)
 
 `ts-fsrs` 5.4.1 (FSRS-6), migrare `20260812190000_stare_concept_fsrs.sql` (aplicată), plus `lib/fsrs.ts` și `GET /api/recapitulare`.

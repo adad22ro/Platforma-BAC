@@ -381,6 +381,46 @@ DDL: [`20260807100000_tichete_mentorat.sql`](../supabase/migrations/202608071000
 
 ---
 
+### `barem_versions`, `barem_rubrici`, `barem_criterii` — baremul oficial ca date
+
+Baremul de BAC codificat drept **date**, nu logică: rubrica de redactare de la Subiectul III
+e identică caracter cu caracter în 9 din 11 bareme oficiale analizate (2021-2026, vezi
+[`bac-barem-analiza.md`](bac-barem-analiza.md)). Corectarea devine „aplică criteriul X cu
+pragurile lui", iar când Ministerul schimbă baremul se schimbă datele, nu codul.
+
+**Sursa de adevăr e [`data/barem.json`](../data/barem.json), nu tabelele.** Tabelele se
+populează cu `npm run barem:import`. Motivul e că baremul produce **note**: un prag schimbat
+direct în DB, fără diff și fără review, modifică tăcut punctajele. În JSON, fiecare corectură
+trece prin commit și se poate da înapoi. Validarea: `npm run barem:check`.
+
+| Tabel | Ce ține |
+|---|---|
+| `barem_versions` | O linie per import care aduce ceva nou. `checksum` (sha256 pe fișier) face importul idempotent; `is_active` marchează versiunea în uz |
+| `barem_rubrici` | Un subiect sau o parte de subiect: `subiect` (I.A / I.B / II / III), `puncte_total`, `minim_cuvinte` (50 / 150 / 400) |
+| `barem_criterii` | Rândul pe care se dau punctele: `puncte_max`, `strat`, `verificator`, `praguri` (jsonb) |
+
+**`strat`** clasifică cine poate acorda punctul (§6 din analiză): `auto` = determinist, fără AI;
+`ai` = pre-notare pentru mentor, **niciodată** notă finală; `mentor` = doar om. Din cele 90 de
+puncte ale examenului, **20 sunt pe stratul `auto`** — exact acelea pe care le poate da stratul 1
+de corectare.
+
+**`verificator`** e obligatoriu pe `auto` și interzis în rest, garantat de un CHECK, nu doar de
+validator: un criteriu automat fără verificator ar trece tăcut prin corectare și ar da mereu 0.
+
+> **De ce versionăm.** O notă acordată trebuie să rămână explicabilă. Dacă am corecta un prag
+> rescriind rândurile existente, toate notele date până atunci ar deveni imposibil de justificat:
+> elevul are 7 pe ecran, sistemul recalculează 8, și nimeni nu poate spune care e adevărul.
+> Importul nu face UPDATE — inserează o versiune nouă și o marchează activă. Notările vor referi
+> `barem_criterii.id`, care aparține unei versiuni anume, deci rămân reproductibile. Versiunile
+> vechi nu se șterg (fără `delete` în grants). Un index parțial unic garantează **o singură**
+> versiune activă — dacă importul crapă la jumătate, nu rămân două.
+
+Vizualizare (doar citire): `/admin/barem`.
+
+DDL: [`20260825200000_barem_criterii.sql`](../supabase/migrations/20260825200000_barem_criterii.sql)
+
+---
+
 ## Conexiunea la Supabase
 
 Fișier: `lib/supabase.ts`
@@ -398,5 +438,6 @@ Pentru operațiuni de server (webhook, panou admin) se folosește clientul admin
 
 ---
 
-> Actualizat la: 2026-07-01 — adăugat `processed_events` (idempotență webhook Stripe).
+> Actualizat la: 2026-08-25 — adăugat baremul ca date (`barem_versions` / `barem_rubrici` / `barem_criterii`).
+> Anterior: 2026-07-01 — `processed_events` (idempotență webhook Stripe).
 > Schema mutată în migrări versionate (`supabase/migrations/`) + tipuri generate (`types/database.ts`).

@@ -217,9 +217,9 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Codificarea baremului ca tabel de criterii cu praguri | Andrei | `barem-date` | Baremul e o **constantă**: rubrica de redactare e identică caracter cu caracter în 9 din 11 bareme oficiale |
+| ✅ | Codificarea baremului ca tabel de criterii cu praguri | Andrei | `barem-date` | Sursa de adevăr: [`data/barem.json`](data/barem.json) — 6 rubrici, 33 de criterii, cu praguri. În DB prin `npm run barem:import`, **versionat** (notele rămân explicabile după o corectură). Validare: `npm run barem:check` (16 teste). Vizualizare doar-citire: `/admin/barem`. Din cele 90 de puncte, **20 sunt pe stratul `auto`** — confirmă estimarea din analiză |
 | ⬜ | Corectare **strat 1, determinist** — număr de cuvinte, conectori, părți componente, prezența citatului | Andrei | `barem-date` | ~20 din 90 de puncte, exact, fără ambiguitate. Nu cere AI |
-| ⬜ | Autoevaluare pe barem — elevul se notează pe grila oficială | Bogdan | `barem-date` | Cel mai ieftin mod de a preda baremul |
+| ⬜ | Autoevaluare pe barem — elevul se notează pe grila oficială | Bogdan | `barem-date` | Cel mai ieftin mod de a preda baremul. **Criteriile există acum ca date** — nu le rescrie în UI. Formatul e în [`lib/barem.ts`](lib/barem.ts) (tipurile `Rubrica`/`Criteriu`/`Prag`), datele în `data/barem.json`, iar `/admin/barem` arată exact ce e în sistem. Fiecare criteriu are `puncte_max` și `praguri` cu textul oficial |
 | ⬜ | Lecție „cum se punctează" — cele ~32 de puncte care se iau pe formă | ❓ | — | Conținut, nu cod. Se învață în cinci minute și foarte puțini elevi o știu |
 
 ### D. AI faza 1 — în lot, offline, fără cereri de la elevi

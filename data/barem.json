@@ -1,0 +1,395 @@
+{
+  "versiune_document": "2026-08-25",
+  "sursa": "docs/bac-barem-analiza.md — corpus 2021-2026, sesiuni de vara. Rubrica de redactare de la Subiectul III e identica caracter cu caracter in 9 din 11 bareme analizate.",
+  "note": "Punctajele si pragurile sunt transcrise din baremele oficiale. Nu adauga criterii fara trimitere la barem. Dupa orice modificare: npm run barem:check",
+  "rubrici": [
+    {
+      "slug": "s1a-cerinta",
+      "subiect": "I.A",
+      "denumire": "Subiectul I.A — o cerinta (din cele cinci)",
+      "profil": null,
+      "puncte_total": 6,
+      "minim_cuvinte": null,
+      "observatii": "Cele cinci cerinte se descompun identic. Cerinta 5 (prezentarea unei trasaturi) are in plus o limita de cuvinte precizata in enunt, care variaza de la an la an — de aceea nu e codificata aici.",
+      "criterii": [
+        {
+          "slug": "s1a-continut",
+          "denumire": "Continutul raspunsului",
+          "puncte_max": 4,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s1a-raspuns-in-enunt",
+          "denumire": "Formularea raspunsului in enunt",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "raspuns_in_enunt",
+          "praguri": [
+            { "puncte": 1, "conditie": "raspunsul e formulat ca enunt complet" },
+            { "puncte": 0, "conditie": "raspuns eliptic, in afara enuntului" }
+          ],
+          "observatii": "Se acorda chiar daca raspunsul e gresit la continut, atat timp cat dezvolta subiectul propus. Foarte putini elevi stiu asta."
+        },
+        {
+          "slug": "s1a-corectitudine",
+          "denumire": "Corectitudinea exprimarii, ortografie si punctuatie",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 1, "conditie": "0-1 greseli" },
+            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "s1b-text-argumentativ",
+      "subiect": "I.B",
+      "denumire": "Subiectul I.B — textul argumentativ",
+      "profil": null,
+      "puncte_total": 20,
+      "minim_cuvinte": 150,
+      "criterii": [
+        {
+          "slug": "s1b-opinie",
+          "denumire": "Formularea unei opinii",
+          "puncte_max": 1,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s1b-argumente-enuntare",
+          "denumire": "Enuntarea a doua argumente (2 x 2p)",
+          "puncte_max": 4,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s1b-argumente-dezvoltare",
+          "denumire": "Dezvoltarea celor doua argumente (2 x 2p)",
+          "puncte_max": 4,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s1b-valorificare-text",
+          "denumire": "Valorificarea textului-suport",
+          "puncte_max": 3,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": [],
+          "observatii": "Prezenta citatului se poate verifica automat; adecvarea lui, nu."
+        },
+        {
+          "slug": "s1b-experienta-personala",
+          "denumire": "Raportare la experienta personala sau culturala",
+          "puncte_max": 1,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s1b-concluzie",
+          "denumire": "Formularea unei concluzii",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "concluzie",
+          "praguri": [
+            { "puncte": 1, "conditie": "exista un enunt final de concluzie" },
+            { "puncte": 0, "conditie": "lipseste" }
+          ]
+        },
+        {
+          "slug": "s1b-conectori",
+          "denumire": "Utilizarea corecta a conectorilor",
+          "puncte_max": 2,
+          "strat": "auto",
+          "verificator": "conectori",
+          "praguri": [
+            { "puncte": 2, "conditie": "conectori adecvati, folositi consecvent" },
+            { "puncte": 1, "conditie": "conectori folositi partial" },
+            { "puncte": 0, "conditie": "fara conectori" }
+          ]
+        },
+        {
+          "slug": "s1b-norme-limba",
+          "denumire": "Respectarea normelor limbii literare",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 1, "conditie": "0-1 greseli" },
+            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
+          ]
+        },
+        {
+          "slug": "s1b-ortografie-punctuatie",
+          "denumire": "Ortografie si punctuatie",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 1, "conditie": "0-1 greseli" },
+            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
+          ]
+        },
+        {
+          "slug": "s1b-asezare",
+          "denumire": "Asezarea in pagina, lizibilitatea",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "acordat_implicit",
+          "praguri": [
+            { "puncte": 1, "conditie": "text scris digital — criteriul nu se aplica" }
+          ],
+          "observatii": "Nu are corespondent digital. Se acorda implicit, dar ramane in grila ca elevul sa vada baremul oficial intreg."
+        },
+        {
+          "slug": "s1b-minim-cuvinte",
+          "denumire": "Respectarea numarului minim de cuvinte (150)",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "numar_cuvinte",
+          "parametri": { "minim": 150 },
+          "praguri": [
+            { "puncte": 1, "conditie": "cel putin 150 de cuvinte" },
+            { "puncte": 0, "conditie": "sub 150 de cuvinte" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "s2-interpretare",
+      "subiect": "II",
+      "denumire": "Subiectul al II-lea — interpretare pe text",
+      "profil": null,
+      "puncte_total": 10,
+      "minim_cuvinte": 50,
+      "observatii": "Cerinta e identica la real si la uman in acelasi an. In 2021-2026 au aparut doar trei tipuri de cerinta.",
+      "criterii": [
+        {
+          "slug": "s2-precizare-concept",
+          "denumire": "Precizarea conceptului cerut",
+          "puncte_max": 2,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s2-prezentare-ilustrata",
+          "denumire": "Prezentarea conceptului, ilustrata cu exemple din text",
+          "puncte_max": 4,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": [
+            { "puncte": 4, "conditie": "prezentare adecvata si nuantata, cu exemple din text" },
+            { "puncte": 2, "conditie": "prezentare ezitanta" },
+            { "puncte": 1, "conditie": "simpla indicare, fara raportare la text" }
+          ]
+        },
+        {
+          "slug": "s2-limba-literara",
+          "denumire": "Utilizarea limbii literare",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 1, "conditie": "0-1 greseli" },
+            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
+          ]
+        },
+        {
+          "slug": "s2-logica-ideilor",
+          "denumire": "Logica inlantuirii ideilor",
+          "puncte_max": 1,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s2-ortografie",
+          "denumire": "Ortografia",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 1, "conditie": "0-1 greseli" },
+            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
+          ]
+        },
+        {
+          "slug": "s2-punctuatie",
+          "denumire": "Punctuatia",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 1, "conditie": "0-1 greseli" },
+            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "s3-redactare",
+      "subiect": "III",
+      "denumire": "Subiectul al III-lea — redactare (comuna tuturor arhetipurilor)",
+      "profil": null,
+      "puncte_total": 12,
+      "minim_cuvinte": 400,
+      "observatii": "Rubrica e identica caracter cu caracter in 9 din 11 bareme analizate; in 2026 singura schimbare e tipografica.",
+      "criterii": [
+        {
+          "slug": "s3-parti-componente",
+          "denumire": "Existenta partilor componente (introducere, cuprins, incheiere)",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "parti_componente",
+          "praguri": [
+            { "puncte": 1, "conditie": "toate cele trei parti exista" },
+            { "puncte": 0, "conditie": "lipseste cel putin una" }
+          ]
+        },
+        {
+          "slug": "s3-logica-ideilor",
+          "denumire": "Logica inlantuirii ideilor",
+          "puncte_max": 1,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s3-analiza-argumentare",
+          "denumire": "Abilitati de analiza si de argumentare",
+          "puncte_max": 3,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": [
+            { "puncte": 3, "conditie": "relatie adecvata idee-argument, argumente convingatoare" },
+            { "puncte": 2, "conditie": "relatie partial adecvata" },
+            { "puncte": 1, "conditie": "schematism" }
+          ]
+        },
+        {
+          "slug": "s3-limba-literara",
+          "denumire": "Utilizarea limbii literare",
+          "puncte_max": 2,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 2, "conditie": "stil si vocabular adecvate" },
+            { "puncte": 1, "conditie": "partial adecvate" }
+          ]
+        },
+        {
+          "slug": "s3-ortografie",
+          "denumire": "Ortografia",
+          "puncte_max": 2,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 2, "conditie": "0-1 greseli" },
+            { "puncte": 1, "conditie": "2 greseli" },
+            { "puncte": 0, "conditie": "3 sau mai multe greseli" }
+          ]
+        },
+        {
+          "slug": "s3-punctuatie",
+          "denumire": "Punctuatia",
+          "puncte_max": 2,
+          "strat": "auto",
+          "verificator": "languagetool",
+          "praguri": [
+            { "puncte": 2, "conditie": "0-1 greseli" },
+            { "puncte": 1, "conditie": "2 greseli" },
+            { "puncte": 0, "conditie": "3 sau mai multe greseli" }
+          ]
+        },
+        {
+          "slug": "s3-asezare",
+          "denumire": "Asezarea in pagina, lizibilitatea",
+          "puncte_max": 1,
+          "strat": "auto",
+          "verificator": "acordat_implicit",
+          "praguri": [
+            { "puncte": 1, "conditie": "text scris digital — criteriul nu se aplica" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "s3-continut-incadrare",
+      "subiect": "III",
+      "denumire": "Subiectul al III-lea — continut, arhetipul A (incadrare intr-o perioada/curent)",
+      "profil": null,
+      "puncte_total": 18,
+      "minim_cuvinte": 400,
+      "criterii": [
+        {
+          "slug": "s3a-curent-si-trasaturi",
+          "denumire": "Precizarea perioadei/curentului (2p) + doua trasaturi (2 x 1p) + evidentierea lor prin text (2 x 1p)",
+          "puncte_max": 6,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s3a-tema-si-imagini",
+          "denumire": "Precizarea temei (2p) + comentarea a doua imagini/episoade/secvente (2 x 2p)",
+          "puncte_max": 6,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s3a-compozitie-limbaj",
+          "denumire": "Analiza a doua elemente de compozitie/limbaj, cu justificarea relevantei (2 x 3p)",
+          "puncte_max": 6,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        }
+      ]
+    },
+    {
+      "slug": "s3-continut-personaj",
+      "subiect": "III",
+      "denumire": "Subiectul al III-lea — continut, arhetipul B (constructia personajului)",
+      "profil": null,
+      "puncte_total": 18,
+      "minim_cuvinte": 400,
+      "criterii": [
+        {
+          "slug": "s3b-statut",
+          "denumire": "Statutul social, psihologic, moral al personajului",
+          "puncte_max": 6,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s3b-trasatura",
+          "denumire": "O trasatura ilustrata prin doua episoade/secvente comentate",
+          "puncte_max": 6,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        },
+        {
+          "slug": "s3b-constructie",
+          "denumire": "Elemente de constructie a personajului",
+          "puncte_max": 6,
+          "strat": "ai",
+          "verificator": null,
+          "praguri": []
+        }
+      ]
+    }
+  ]
+}
