@@ -187,6 +187,9 @@ Se scriu **de la mult la puțin**, ca în barem:
   `{ "puncte": 2, "conditie": "0-1 greseli", "max_greseli": 1 }`. Textul din `conditie` e pentru
   om; corectarea are nevoie de cifră, iar parsarea propoziției ar fi fragilă exact acolo unde nu
   ne permitem. Pragul de 0 puncte e cazul „în rest" și nu are nevoie de cifră.
+- **`max_greseli` trebuie să crească pe măsură ce punctajul scade** (1, apoi 2, apoi…). Altfel
+  pragul de jos nu se atinge niciodată, fiindcă îl „prinde" primul de sus — iar elevul primește
+  tăcut alt punctaj decât spune baremul. E verificat automat.
 - `puncte` nu poate depăși `puncte_max` al criteriului.
 - `conditie` e text pentru om. Scrie-l cât mai aproape de barem, pentru că **ajunge sub ochii
   elevului**, nu doar în cod.
@@ -269,6 +272,7 @@ Alte lucruri utile despre import:
 | `verificatorul "numar_cuvinte" cere parametri.minim` | Adaugă `"parametri": { "minim": 150 }` |
 | `verificatorul "languagetool" cere parametri.categorie` | Adaugă `"parametri": { "categorie": "ortografie" }` |
 | `pragul de N puncte n-are max_greseli` | La criteriile de limbă, pragurile peste 0 au nevoie de numărul de greșeli acceptate |
+| `toleranta trebuie sa creasca pe masura ce punctajul scade` | Ai scris `max_greseli` descrescător. Pe măsură ce iei mai puține puncte, numărul de greșeli acceptate trebuie să fie **mai mare**, nu mai mic |
 | `pragul de N puncte depaseste puncte_max` | Pragul e mai mare decât face criteriul |
 | `pragurile nu sunt in ordine descrescatoare` | Rearanjează-le de la mult la puțin |
 | `slug duplicat` | Două criterii cu același `slug`. Trebuie unice în tot fișierul |

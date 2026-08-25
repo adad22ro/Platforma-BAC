@@ -217,6 +217,24 @@ export function valideazaBarem(b: Barem): string[] {
             )
           }
         }
+
+        // Pe masura ce punctajul scade, toleranta la greseli trebuie sa CREASCA.
+        // Corectarea ia primul prag in care incape numarul de greseli, de sus in
+        // jos; daca `max_greseli` nu e crescator, un prag de mai jos devine
+        // inaccesibil si elevul primeste tacit alt punctaj decat spune baremul.
+        // Nu s-ar vedea nici la citit, nici la teste — doar in note.
+        const cuCifra = (c.praguri ?? []).filter(
+          (p): p is Prag & { max_greseli: number } => typeof p.max_greseli === 'number'
+        )
+        for (let i = 1; i < cuCifra.length; i++) {
+          if (cuCifra[i].max_greseli <= cuCifra[i - 1].max_greseli) {
+            probleme.push(
+              `${undeC}: pragul de ${cuCifra[i].puncte} puncte accepta ${cuCifra[i].max_greseli} greseli, ` +
+                `dar cel de ${cuCifra[i - 1].puncte} puncte accepta ${cuCifra[i - 1].max_greseli} — ` +
+                `toleranta trebuie sa creasca pe masura ce punctajul scade, altfel pragul de jos nu se atinge niciodata.`
+            )
+          }
+        }
       }
 
       for (const p of c.praguri ?? []) {

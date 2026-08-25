@@ -202,6 +202,48 @@ describe("valideazaBarem — prinde greselile de transcriere", () => {
     expect(probleme.some((p) => p.includes("slug duplicat"))).toBe(true);
   });
 
+  it("semnaleaza praguri de greseli care nu cresc pe masura ce punctajul scade", () => {
+    // Cazul periculos: corectarea ia primul prag in care incape numarul de
+    // greseli, deci un `max_greseli` care nu creste face pragul de jos inaccesibil.
+    // Elevul ar primi tacit alt punctaj decat spune baremul.
+    const r = rubricaOk();
+    r.puncte_total = 3;
+    r.criterii[1] = {
+      slug: "test-orto",
+      denumire: "Ortografia",
+      puncte_max: 2,
+      strat: "auto",
+      verificator: "languagetool",
+      parametri: { categorie: "ortografie" },
+      praguri: [
+        { puncte: 2, conditie: "0-1 greseli", max_greseli: 2 },
+        { puncte: 1, conditie: "2 greseli", max_greseli: 1 },
+        { puncte: 0, conditie: "3 sau mai multe" },
+      ],
+    };
+    const probleme = valideazaBarem(baremCu(r));
+    expect(probleme.some((p) => p.includes("toleranta trebuie sa creasca"))).toBe(true);
+  });
+
+  it("accepta praguri de greseli corect ordonate", () => {
+    const r = rubricaOk();
+    r.puncte_total = 3;
+    r.criterii[1] = {
+      slug: "test-orto",
+      denumire: "Ortografia",
+      puncte_max: 2,
+      strat: "auto",
+      verificator: "languagetool",
+      parametri: { categorie: "ortografie" },
+      praguri: [
+        { puncte: 2, conditie: "0-1 greseli", max_greseli: 1 },
+        { puncte: 1, conditie: "2 greseli", max_greseli: 2 },
+        { puncte: 0, conditie: "3 sau mai multe" },
+      ],
+    };
+    expect(valideazaBarem(baremCu(r))).toEqual([]);
+  });
+
   it("semnaleaza un barem gol", () => {
     const probleme = valideazaBarem({
       versiune_document: "test",
