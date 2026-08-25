@@ -32,9 +32,16 @@ o coloană acum și e foarte scump de adăugat mai târziu. Un index parțial un
 singură versiune activă, iar importul scrie tot conținutul inactiv și abia la final mută
 steagul, ca o rulare întreruptă să lase baremul vechi intact.
 
-**Confirmare neașteptată:** suma punctelor de pe stratul `auto` a ieșit exact **20 din 90**,
-adică fix estimarea din `bac-barem-analiza.md` §6, făcută independent, prin numărare pe
-document. Cele două s-au întâlnit fără să fie potrivite.
+**Corectură pe propria transcriere, în aceeași sesiune.** Prima variantă avea 20 de puncte pe
+stratul `auto` și părea să confirme exact estimarea din analiză (§6). Verificând-o ca s-o pot
+aplica automat, am găsit greșeala: pusesem pe `auto` două criterii cu praguri **calitative** —
+„utilizarea limbii literare" de la Subiectele II și III, unde baremul zice „stil și vocabular
+adecvate", nu un număr de greșeli. Regula pe care o scrisesem chiar eu în ghid — `auto` doar
+dacă se verifică fără nicio interpretare — era încălcată de propriul fișier. Mutate pe `ai`,
+totalul e **17**, iar potrivirea cu estimarea era parțial noroc: analiza numără examenul
+întreg, noi numărăm rubricile distincte, iar Subiectul I.A e modelat o singură dată deși are
+cinci cerințe. Testul fixează acum 17 exact, ca o mutare între straturi să fie o decizie, nu un
+efect secundar.
 
 **Stratul 1 determinist**, în aceeași sesiune: `lib/corectare-strat1.ts`, 6 verificatoare
 (număr de cuvinte, conectori, părți componente, concluzie, citat, răspuns în enunț) + 24 de

@@ -18,10 +18,17 @@ vi.mock("@/lib/supabase-admin", () => ({
   },
 }));
 
-import { getCurrentAppUser, isTeacher, canAccessPremium } from "@/lib/current-user";
+import {
+  getCurrentAppUser,
+  isTeacher,
+  poateCorecta,
+  rolInFir,
+  canAccessPremium,
+} from "@/lib/current-user";
 import type { AppUser } from "@/lib/current-user";
 
 const teacher: AppUser = { id: "u-t", clerk_id: "t", role: "teacher", subscription_status: "free", subscription_end_date: null };
+const mentor: AppUser = { id: "u-m", clerk_id: "m", role: "mentor", subscription_status: "free", subscription_end_date: null };
 const studentFree: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "free", subscription_end_date: null };
 const studentActive: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "active", subscription_end_date: null };
 const studentCancelled: AppUser = { id: "u-s", clerk_id: "s", role: "student", subscription_status: "cancelled", subscription_end_date: null };
@@ -76,5 +83,32 @@ describe("getCurrentAppUser", () => {
     h.userId = "user_1";
     h.dbResult = { data: studentActive, error: null };
     expect(await getCurrentAppUser()).toEqual(studentActive);
+  });
+});
+
+describe("rolul de mentor", () => {
+  it("mentorul NU are drept de scris continut", () => {
+    // Separarea de fond: profesorul scrie materie, mentorul corecteaza. Daca asta
+    // pica, un mentor poate crea capitole si lectii.
+    expect(isTeacher(mentor)).toBe(false);
+    expect(isTeacher(teacher)).toBe(true);
+  });
+
+  it("si profesorul, si mentorul pot corecta", () => {
+    expect(poateCorecta(teacher)).toBe(true);
+    expect(poateCorecta(mentor)).toBe(true);
+  });
+
+  it("elevul nu poate corecta", () => {
+    expect(poateCorecta(studentFree)).toBe(false);
+    expect(poateCorecta(null)).toBe(false);
+  });
+
+  it("firul de tichet arata rolul real, nu doar teacher/student", () => {
+    // Elevul are dreptul sa stie cu cine vorbeste.
+    expect(rolInFir(mentor)).toBe("mentor");
+    expect(rolInFir(teacher)).toBe("teacher");
+    expect(rolInFir(studentFree)).toBe("student");
+    expect(rolInFir(null)).toBe("student");
   });
 });

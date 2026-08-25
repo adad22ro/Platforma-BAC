@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
+import { getCurrentAppUser, poateCorecta } from '@/lib/current-user'
 import { checkChapterAccess, accessErrorResponse } from '@/lib/chapter-access'
 import { logError } from '@/lib/log-error'
 import { apiError } from '@/lib/api-error'
@@ -25,7 +25,8 @@ export async function GET(req: Request) {
     .order('last_message_at', { ascending: false })
 
   // Elevul e legat de propriile tichete indiferent ce trimite in query string.
-  if (!isTeacher(user)) query = query.eq('user_id', user.id)
+  // Profesorii si mentorii vad toate tichetele; elevul, doar pe ale lui.
+  if (!poateCorecta(user)) query = query.eq('user_id', user.id)
 
   if (status) query = query.eq('status', status)
   if (chapterId) query = query.eq('chapter_id', chapterId)

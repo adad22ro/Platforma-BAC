@@ -400,9 +400,10 @@ trece prin commit și se poate da înapoi. Validarea: `npm run barem:check`.
 | `barem_criterii` | Rândul pe care se dau punctele: `puncte_max`, `strat`, `verificator`, `praguri` (jsonb) |
 
 **`strat`** clasifică cine poate acorda punctul (§6 din analiză): `auto` = determinist, fără AI;
-`ai` = pre-notare pentru mentor, **niciodată** notă finală; `mentor` = doar om. Din cele 90 de
-puncte ale examenului, **20 sunt pe stratul `auto`** — exact acelea pe care le poate da stratul 1
-de corectare.
+`ai` = pre-notare pentru mentor, **niciodată** notă finală; `mentor` = doar om. Pe rubricile
+modelate, **17 puncte sunt pe stratul `auto`** — acelea pe care le dă stratul 1 de corectare.
+(Analiza estimează ~20 pe examenul întreg; diferența vine din faptul că Subiectul I.A e modelat
+ca o singură rubrică, deși are cinci cerințe identice ca structură.)
 
 **`verificator`** e obligatoriu pe `auto` și interzis în rest, garantat de un CHECK, nu doar de
 validator: un criteriu automat fără verificator ar trece tăcut prin corectare și ar da mereu 0.

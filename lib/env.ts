@@ -32,6 +32,9 @@ const schema = z.object({
   VERCEL_TEAM_ID: z.string().optional(),
   VERCEL_PROJECT_NAME: z.string().optional(),
   DISCORD_ALERT_WEBHOOK_URL: z.union([z.string().url(), z.literal("")]).optional(),
+  // LanguageTool self-hostat (ortografie/punctuatie pentru stratul 1 de corectare).
+  // Fara el, criteriile de limba ies „indisponibil" — nu 0 — si trec la mentor.
+  LANGUAGETOOL_URL: z.union([z.string().url(), z.literal("")]).optional(),
 });
 
 export type Env = z.infer<typeof schema>;

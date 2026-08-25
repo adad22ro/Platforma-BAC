@@ -58,7 +58,26 @@ export const VERIFICATOARE: readonly Verificator[] = [
 export type Prag = {
   puncte: number
   conditie: string
+  // Pragul NUMERIC, pentru criteriile de ortografie/punctuatie: cate greseli sunt
+  // inca acceptate la punctajul asta. „0-1 greseli - 1 punct" devine
+  // `max_greseli: 1`. Textul din `conditie` e pentru om; corectarea are nevoie de
+  // cifra, iar parsarea propozitiei ar fi fost fragila exact acolo unde nu ne
+  // permitem: la note.
+  max_greseli?: number
 }
+
+// Ce anume numara LanguageTool pentru criteriul asta. Baremul le trateaza uneori
+// separat (Subiectul III: ortografia 2p, punctuatia 2p) si uneori impreuna
+// (Subiectul I.B: „ortografie si punctuatie", 1p).
+export type CategorieLimba = 'ortografie' | 'punctuatie' | 'gramatica' | 'toate'
+
+export const CATEGORII_LIMBA: readonly CategorieLimba[] = [
+  'ortografie',
+  'punctuatie',
+  // Acord, topica, stil — „respectarea normelor limbii literare" din barem.
+  'gramatica',
+  'toate',
+]
 
 export type Criteriu = {
   slug: string
@@ -67,7 +86,7 @@ export type Criteriu = {
   strat: Strat
   verificator: Verificator | null
   praguri: Prag[]
-  parametri?: Record<string, number>
+  parametri?: Record<string, number | string>
   observatii?: string
 }
 
@@ -102,7 +121,7 @@ export function rubricaDupaSlug(slug: string): Rubrica | undefined {
 }
 
 // Cate puncte din rubrica se pot acorda fara AI si fara mentor. Numarul asta e
-// motivul pentru care exista stratul 1: pe intreg baremul da ~20 din 90 de puncte.
+// motivul pentru care exista stratul 1: pe rubricile modelate da 17 puncte.
 export function puncteAutomatizabile(r: Rubrica): number {
   return r.criterii
     .filter((c) => c.strat === 'auto')
@@ -181,6 +200,23 @@ export function valideazaBarem(b: Barem): string[] {
 
       if (c.verificator === 'numar_cuvinte' && typeof c.parametri?.minim !== 'number') {
         probleme.push(`${undeC}: verificatorul "numar_cuvinte" cere parametri.minim.`)
+      }
+
+      if (c.verificator === 'languagetool') {
+        const categorie = c.parametri?.categorie
+        if (typeof categorie !== 'string' || !CATEGORII_LIMBA.includes(categorie as CategorieLimba)) {
+          probleme.push(
+            `${undeC}: verificatorul "languagetool" cere parametri.categorie (${CATEGORII_LIMBA.join(', ')}).`
+          )
+        }
+        // Pragurile cu punctaj > 0 au nevoie de cifra; cel de 0 e cazul „in rest".
+        for (const p of c.praguri ?? []) {
+          if (p.puncte > 0 && typeof p.max_greseli !== 'number') {
+            probleme.push(
+              `${undeC}: pragul de ${p.puncte} puncte n-are max_greseli, deci nu poate fi aplicat automat.`
+            )
+          }
+        }
       }
 
       for (const p of c.praguri ?? []) {

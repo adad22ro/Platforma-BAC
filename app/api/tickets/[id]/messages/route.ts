@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
+import { getCurrentAppUser, poateCorecta, rolInFir } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
 import { apiError } from '@/lib/api-error'
 
@@ -34,8 +34,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (!ticket) return apiError(404, 'Not found')
 
-  const teacher = isTeacher(user)
-  if (!teacher && ticket.user_id !== user.id) return apiError(404, 'Not found')
+  const corector = poateCorecta(user)
+  if (!corector && ticket.user_id !== user.id) return apiError(404, 'Not found')
 
   const now = new Date().toISOString()
   const { data: message, error } = await supabaseAdmin
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       ticket_id: id,
       author_id: user.id,
       // Rolul se ingheata la momentul scrierii — vezi migrarea.
-      author_role: teacher ? 'teacher' : 'student',
+      author_role: rolInFir(user),
       body,
       created_at: now,
     })
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const { error: tErr } = await supabaseAdmin
     .from('tickets')
     .update({
-      status: teacher ? 'answered' : 'open',
+      status: corector ? 'answered' : 'open',
       last_message_at: now,
       updated_at: now,
     })

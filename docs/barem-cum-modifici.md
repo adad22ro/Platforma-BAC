@@ -69,9 +69,10 @@ Exemplu real, decupat din fișier:
       "puncte_max": 2,
       "strat": "auto",
       "verificator": "languagetool",
+      "parametri": { "categorie": "ortografie" },
       "praguri": [
-        { "puncte": 2, "conditie": "0-1 greseli" },
-        { "puncte": 1, "conditie": "2 greseli" },
+        { "puncte": 2, "conditie": "0-1 greseli", "max_greseli": 1 },
+        { "puncte": 1, "conditie": "2 greseli", "max_greseli": 2 },
         { "puncte": 0, "conditie": "3 sau mai multe greseli" }
       ]
     }
@@ -104,7 +105,7 @@ Exemplu real, decupat din fișier:
 | `strat` | Cine poate da punctul — `auto`, `ai` sau `mentor`. Vezi mai jos |
 | `verificator` | Ce unealtă îl aplică. **Doar** la `strat: "auto"` |
 | `praguri` | Lista de „câte puncte, în ce condiție" |
-| `parametri` | Reglaje pentru verificator, ex. `{ "minim": 150 }` |
+| `parametri` | Reglaje pentru verificator: `{ "minim": 150 }` la numărul de cuvinte, `{ "categorie": "ortografie" }` la LanguageTool |
 | `observatii` | Notă pentru om. Opțional |
 
 ---
@@ -124,9 +125,12 @@ Exemplu real, decupat din fișier:
 trebuie ca cineva să judece, e `ai` sau `mentor`. Un criteriu mutat greșit pe `auto` produce
 note greșite în tăcere — cel mai prost tip de bug care există la noi.
 
-Acum sunt **20 din cele 90 de puncte** ale examenului pe `auto`. Dacă numărul ăsta sare brusc
-după o modificare de-a ta, verifică de două ori: testele te avertizează dacă iese din
-intervalul 18–24.
+Acum sunt **17 puncte** pe `auto`, pe rubricile modelate. Numărul e fixat exact într-un test:
+dacă îl schimbi, trebuie să fie o decizie conștientă, nu un efect secundar al altei modificări.
+
+> Greșeala asta s-a făcut deja o dată, la prima transcriere: „utilizarea limbii literare" de la
+> Subiectele II și III fusese pusă pe `auto`, deși baremul o notează cu „stil și vocabular
+> adecvate" — adică exact genul de judecată care nu se poate măsura. Sunt acum pe `ai`.
 
 ---
 
@@ -142,8 +146,18 @@ Se pune **numai** la `strat: "auto"`, și acolo e **obligatoriu**.
 | `concluzie` | Caută enunțul final de concluzie | Nu |
 | `citat` | Verifică prezența unui citat din textul-suport | Nu |
 | `raspuns_in_enunt` | Verifică dacă răspunsul e formulat ca enunț complet | Nu |
-| `languagetool` | Numără greșelile de ortografie/punctuație | Nu |
+| `languagetool` | Numără greșelile de ortografie/punctuație | Da: `{ "categorie": … }` |
 | `acordat_implicit` | Nu verifică nimic, dă punctul mereu | Nu |
+
+**`categorie`** la LanguageTool spune ce se numără, pentru că baremul le tratează uneori separat
+și alteori împreună:
+
+| Categorie | Ce numără | Unde apare în barem |
+|---|---|---|
+| `ortografie` | Greșeli de scriere | Subiectul II și III, criterii separate |
+| `punctuatie` | Semne de punctuație | Idem |
+| `gramatica` | Acord, topică, stil | „respectarea normelor limbii literare" (I.B) |
+| `toate` | Ortografie + punctuație la un loc | „ortografie și punctuație", 1p (I.A, I.B) |
 
 **`acordat_implicit`** e pentru criteriile care n-au corespondent digital — „așezarea în
 pagină, lizibilitatea". Le ținem în grilă ca elevul să vadă baremul oficial întreg, dar nu
@@ -168,6 +182,11 @@ Se scriu **de la mult la puțin**, ca în barem:
 
 - Ordinea contează — se citesc de sus în jos, ca la corectarea pe hârtie. Ordinea greșită e
   semnalată.
+- **La criteriile de limbă, fiecare prag cu punctaj peste 0 are nevoie și de `max_greseli`** —
+  numărul de greșeli încă acceptate la punctajul acela. „0-1 greșeli → 2p" se scrie
+  `{ "puncte": 2, "conditie": "0-1 greseli", "max_greseli": 1 }`. Textul din `conditie` e pentru
+  om; corectarea are nevoie de cifră, iar parsarea propoziției ar fi fragilă exact acolo unde nu
+  ne permitem. Pragul de 0 puncte e cazul „în rest" și nu are nevoie de cifră.
 - `puncte` nu poate depăși `puncte_max` al criteriului.
 - `conditie` e text pentru om. Scrie-l cât mai aproape de barem, pentru că **ajunge sub ochii
   elevului**, nu doar în cod.
@@ -248,6 +267,8 @@ Alte lucruri utile despre import:
 | `are verificator ... dar nu e pe stratul "auto"` | Scoate verificatorul sau mută criteriul pe `auto` |
 | `verificator necunoscut` | Ai scris un verificator care nu există. Vezi tabelul de mai sus |
 | `verificatorul "numar_cuvinte" cere parametri.minim` | Adaugă `"parametri": { "minim": 150 }` |
+| `verificatorul "languagetool" cere parametri.categorie` | Adaugă `"parametri": { "categorie": "ortografie" }` |
+| `pragul de N puncte n-are max_greseli` | La criteriile de limbă, pragurile peste 0 au nevoie de numărul de greșeli acceptate |
 | `pragul de N puncte depaseste puncte_max` | Pragul e mai mare decât face criteriul |
 | `pragurile nu sunt in ordine descrescatoare` | Rearanjează-le de la mult la puțin |
 | `slug duplicat` | Două criterii cu același `slug`. Trebuie unice în tot fișierul |
@@ -264,6 +285,8 @@ de la Node care spune linia. Editorul îți colorează de obicei greșeala înai
   oficial 2025 înainte de a-l adăuga.
 - **Limita de cuvinte de la cerința 5 a Subiectului I.A** variază de la an la an, e în enunț,
   nu în barem. De aceea nu e o constantă.
+- **Subiectul I.A e modelat ca o singură rubrică**, deși examenul are cinci cerințe construite
+  identic. De aceea totalul automatizabil e 17, nu ~20 cât estimează analiza pe examenul întreg.
 
 ---
 

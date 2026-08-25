@@ -90,15 +90,46 @@ describe("data/barem.json — fisierul real", () => {
     expect(orto?.praguri.map((p) => p.puncte)).toEqual([2, 1, 0]);
   });
 
-  it("da ~20 de puncte automatizabile pe tot baremul", () => {
-    // Estimarea din analiza (§6) e „~20 din 90 de puncte, notabile exact". Daca
-    // numarul asta scade brusc, cineva a mutat un criteriu de pe stratul auto.
+  it("da 17 puncte automatizabile pe rubricile modelate", () => {
+    // Numarul e fixat deliberat: daca se schimba, cineva a mutat un criteriu intre
+    // straturi si trebuie sa fie o decizie constienta, nu un efect secundar.
+    //
+    // De ce 17 si nu ~20, cat estimeaza analiza (§6): rubrica `s1a-cerinta` e
+    // modelata O SINGURA data, desi Subiectul I.A are cinci cerinte identice ca
+    // structura. Instantiate toate cinci, cele 2 puncte automatizabile ale ei devin
+    // 10, si totalul trece de 20. Estimarea din document numara examenul intreg;
+    // aici numaram rubricile distincte.
     const total = incarcaBarem().rubrici.reduce(
       (s, r) => s + puncteAutomatizabile(r),
       0
     );
-    expect(total).toBeGreaterThanOrEqual(18);
-    expect(total).toBeLessThanOrEqual(24);
+    expect(total).toBe(17);
+  });
+
+  it("nu tine pe stratul auto criterii cu praguri calitative", () => {
+    // Regula: `auto` inseamna verificabil fara nicio interpretare. „Stil si
+    // vocabular adecvate" nu e. Criteriile astea au fost mutate pe `ai` dupa ce
+    // prima transcriere le pusese gresit pe `auto`.
+    const auto = incarcaBarem()
+      .rubrici.flatMap((r) => r.criterii)
+      .filter((c) => c.strat === "auto");
+    expect(auto.map((c) => c.slug)).not.toContain("s3-limba-literara");
+    expect(auto.map((c) => c.slug)).not.toContain("s2-limba-literara");
+  });
+
+  it("fiecare criteriu de limba are categorie si prag numeric", () => {
+    // Fara `max_greseli`, pragul „0-1 greseli" ar trebui parsat din text — fragil
+    // exact acolo unde nu ne permitem: la note.
+    const limba = incarcaBarem()
+      .rubrici.flatMap((r) => r.criterii)
+      .filter((c) => c.verificator === "languagetool");
+    expect(limba.length).toBeGreaterThan(0);
+    for (const c of limba) {
+      expect(typeof c.parametri?.categorie).toBe("string");
+      for (const p of c.praguri.filter((p) => p.puncte > 0)) {
+        expect(typeof p.max_greseli).toBe("number");
+      }
+    }
   });
 
   it("nu are criterii pe stratul auto fara verificator", () => {

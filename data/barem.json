@@ -27,8 +27,14 @@
           "strat": "auto",
           "verificator": "raspuns_in_enunt",
           "praguri": [
-            { "puncte": 1, "conditie": "raspunsul e formulat ca enunt complet" },
-            { "puncte": 0, "conditie": "raspuns eliptic, in afara enuntului" }
+            {
+              "puncte": 1,
+              "conditie": "raspunsul e formulat ca enunt complet"
+            },
+            {
+              "puncte": 0,
+              "conditie": "raspuns eliptic, in afara enuntului"
+            }
           ],
           "observatii": "Se acorda chiar daca raspunsul e gresit la continut, atat timp cat dezvolta subiectul propus. Foarte putini elevi stiu asta."
         },
@@ -39,9 +45,19 @@
           "strat": "auto",
           "verificator": "languagetool",
           "praguri": [
-            { "puncte": 1, "conditie": "0-1 greseli" },
-            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
-          ]
+            {
+              "puncte": 1,
+              "conditie": "0-1 greseli",
+              "max_greseli": 1
+            },
+            {
+              "puncte": 0,
+              "conditie": "2 sau mai multe greseli"
+            }
+          ],
+          "parametri": {
+            "categorie": "toate"
+          }
         }
       ]
     },
@@ -101,8 +117,14 @@
           "strat": "auto",
           "verificator": "concluzie",
           "praguri": [
-            { "puncte": 1, "conditie": "exista un enunt final de concluzie" },
-            { "puncte": 0, "conditie": "lipseste" }
+            {
+              "puncte": 1,
+              "conditie": "exista un enunt final de concluzie"
+            },
+            {
+              "puncte": 0,
+              "conditie": "lipseste"
+            }
           ]
         },
         {
@@ -112,9 +134,18 @@
           "strat": "auto",
           "verificator": "conectori",
           "praguri": [
-            { "puncte": 2, "conditie": "conectori adecvati, folositi consecvent" },
-            { "puncte": 1, "conditie": "conectori folositi partial" },
-            { "puncte": 0, "conditie": "fara conectori" }
+            {
+              "puncte": 2,
+              "conditie": "conectori adecvati, folositi consecvent"
+            },
+            {
+              "puncte": 1,
+              "conditie": "conectori folositi partial"
+            },
+            {
+              "puncte": 0,
+              "conditie": "fara conectori"
+            }
           ]
         },
         {
@@ -124,9 +155,19 @@
           "strat": "auto",
           "verificator": "languagetool",
           "praguri": [
-            { "puncte": 1, "conditie": "0-1 greseli" },
-            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
-          ]
+            {
+              "puncte": 1,
+              "conditie": "0-1 greseli",
+              "max_greseli": 1
+            },
+            {
+              "puncte": 0,
+              "conditie": "2 sau mai multe greseli"
+            }
+          ],
+          "parametri": {
+            "categorie": "gramatica"
+          }
         },
         {
           "slug": "s1b-ortografie-punctuatie",
@@ -135,9 +176,19 @@
           "strat": "auto",
           "verificator": "languagetool",
           "praguri": [
-            { "puncte": 1, "conditie": "0-1 greseli" },
-            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
-          ]
+            {
+              "puncte": 1,
+              "conditie": "0-1 greseli",
+              "max_greseli": 1
+            },
+            {
+              "puncte": 0,
+              "conditie": "2 sau mai multe greseli"
+            }
+          ],
+          "parametri": {
+            "categorie": "toate"
+          }
         },
         {
           "slug": "s1b-asezare",
@@ -146,7 +197,10 @@
           "strat": "auto",
           "verificator": "acordat_implicit",
           "praguri": [
-            { "puncte": 1, "conditie": "text scris digital — criteriul nu se aplica" }
+            {
+              "puncte": 1,
+              "conditie": "text scris digital — criteriul nu se aplica"
+            }
           ],
           "observatii": "Nu are corespondent digital. Se acorda implicit, dar ramane in grila ca elevul sa vada baremul oficial intreg."
         },
@@ -156,10 +210,18 @@
           "puncte_max": 1,
           "strat": "auto",
           "verificator": "numar_cuvinte",
-          "parametri": { "minim": 150 },
+          "parametri": {
+            "minim": 150
+          },
           "praguri": [
-            { "puncte": 1, "conditie": "cel putin 150 de cuvinte" },
-            { "puncte": 0, "conditie": "sub 150 de cuvinte" }
+            {
+              "puncte": 1,
+              "conditie": "cel putin 150 de cuvinte"
+            },
+            {
+              "puncte": 0,
+              "conditie": "sub 150 de cuvinte"
+            }
           ]
         }
       ]
@@ -188,21 +250,37 @@
           "strat": "ai",
           "verificator": null,
           "praguri": [
-            { "puncte": 4, "conditie": "prezentare adecvata si nuantata, cu exemple din text" },
-            { "puncte": 2, "conditie": "prezentare ezitanta" },
-            { "puncte": 1, "conditie": "simpla indicare, fara raportare la text" }
+            {
+              "puncte": 4,
+              "conditie": "prezentare adecvata si nuantata, cu exemple din text"
+            },
+            {
+              "puncte": 2,
+              "conditie": "prezentare ezitanta"
+            },
+            {
+              "puncte": 1,
+              "conditie": "simpla indicare, fara raportare la text"
+            }
           ]
         },
         {
           "slug": "s2-limba-literara",
           "denumire": "Utilizarea limbii literare",
           "puncte_max": 1,
-          "strat": "auto",
-          "verificator": "languagetool",
+          "strat": "ai",
+          "verificator": null,
           "praguri": [
-            { "puncte": 1, "conditie": "0-1 greseli" },
-            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
-          ]
+            {
+              "puncte": 1,
+              "conditie": "0-1 greseli"
+            },
+            {
+              "puncte": 0,
+              "conditie": "2 sau mai multe greseli"
+            }
+          ],
+          "observatii": "Pragurile baremului sunt calitative („stil si vocabular adecvate\"), deci criteriul nu poate fi acordat determinist. Trece pe stratul AI."
         },
         {
           "slug": "s2-logica-ideilor",
@@ -219,9 +297,19 @@
           "strat": "auto",
           "verificator": "languagetool",
           "praguri": [
-            { "puncte": 1, "conditie": "0-1 greseli" },
-            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
-          ]
+            {
+              "puncte": 1,
+              "conditie": "0-1 greseli",
+              "max_greseli": 1
+            },
+            {
+              "puncte": 0,
+              "conditie": "2 sau mai multe greseli"
+            }
+          ],
+          "parametri": {
+            "categorie": "ortografie"
+          }
         },
         {
           "slug": "s2-punctuatie",
@@ -230,9 +318,19 @@
           "strat": "auto",
           "verificator": "languagetool",
           "praguri": [
-            { "puncte": 1, "conditie": "0-1 greseli" },
-            { "puncte": 0, "conditie": "2 sau mai multe greseli" }
-          ]
+            {
+              "puncte": 1,
+              "conditie": "0-1 greseli",
+              "max_greseli": 1
+            },
+            {
+              "puncte": 0,
+              "conditie": "2 sau mai multe greseli"
+            }
+          ],
+          "parametri": {
+            "categorie": "punctuatie"
+          }
         }
       ]
     },
@@ -252,8 +350,14 @@
           "strat": "auto",
           "verificator": "parti_componente",
           "praguri": [
-            { "puncte": 1, "conditie": "toate cele trei parti exista" },
-            { "puncte": 0, "conditie": "lipseste cel putin una" }
+            {
+              "puncte": 1,
+              "conditie": "toate cele trei parti exista"
+            },
+            {
+              "puncte": 0,
+              "conditie": "lipseste cel putin una"
+            }
           ]
         },
         {
@@ -271,21 +375,37 @@
           "strat": "ai",
           "verificator": null,
           "praguri": [
-            { "puncte": 3, "conditie": "relatie adecvata idee-argument, argumente convingatoare" },
-            { "puncte": 2, "conditie": "relatie partial adecvata" },
-            { "puncte": 1, "conditie": "schematism" }
+            {
+              "puncte": 3,
+              "conditie": "relatie adecvata idee-argument, argumente convingatoare"
+            },
+            {
+              "puncte": 2,
+              "conditie": "relatie partial adecvata"
+            },
+            {
+              "puncte": 1,
+              "conditie": "schematism"
+            }
           ]
         },
         {
           "slug": "s3-limba-literara",
           "denumire": "Utilizarea limbii literare",
           "puncte_max": 2,
-          "strat": "auto",
-          "verificator": "languagetool",
+          "strat": "ai",
+          "verificator": null,
           "praguri": [
-            { "puncte": 2, "conditie": "stil si vocabular adecvate" },
-            { "puncte": 1, "conditie": "partial adecvate" }
-          ]
+            {
+              "puncte": 2,
+              "conditie": "stil si vocabular adecvate"
+            },
+            {
+              "puncte": 1,
+              "conditie": "partial adecvate"
+            }
+          ],
+          "observatii": "Pragurile baremului sunt calitative („stil si vocabular adecvate\"), deci criteriul nu poate fi acordat determinist. Trece pe stratul AI."
         },
         {
           "slug": "s3-ortografie",
@@ -294,10 +414,24 @@
           "strat": "auto",
           "verificator": "languagetool",
           "praguri": [
-            { "puncte": 2, "conditie": "0-1 greseli" },
-            { "puncte": 1, "conditie": "2 greseli" },
-            { "puncte": 0, "conditie": "3 sau mai multe greseli" }
-          ]
+            {
+              "puncte": 2,
+              "conditie": "0-1 greseli",
+              "max_greseli": 1
+            },
+            {
+              "puncte": 1,
+              "conditie": "2 greseli",
+              "max_greseli": 2
+            },
+            {
+              "puncte": 0,
+              "conditie": "3 sau mai multe greseli"
+            }
+          ],
+          "parametri": {
+            "categorie": "ortografie"
+          }
         },
         {
           "slug": "s3-punctuatie",
@@ -306,10 +440,24 @@
           "strat": "auto",
           "verificator": "languagetool",
           "praguri": [
-            { "puncte": 2, "conditie": "0-1 greseli" },
-            { "puncte": 1, "conditie": "2 greseli" },
-            { "puncte": 0, "conditie": "3 sau mai multe greseli" }
-          ]
+            {
+              "puncte": 2,
+              "conditie": "0-1 greseli",
+              "max_greseli": 1
+            },
+            {
+              "puncte": 1,
+              "conditie": "2 greseli",
+              "max_greseli": 2
+            },
+            {
+              "puncte": 0,
+              "conditie": "3 sau mai multe greseli"
+            }
+          ],
+          "parametri": {
+            "categorie": "punctuatie"
+          }
         },
         {
           "slug": "s3-asezare",
@@ -318,7 +466,10 @@
           "strat": "auto",
           "verificator": "acordat_implicit",
           "praguri": [
-            { "puncte": 1, "conditie": "text scris digital — criteriul nu se aplica" }
+            {
+              "puncte": 1,
+              "conditie": "text scris digital — criteriul nu se aplica"
+            }
           ]
         }
       ]

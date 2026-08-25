@@ -25,6 +25,13 @@ const ctx = (text: string, textSuport?: string): ContextCorectare => ({
   textSuport,
 });
 
+const fara = (n: { ortografie?: number; punctuatie?: number; altele?: number }) => ({
+  ortografie: 0,
+  punctuatie: 0,
+  altele: 0,
+  ...n,
+});
+
 describe("numaraCuvinte", () => {
   it("numara doar secventele care contin litere", () => {
     expect(numaraCuvinte("Un text de cinci cuvinte")).toBe(5);
@@ -157,15 +164,88 @@ describe("raspuns_in_enunt", () => {
   });
 });
 
-describe("languagetool — cat timp unealta lipseste", () => {
-  const c = criteriu({ verificator: "languagetool", puncte_max: 2 });
+describe("languagetool", () => {
+  // Pragurile reale de la Subiectul III: 0-1 greseli = 2p, 2 = 1p, 3+ = 0p.
+  const orto = criteriu({
+    slug: "orto",
+    denumire: "Ortografia",
+    puncte_max: 2,
+    verificator: "languagetool",
+    parametri: { categorie: "ortografie" },
+    praguri: [
+      { puncte: 2, conditie: "0-1 greseli", max_greseli: 1 },
+      { puncte: 1, conditie: "2 greseli", max_greseli: 2 },
+      { puncte: 0, conditie: "3 sau mai multe greseli" },
+    ],
+  });
 
-  it("nu da 0, ci marcheaza criteriul ca indisponibil", () => {
+  it("nu da 0 cand serviciul lipseste, ci marcheaza indisponibil", () => {
     // Regula centrala a stratului 1: un 0 nemeritat, dat tacit fiindca unealta
     // lipseste, e mai rau decat un criteriu lasat nenotat.
-    const r = aplicaCriteriu(c, ctx("Un text oarecare."));
+    const r = aplicaCriteriu(orto, ctx("Un text oarecare."));
     expect(r.stare).toBe("indisponibil");
     expect(r.puncte).toBeNull();
+  });
+
+  it("aplica pragurile baremului, de sus in jos", () => {
+    const cu = (n: number) => ({
+      ...ctx("text"),
+      limba: fara({ ortografie: n }),
+    });
+    expect(aplicaCriteriu(orto, cu(0)).puncte).toBe(2);
+    expect(aplicaCriteriu(orto, cu(1)).puncte).toBe(2);
+    expect(aplicaCriteriu(orto, cu(2)).puncte).toBe(1);
+    expect(aplicaCriteriu(orto, cu(3)).puncte).toBe(0);
+    expect(aplicaCriteriu(orto, cu(30)).puncte).toBe(0);
+  });
+
+  it("numara doar categoria ceruta de criteriu", () => {
+    // Un text cu 5 greseli de punctuatie nu are voie sa piarda puncte la ortografie.
+    const r = aplicaCriteriu(orto, {
+      ...ctx("text"),
+      limba: fara({ ortografie: 0, punctuatie: 5 }),
+    });
+    expect(r.puncte).toBe(2);
+  });
+
+  it("categoria toate aduna ortografia si punctuatia", () => {
+    const c = criteriu({
+      verificator: "languagetool",
+      puncte_max: 1,
+      parametri: { categorie: "toate" },
+      praguri: [
+        { puncte: 1, conditie: "0-1 greseli", max_greseli: 1 },
+        { puncte: 0, conditie: "2 sau mai multe" },
+      ],
+    });
+    const r = aplicaCriteriu(c, {
+      ...ctx("text"),
+      limba: fara({ ortografie: 1, punctuatie: 1 }),
+    });
+    expect(r.puncte).toBe(0);
+  });
+
+  it("categoria gramatica foloseste restul greselilor", () => {
+    const c = criteriu({
+      verificator: "languagetool",
+      puncte_max: 1,
+      parametri: { categorie: "gramatica" },
+      praguri: [
+        { puncte: 1, conditie: "0-1 greseli", max_greseli: 1 },
+        { puncte: 0, conditie: "2 sau mai multe" },
+      ],
+    });
+    const r = aplicaCriteriu(c, { ...ctx("text"), limba: fara({ altele: 4 }) });
+    expect(r.puncte).toBe(0);
+  });
+
+  it("spune cate greseli a gasit si la ce prag a incadrat", () => {
+    const r = aplicaCriteriu(orto, {
+      ...ctx("text"),
+      limba: fara({ ortografie: 2 }),
+    });
+    expect(r.explicatie).toContain("2");
+    expect(r.explicatie).toContain("2 greseli");
   });
 });
 

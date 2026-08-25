@@ -1,4 +1,5 @@
-import type { Criteriu, Rubrica } from '@/lib/barem'
+import type { CategorieLimba, Criteriu, Rubrica } from '@/lib/barem'
+import type { NumarGreseli } from '@/lib/languagetool'
 
 // Stratul 1 de corectare: criteriile care se pot acorda DETERMINIST, fara AI si
 // fara mentor. Pe tot baremul inseamna ~20 din cele 90 de puncte ale examenului.
@@ -19,6 +20,13 @@ export type ContextCorectare = {
   // verificatorul `citat` poate confirma doar ca exista ghilimele, nu si ca ce e
   // intre ele chiar vine din text.
   textSuport?: string
+  // Numarul de greseli, daca LanguageTool a rulat. `undefined` sau `null` inseamna
+  // ca serviciul n-a raspuns — criteriile de limba raman nenotate, nu pe 0.
+  //
+  // Se primeste gata calculat, in loc ca fisierul asta sa faca singur cererea:
+  // verificatoarele raman functii pure si sincrone, deci testabile fara retea, iar
+  // apelul de retea se face o SINGURA data per lucrare, nu o data per criteriu.
+  limba?: NumarGreseli | null
 }
 
 export type StareCriteriu =
@@ -119,7 +127,9 @@ function paragrafe(text: string): string[] {
 // si decid pe baza lui, ca pragurile sa ramana in date, nu in cod.
 
 function verificaNumarCuvinte(c: Criteriu, ctx: ContextCorectare): RezultatCriteriu {
-  const minim = c.parametri?.minim ?? 0
+  // `parametri` tine si numere, si siruri (ex. `categorie`), deci ingustam aici.
+  // Validatorul garanteaza deja ca `minim` e numar pentru verificatorul asta.
+  const minim = typeof c.parametri?.minim === 'number' ? c.parametri.minim : 0
   const n = numaraCuvinte(ctx.text)
   const indeplinit = n >= minim
 
@@ -280,16 +290,53 @@ function verificaAcordatImplicit(c: Criteriu): RezultatCriteriu {
   }
 }
 
-function verificaLanguageTool(c: Criteriu): RezultatCriteriu {
-  // LanguageTool self-hostat e o sarcina separata (grupa F). Pana atunci NU dam 0:
-  // criteriul ramane nenotat si trece la mentor.
+function numaraPentru(categorie: CategorieLimba, g: NumarGreseli): number {
+  switch (categorie) {
+    case 'ortografie':
+      return g.ortografie
+    case 'punctuatie':
+      return g.punctuatie
+    case 'gramatica':
+      return g.altele
+    case 'toate':
+      return g.ortografie + g.punctuatie
+  }
+}
+
+function verificaLanguageTool(c: Criteriu, ctx: ContextCorectare): RezultatCriteriu {
+  const baza = { slug: c.slug, denumire: c.denumire, din: c.puncte_max }
+
+  // Fara raspuns de la LanguageTool NU dam 0: criteriul ramane nenotat si trece la
+  // mentor. Se intampla si cand serviciul nu e configurat, si cand e cazut.
+  if (!ctx.limba) {
+    return {
+      ...baza,
+      puncte: null,
+      stare: 'indisponibil',
+      explicatie:
+        'Verificarea ortografiei si a punctuatiei n-a putut rula. Criteriul ramane de notat.',
+    }
+  }
+
+  const categorie = (c.parametri?.categorie ?? 'toate') as CategorieLimba
+  const greseli = numaraPentru(categorie, ctx.limba)
+
+  // Pragurile sunt in ordine descrescatoare, deci primul care incape castiga —
+  // exact cum se citeste baremul pe hartie.
+  const prag = c.praguri.find(
+    (p) => typeof p.max_greseli === 'number' && greseli <= p.max_greseli
+  )
+  const puncte = prag ? prag.puncte : 0
+
   return {
-    slug: c.slug,
-    denumire: c.denumire,
-    din: c.puncte_max,
-    puncte: null,
-    stare: 'indisponibil',
-    explicatie: 'Verificarea ortografiei si a punctuatiei nu e inca disponibila. Criteriul ramane de notat.',
+    ...baza,
+    puncte,
+    stare: 'acordat',
+    explicatie:
+      greseli === 0
+        ? 'Nicio greseala gasita.'
+        : `${greseli} ${greseli === 1 ? 'greseala gasita' : 'de greseli gasite'}` +
+          (prag ? ` — ${prag.conditie}.` : ' — peste toate pragurile baremului.'),
   }
 }
 
@@ -314,7 +361,7 @@ export function aplicaCriteriu(c: Criteriu, ctx: ContextCorectare): RezultatCrit
     case 'acordat_implicit':
       return verificaAcordatImplicit(c)
     case 'languagetool':
-      return verificaLanguageTool(c)
+      return verificaLanguageTool(c, ctx)
     default:
       // Criteriu pe stratul auto cu verificator necunoscut. Migrarea si validatorul
       // ar trebui sa faca asta imposibil; daca totusi ajunge aici, nu inventam un
