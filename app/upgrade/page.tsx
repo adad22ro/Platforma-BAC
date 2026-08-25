@@ -44,6 +44,7 @@ export default function UpgradePage() {
         <>
           <p className="text-red-600">Nu am putut porni plata: {error}</p>
           <button
+            type="button"
             onClick={() => window.location.reload()}
             className="rounded bg-black px-4 py-2 text-white"
           >
