@@ -114,6 +114,130 @@ export type Database = {
           },
         ]
       }
+      barem_criterii: {
+        Row: {
+          denumire: string
+          id: string
+          observatii: string | null
+          order_index: number
+          parametri: Json | null
+          praguri: Json
+          puncte_max: number
+          rubrica_id: string
+          slug: string
+          strat: string
+          verificator: string | null
+        }
+        Insert: {
+          denumire: string
+          id?: string
+          observatii?: string | null
+          order_index?: number
+          parametri?: Json | null
+          praguri?: Json
+          puncte_max: number
+          rubrica_id: string
+          slug: string
+          strat: string
+          verificator?: string | null
+        }
+        Update: {
+          denumire?: string
+          id?: string
+          observatii?: string | null
+          order_index?: number
+          parametri?: Json | null
+          praguri?: Json
+          puncte_max?: number
+          rubrica_id?: string
+          slug?: string
+          strat?: string
+          verificator?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barem_criterii_rubrica_id_fkey"
+            columns: ["rubrica_id"]
+            isOneToOne: false
+            referencedRelation: "barem_rubrici"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barem_rubrici: {
+        Row: {
+          denumire: string
+          id: string
+          minim_cuvinte: number | null
+          observatii: string | null
+          order_index: number
+          profil: string | null
+          puncte_total: number
+          slug: string
+          subiect: string
+          version_id: string
+        }
+        Insert: {
+          denumire: string
+          id?: string
+          minim_cuvinte?: number | null
+          observatii?: string | null
+          order_index?: number
+          profil?: string | null
+          puncte_total: number
+          slug: string
+          subiect: string
+          version_id: string
+        }
+        Update: {
+          denumire?: string
+          id?: string
+          minim_cuvinte?: number | null
+          observatii?: string | null
+          order_index?: number
+          profil?: string | null
+          puncte_total?: number
+          slug?: string
+          subiect?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barem_rubrici_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "barem_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barem_versions: {
+        Row: {
+          checksum: string
+          created_at: string
+          id: string
+          is_active: boolean
+          sursa: string
+          versiune_document: string
+        }
+        Insert: {
+          checksum: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sursa: string
+          versiune_document: string
+        }
+        Update: {
+          checksum?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sursa?: string
+          versiune_document?: string
+        }
+        Relationships: []
+      }
       chapters: {
         Row: {
           created_at: string
