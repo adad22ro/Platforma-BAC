@@ -1,6 +1,6 @@
 # Viziunea produsului — decizii și direcție
 
-> Notat la 2026-08-07, din discuția cu Gabi. Acesta e documentul de **intenție**:
+> Notat la 2026-08-07, din discuția cu Andrei. Acesta e documentul de **intenție**:
 > ce vrem să construim și de ce. Cum se traduce în conținut → [`bac-romana-programa.md`](bac-romana-programa.md)
 > și [`bac-barem-analiza.md`](bac-barem-analiza.md). De unde ne inspirăm → [`duolingo-research.md`](duolingo-research.md).
 >
