@@ -367,7 +367,7 @@ Trei lucruri mici rămase în urmă, pe `backend-restante`. Săpt. 9-10 intrase 
   - Nu se poate deschide tichet despre conținut inaccesibil (404 draft / 402 premium) — altfel tichetul e o cale laterală de a afla ce e acolo. Refolosește `lib/chapter-access.ts`.
   - Tichetul altcuiva dă **404, nu 403** — nu confirmăm că există; nici mesajele lui nu se citesc.
 
-**Revizuire în aceeași sesiune, după feedback (Gabi):**
+**Revizuire în aceeași sesiune, după feedback (Andrei):**
 - **Tichetul devine fir de mesaje** (`ticket_messages`), nu pereche întrebare/răspuns. Coloanele `answer`/`answered_by`/`answered_at` au dispărut, iar migrarea mută conținutul existent în fir în loc să-l piardă. Statusul urmează ultimul vorbitor: profesor → `answered`, revenire elev → `open`. `author_role` e înghețat la scriere, ca un elev promovat profesor să nu-și transforme retroactiv mesajele vechi în răspunsuri oficiale.
 - **Tichetele se deschid doar din fereastra lecției** — `lesson_id` obligatoriu în API. Coloana rămâne nullable în DB ca ștergerea lecției să facă SET NULL fără să piardă tichetul; de aceea `lesson_title` e salvat ca snapshot.
 - **Context complet pentru profesor:** progresul la testul capitolului (înghețat la momentul întrebării, nu citit la afișare), poziția în lecție (`scroll_percent`) și fragmentul selectat. Doar ultimele două vin de la client — restul se citește pe server.
