@@ -331,6 +331,7 @@ XII-a. De reevaluat fragmentarea materiei în consecință.
 | **Model free vs. premium** | Nedecis. Se vrea **o formă de free**, dar nu e ales tipul: *free-tier permanent* (acces la învățare, se plătește pentru mentorat/AI/simulări) sau *trial pe durată limitată*. Blochează gating-ul funcțiilor noi (B, D) — nu se știe ce e gratuit și ce nu | Andrei |
 | **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Andrei |
 | **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Andrei |
+| **TypeScript 7** (bump `6.0.3` → `7.0.2`) | `npm run lint` crapă cu `typescript-eslint does not support TS 7.0`; `tsc --noEmit` și cele 161 de teste trec. Lanțul: `eslint-config-next` → `typescript-eslint: "^8.46.0"`, avem 8.62.0. **Nu așteptăm o versiune nouă de Next** — caret-ul face ca orice `8.x` cu suport TS 7 să intre singur la `npm install`. **Cum aflăm că s-a deblocat:** dependabot redeschide PR-ul de bump `typescript`, iar check-ul `test` din CI (care rulează `lint`) trece verde — nimic de verificat manual, PR verde = se poate merge-a. Verificat 2026-08-25 | typescript-eslint (upstream) |
 | Structura reală de capitole în interiorul secțiunilor | Cele patru secțiuni sunt decise; ce conține fiecare, nu | Profesorul partener |
 
 ---
