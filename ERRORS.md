@@ -5,6 +5,16 @@
 
 ---
 
+## #022 — CI roșu pe PR-ul dependabot: `apiVersion` Stripe incompatibil după bump
+**Data:** 2026-08-25
+**Context:** PR #56 (dependabot, 9 pachete minor+patch) avea `test` și Vercel roșii. `npm test` trecea; pica `typecheck`: `lib/stripe.ts(5,3): error TS2322: Type '"2026-06-24.dahlia"' is not assignable to type '"2026-07-29.dahlia"'`.
+**Cauză:** SDK-ul `stripe` **fixează versiunea de API în tipuri**. La bump-ul pachetului, tipul `Stripe.LatestApiVersion` devine noul string, iar `apiVersion`-ul nostru, scris literal în `lib/stripe.ts`, nu mai e atribuibil. Nu e o incompatibilitate reală de rulare — e o constrângere de tip care obligă la actualizare conștientă.
+**Diagnostic cheie:** eroare **TS2322 pe un string literal** într-un PR care atinge doar `package.json`/`package-lock.json` = bump de SDK cu versiune de API fixată în tipuri. Nu căuta în codul de plăți.
+**Soluție:** actualizat `apiVersion` la `'2026-07-29.dahlia'` în `lib/stripe.ts`, în același PR cu bump-ul. `typecheck` + `lint` + cele 161 de teste, verde local înainte de merge.
+**Dacă reapare:** la orice bump de `stripe`, așteaptă-te la același rând de modificat. Verifică în `CHANGELOG`-ul Stripe dacă versiunea de API aduce schimbări de comportament pe Checkout/webhook — aici nu aducea, dar saltul nu e automat inofensiv.
+
+---
+
 ## #021 — `git push` eșuat de două ori, reușit la reîncercare — **cauză neaflată**
 **Data:** 2026-08-12
 **Context:** Pe `docs-cercetare-produs`, două push-uri consecutive (nu la rând) au picat cu `error: failed to push some refs`, iar reîncercarea imediată, fără nicio schimbare, a trecut. Ambele au fost rulate ca `git add && git commit && git push ... 2>&1 | tail -2`.
