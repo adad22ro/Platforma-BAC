@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getCurrentAppUser, isTeacher } from '@/lib/current-user'
+import { getCurrentAppUser, poateCorecta } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
 import { apiError } from '@/lib/api-error'
 
@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     .single()
 
   if (error || !ticket) return apiError(404, 'Not found')
-  if (!isTeacher(user) && ticket.user_id !== user.id) {
+  if (!poateCorecta(user) && ticket.user_id !== user.id) {
     return apiError(404, 'Not found')
   }
 
@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     .single()
 
   if (!ticket) return apiError(404, 'Not found')
-  if (!isTeacher(user) && ticket.user_id !== user.id) {
+  if (!poateCorecta(user) && ticket.user_id !== user.id) {
     return apiError(404, 'Not found')
   }
 

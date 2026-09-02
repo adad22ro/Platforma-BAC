@@ -1,4 +1,10 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+#
+# ATENTIE: fisierul asta acopera DOAR Snyk Open Source (dependinte). Constatarile
+# de la Snyk Code (analiza statica) NU se pot ignora de aici — se ignora din
+# interfata web, pe proiect. Verificat pe 2026-08-25: intrarea de mai jos are
+# acelasi Finding ID cu ce raporteaza `snyk code test`, si totusi scanarea zice
+# „Ignored issues: 0". Deci nu suprima nimic; o pastram ca documentatie a analizei.
 version: v1.25.1
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:

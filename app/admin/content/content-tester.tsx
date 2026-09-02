@@ -124,10 +124,10 @@ export function ContentTester() {
           value={newChapter}
           onChange={(e) => setNewChapter(e.target.value)}
         />
-        <button className={btn} onClick={createChapter}>
+        <button type="button" className={btn} onClick={createChapter}>
           + Capitol
         </button>
-        <button className={btn} onClick={loadChapters}>
+        <button type="button" className={btn} onClick={loadChapters}>
           ↻ Reîncarcă
         </button>
       </div>
@@ -143,16 +143,16 @@ export function ContentTester() {
                 {c.published ? "publicat" : "draft"}
               </span>
               <div className="ml-auto flex gap-1">
-                <button className={btn} onClick={() => patchChapter(c.id, { published: !c.published })}>
+                <button type="button" className={btn} onClick={() => patchChapter(c.id, { published: !c.published })}>
                   {c.published ? "→ draft" : "→ publică"}
                 </button>
-                <button className={btn} onClick={() => patchChapter(c.id, { is_free: !c.is_free })}>
+                <button type="button" className={btn} onClick={() => patchChapter(c.id, { is_free: !c.is_free })}>
                   {c.is_free ? "→ premium" : "→ free"}
                 </button>
-                <button className={btn} onClick={() => loadLessons(c.id)}>
+                <button type="button" className={btn} onClick={() => loadLessons(c.id)}>
                   lecții
                 </button>
-                <button className={btn} onClick={() => deleteChapter(c.id)}>
+                <button type="button" className={btn} onClick={() => deleteChapter(c.id)}>
                   șterge
                 </button>
               </div>
@@ -169,7 +169,7 @@ export function ContentTester() {
                         <span className="text-xs text-zinc-400">
                           {l.published ? "publicat" : "draft"}
                         </span>
-                        <button
+                        <button type="button"
                           className={`${btn} ml-auto`}
                           onClick={() => deleteLesson(c.id, l.id)}
                         >
@@ -195,7 +195,7 @@ export function ContentTester() {
                       setNewLesson((s) => ({ ...s, [c.id]: e.target.value }))
                     }
                   />
-                  <button className={btn} onClick={() => createLesson(c.id)}>
+                  <button type="button" className={btn} onClick={() => createLesson(c.id)}>
                     + Lecție
                   </button>
                 </div>

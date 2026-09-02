@@ -6,7 +6,7 @@ export type AppUser = {
   // interne, ex. student_progress.user_id.
   id: string
   clerk_id: string
-  role: 'student' | 'teacher'
+  role: 'student' | 'teacher' | 'mentor'
   subscription_status: 'free' | 'active' | 'cancelled'
   subscription_end_date: string | null
 }
@@ -28,8 +28,26 @@ export async function getCurrentAppUser(): Promise<AppUser | null> {
   return data as AppUser
 }
 
+// Profesorul SCRIE continut: capitole, lectii, intrebari. Mentorul nu — de aceea
+// verificarea asta ramane strict pe 'teacher' si nu include mentorii.
 export function isTeacher(user: AppUser | null): boolean {
   return user?.role === 'teacher'
+}
+
+// Cine poate corecta si raspunde la tichete: si profesorul, si mentorul.
+//
+// Separarea fata de `isTeacher` e miezul rolului de mentor. Cele doua munci au
+// volume complet diferite: scrisul de continut vine in valuri, la inceput;
+// corectarea creste liniar cu numarul de elevi si e articolul cu cel mai mare volum
+// din sistem. Daca le-am fi tinut pe acelasi rol, n-am fi putut adauga oameni doar
+// pe corectare fara sa le dam si drept de scris in materie.
+export function poateCorecta(user: AppUser | null): boolean {
+  return user?.role === 'teacher' || user?.role === 'mentor'
+}
+
+// Ce se scrie in `ticket_messages.author_role`, ca elevul sa vada cu cine vorbeste.
+export function rolInFir(user: AppUser | null): 'student' | 'teacher' | 'mentor' {
+  return user?.role === 'teacher' || user?.role === 'mentor' ? user.role : 'student'
 }
 
 // Acces la continut premium: abonament activ. Aparare in adancime: daca stim data

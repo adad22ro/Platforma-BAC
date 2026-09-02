@@ -6,6 +6,63 @@
 
 ---
 
+## 2026-08-25 — Andrei (Grupa C — baremul ca date)
+
+Curățenie și întreținere întâi: mergeat PR #56 (9 pachete, blocat de 6 zile de un
+`typecheck` roșu — SDK-ul `stripe` fixează versiunea de API în tipuri, deci bump-ul cerea
+`apiVersion: '2026-07-29.dahlia'`; intrarea #022 în ERRORS). Corectată atribuirea deciziilor
+blocate (#57) și notat blocajul TypeScript 7 cu semnalul lui de deblocare (#58).
+
+**Baremul oficial e acum date, nu logică.** 6 rubrici, 33 de criterii, cu praguri, în
+`data/barem.json`; migrarea `20260825200000_barem_criterii.sql` și importul versionat prin
+`npm run barem:import`.
+
+**Decizia care contează: JSON în repo ca sursă de adevăr, nu ecran de administrare.**
+Baremul produce note. Un prag schimbat dintr-un click, fără diff și fără review, modifică
+tăcut punctajele — inclusiv retroactiv. În JSON, fiecare corectură trece prin commit, se
+vede la review și se poate da înapoi; iar `npm run barem:check` prinde greșeala de
+transcriere înainte de push. Adminul primește doar **vizualizare** (`/admin/barem`), care
+răspunde la singura întrebare rămasă: „ce e în sistem acum, și e corect?". Dacă se dovedește
+că profesorul chiar vrea să ajusteze criterii des, editarea se adaugă atunci — nu preventiv.
+
+**A doua decizie: importul versionează, nu suprascrie.** Fiecare corectură creează o
+versiune nouă și o marchează activă; cele vechi rămân. Altfel, prima corectură ar face
+notele deja acordate imposibil de explicat — elevul vede 7, sistemul recalculează 8. Costă
+o coloană acum și e foarte scump de adăugat mai târziu. Un index parțial unic garantează o
+singură versiune activă, iar importul scrie tot conținutul inactiv și abia la final mută
+steagul, ca o rulare întreruptă să lase baremul vechi intact.
+
+**Corectură pe propria transcriere, în aceeași sesiune.** Prima variantă avea 20 de puncte pe
+stratul `auto` și părea să confirme exact estimarea din analiză (§6). Verificând-o ca s-o pot
+aplica automat, am găsit greșeala: pusesem pe `auto` două criterii cu praguri **calitative** —
+„utilizarea limbii literare" de la Subiectele II și III, unde baremul zice „stil și vocabular
+adecvate", nu un număr de greșeli. Regula pe care o scrisesem chiar eu în ghid — `auto` doar
+dacă se verifică fără nicio interpretare — era încălcată de propriul fișier. Mutate pe `ai`,
+totalul e **17**, iar potrivirea cu estimarea era parțial noroc: analiza numără examenul
+întreg, noi numărăm rubricile distincte, iar Subiectul I.A e modelat o singură dată deși are
+cinci cerințe. Testul fixează acum 17 exact, ca o mutare între straturi să fie o decizie, nu un
+efect secundar.
+
+**Stratul 1 determinist**, în aceeași sesiune: `lib/corectare-strat1.ts`, 6 verificatoare
+(număr de cuvinte, conectori, părți componente, concluzie, citat, răspuns în enunț) + 24 de
+teste. Decizia care contează aici: **un criteriu pe care nu-l putem verifica nu primește 0**,
+ci `stare: 'indisponibil'` și `puncte: null`. Un 0 nemeritat, dat tăcut fiindcă unealta
+lipsește, e mai rău decât un criteriu lăsat nenotat — elevul crede că a greșit ceva ce n-a
+fost măsurat. `dinCatePosibile` exclude punctele acelea, deci se afișează „5 din 5", nu
+„5 din 7". Cele 4 puncte de ortografie/punctuație rămân așa până la LanguageTool.
+
+A doua nuanță, scrisă explicit în cod: stratul 1 verifică **prezența și forma**, nu calitatea.
+Putem spune că există trei paragrafe, nu că introducerea e bună. La conectori putem măsura
+prezența și varietatea, nu potrivirea în frază — iar explicația întoarsă elevului spune asta
+pe față, ca să nu citească mai mult decât e.
+
+**Rămâne deschis:** migrarea **nu e aplicată în producție** — o aplic la următoarea sesiune,
+împreună cu `npm run db:types`. Până atunci, `lib/barem-db.ts` conține un cast documentat
+(tipurile generate nu cunosc încă tabelele), de scos imediat după regenerare. Pasul următor
+din grupa C e stratul 1 determinist, care consumă exact aceste date.
+
+---
+
 ## 2026-08-12 — Andrei (Grupa H — motorul de repetiție spațiată)
 
 `ts-fsrs` 5.4.1 (FSRS-6), migrare `20260812190000_stare_concept_fsrs.sql` (aplicată), plus `lib/fsrs.ts` și `GET /api/recapitulare`.

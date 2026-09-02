@@ -14,7 +14,9 @@
     "db:types": "npx -y supabase@latest gen types typescript --linked --schema public > types/database.ts",
     "debug": "node --env-file=.env.local scripts/debug.mjs",
     "seed:content": "node --env-file=.env.local scripts/seed-content.mjs",
-    "seed:questions": "node --env-file=.env.local scripts/seed-questions.mjs"
+    "seed:questions": "node --env-file=.env.local scripts/seed-questions.mjs",
+    "barem:check": "vitest run tests/barem.test.ts",
+    "barem:import": "node --env-file=.env.local scripts/import-barem.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.8.0",

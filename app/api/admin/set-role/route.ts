@@ -4,7 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/log-error'
 import { apiError } from '@/lib/api-error'
 
-// Schimba rolul unui user (student <-> teacher). Doar pentru admini (allowlist ADMIN_EMAILS).
+// Schimba rolul unui user (student / teacher / mentor). Doar pentru admini
+// (allowlist ADMIN_EMAILS).
 // Apelat din panoul /admin (butonul de promovare).
 export async function POST(req: Request) {
   const user = await currentUser()
@@ -14,7 +15,8 @@ export async function POST(req: Request) {
   }
 
   const { clerk_id, role } = await req.json().catch(() => ({}))
-  if (!clerk_id || (role !== 'student' && role !== 'teacher')) {
+  const ROLURI = ['student', 'teacher', 'mentor']
+  if (!clerk_id || !ROLURI.includes(role)) {
     return apiError(400, 'Bad request')
   }
 

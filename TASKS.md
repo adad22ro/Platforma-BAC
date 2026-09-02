@@ -217,9 +217,9 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Codificarea baremului ca tabel de criterii cu praguri | Andrei | `barem-date` | Baremul e o **constantă**: rubrica de redactare e identică caracter cu caracter în 9 din 11 bareme oficiale |
-| ⬜ | Corectare **strat 1, determinist** — număr de cuvinte, conectori, părți componente, prezența citatului | Andrei | `barem-date` | ~20 din 90 de puncte, exact, fără ambiguitate. Nu cere AI |
-| ⬜ | Autoevaluare pe barem — elevul se notează pe grila oficială | Bogdan | `barem-date` | Cel mai ieftin mod de a preda baremul |
+| ✅ | Codificarea baremului ca tabel de criterii cu praguri | Andrei | `barem-date` | Sursa de adevăr: [`data/barem.json`](data/barem.json) — 6 rubrici, 33 de criterii, cu praguri. În DB prin `npm run barem:import`, **versionat** (notele rămân explicabile după o corectură). Validare: `npm run barem:check`. Vizualizare doar-citire: `/admin/barem`. **17 puncte pe stratul `auto`** pe rubricile modelate |
+| ✅ | Corectare **strat 1, determinist** — număr de cuvinte, conectori, părți componente, prezența citatului | Andrei | `barem-date` | [`lib/corectare-strat1.ts`](lib/corectare-strat1.ts) — `corecteazaStrat1(rubrica, { text, textSuport })`. 6 verificatoare + 24 de teste. **Un criteriu nenotat NU primește 0**: întoarce `stare: 'indisponibil'` și `puncte: null`, iar `dinCatePosibile` exclude acele puncte, ca elevul să nu creadă că le-a pierdut. Cele 4 puncte de ortografie/punctuație rămân indisponibile până la LanguageTool (grupa F) |
+| ⬜ | Autoevaluare pe barem — elevul se notează pe grila oficială | Bogdan | `barem-date` | Cel mai ieftin mod de a preda baremul. **Criteriile există acum ca date** — nu le rescrie în UI. Formatul e în [`lib/barem.ts`](lib/barem.ts) (tipurile `Rubrica`/`Criteriu`/`Prag`), datele în `data/barem.json`, iar `/admin/barem` arată exact ce e în sistem. Fiecare criteriu are `puncte_max` și `praguri` cu textul oficial |
 | ⬜ | Lecție „cum se punctează" — cele ~32 de puncte care se iau pe formă | ❓ | — | Conținut, nu cod. Se învață în cinci minute și foarte puțini elevi o știu |
 
 ### D. AI faza 1 — în lot, offline, fără cereri de la elevi
@@ -243,7 +243,7 @@
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | **LanguageTool** self-hostat pentru ortografie/punctuație | Andrei | `gramatica` | Cost zero per corectare, explicabil, nu inventează. Se prezintă ca **sugestie**, nu verdict — orice corector dă fals-pozitive |
+| 🟡 | **LanguageTool** self-hostat pentru ortografie/punctuație | Andrei | `barem-date` | **Clientul e scris** ([`lib/languagetool.ts`](lib/languagetool.ts)) și legat de barem prin `parametri.categorie` (`ortografie` / `punctuatie` / `gramatica` / `toate`) și `praguri[].max_greseli`. **Rămâne doar găzduirea:** pornești instanța și pui `LANGUAGETOOL_URL` în env — zero cod. Local: `docker run -d -p 8010:8010 erikvl87/languagetool`. Fără variabilă, criteriile de limbă ies `indisponibil`, nu 0 |
 | ⬜ | Cache pe `/api/chapters` (`use cache`, Next 16) | Andrei | `cache-continut` | ~200ms per cerere pentru date care se schimbă săptămânal |
 | ⬜ | Nivel intermediar în ierarhie (`chapters → units → lessons`) | Andrei | — | Doar dacă un capitol ajunge la ~30 de lecții. Momentan nu e nevoie |
 
@@ -330,6 +330,7 @@ XII-a. De reevaluat fragmentarea materiei în consecință.
 | **Ordinea secțiunilor** — cu care dintre cele patru începem | Structura e decisă (vezi G); ordinea se discută cu profesorul | Andrei + profesorul partener |
 | **Model free vs. premium** | Nedecis. Se vrea **o formă de free**, dar nu e ales tipul: *free-tier permanent* (acces la învățare, se plătește pentru mentorat/AI/simulări) sau *trial pe durată limitată*. Blochează gating-ul funcțiilor noi (B, D) — nu se știe ce e gratuit și ce nu | Andrei |
 | **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Andrei |
+| **Alocarea lucrărilor la corectori** | Rolurile `teacher` și `mentor` există și amândoi pot corecta, dar **nu e gândit cum se împart lucrările**: cine primește ce, în ce ordine, ce se întâmplă când un corector e plin. Blochează interfața mentorului și calculul de capacitate | Andrei |
 | **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Andrei |
 | **TypeScript 7** (bump `6.0.3` → `7.0.2`) | `npm run lint` crapă cu `typescript-eslint does not support TS 7.0`; `tsc --noEmit` și cele 161 de teste trec. Lanțul: `eslint-config-next` → `typescript-eslint: "^8.46.0"`, avem 8.62.0. **Nu așteptăm o versiune nouă de Next** — caret-ul face ca orice `8.x` cu suport TS 7 să intre singur la `npm install`. **Cum aflăm că s-a deblocat:** dependabot redeschide PR-ul de bump `typescript`, iar check-ul `test` din CI (care rulează `lint`) trece verde — nimic de verificat manual, PR verde = se poate merge-a. Verificat 2026-08-25 | typescript-eslint (upstream) |
 | Structura reală de capitole în interiorul secțiunilor | Cele patru secțiuni sunt decise; ce conține fiecare, nu | Profesorul partener |
