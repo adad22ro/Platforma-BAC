@@ -6,6 +6,38 @@
 
 ---
 
+## 2026-09-03 — Andrei (alocarea confirmată, cardul respins, SMS în loc de IP)
+
+**Alocarea lucrărilor: decisă** — lipicioasă, cu revenire în pool. Iese din „Blocat" după
+ce a stat acolo de pe 12 august. Șase sarcini care decurg, în `TASKS.md`; una singură are
+o capcană reală: preluarea din pool trebuie să fie **atomică** (condiție pe
+`preluat_la IS NULL` în `UPDATE`, nu verificare-apoi-scriere), altfel doi mentori care
+apasă simultan iau amândoi același tichet.
+
+**Cardul obligatoriu la trial: respins.** Motivul dat — pierdem elevii care nu au card sau
+nu vor să-l dea înainte de a fi convinși — e corect și cântărește mai mult decât abuzul
+prevenit, la un public de 17-18 ani.
+
+**Întrebarea care a urmat: IP sau ceva mai greu de schimbat?** Răspuns: nu IP, nu amprentă
+de browser. Motivele sunt în `TASKS.md`; pe scurt, **IP-ul nu identifică un elev, ci o
+rețea** — frații, colegii de clasă și un internat întreg au același IP public, deci am
+respinge exact grupurile pe care le vrem — și în același timp e banal de schimbat (date
+mobile în loc de Wi-Fi). Prinde greșit omul cinstit și ratează pe cel care încearcă.
+Amprenta de browser e tehnic mai stabilă, dar cere consimțământ explicit sub ePrivacy: un
+banner care îi spune unui elev, posibil minor, că îi luăm amprenta dispozitivului. Preț
+prea mare pentru câteva trial-uri prelungite.
+
+**Înlocuitorul: verificare prin SMS.** Numărul de telefon nimerește exact golul dintre
+email și card — mult mai greu de schimbat decât primul, mult mai ușor de dat decât al
+doilea. Aproape orice elev are telefon; puțini au card. E deja în Clerk, deci zero
+infrastructură nouă. ~0,03-0,05 EUR per elev real.
+
+**Principiul, scris ca să nu-l redescoperim:** preferăm un identificator pe care elevul
+**ni-l dă** unuia pe care **i-l luăm**. E mai onest, mai stabil și mai ușor de explicat —
+și, întâmplător, și mai ieftin juridic.
+
+---
+
 ## 2026-09-03 — Andrei (deciziile de model + `/api/checkout` respinge rolurile)
 
 **Trial 14 zile, apoi plată.** Nu free-tier permanent. Deblochează gating-ul din grupele

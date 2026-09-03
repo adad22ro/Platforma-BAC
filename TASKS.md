@@ -29,7 +29,8 @@
 - **Frontend Săpt. 9-10:** UI-ul există (buton „Nu am înțeles", tichete la profesor, `/intrebari`), dar e scris pe **contractul vechi** și e **dezactivat în producție** prin `TICHETE_UI_ACTIVE` — de reconectat la firul de mesaje, vezi tabelul Săpt. 9-10
 - **Faza 2 (direcție de produs):** planificată — vezi secțiunea de la finalul fișierului. Decis în ședința din 12 august: jurnal de evenimente acum, repetiție spațiată cu **FSRS**, structura materiei în patru secțiuni, corectare stratificată (auto pe ce e fix, pre-notare pe text liber, mentor integral pe testele mari), public-țintă a XI-a + a XII-a
 - **Bottleneck:** reconectarea frontendului de tichete la contractul de mesaje (Bogdan)
-- **Ultima actualizare:** 2026-09-03 (audit de branch-uri; curățate 20 de branch-uri mergeate)
+- **Model de abonament:** **trial 14 zile**, apoi plată. Anti-abuz fără card: email normalizat + domenii temporare + verificare SMS. Detalii în „Model de abonament și alocare"
+- **Ultima actualizare:** 2026-09-03 (trial decis, alocare decisă, `/api/checkout` respinge rolurile)
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -329,7 +330,6 @@ XII-a. De reevaluat fragmentarea materiei în consecință.
 | Structura reală de capitole BAC | Profesorul partener nu este disponibil încă | Profesorul partener |
 | Conținut real lecții | Idem | Profesorul partener |
 | **Ordinea secțiunilor** — cu care dintre cele patru începem | Structura e decisă (vezi G); ordinea se discută cu profesorul | Andrei + profesorul partener |
-| **Alocarea lucrărilor la corectori** | **Propunere pe masă (2026-09-03): alocare lipicioasă cu revenire în pool.** Vezi secțiunea „Model de abonament și alocare" de mai jos. Rămâne blocat până la confirmare | Andrei |
 | **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Andrei |
 | **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Andrei |
 | **TypeScript 7** (bump `6.0.3` → `7.0.2`) | `npm run lint` crapă cu `typescript-eslint does not support TS 7.0`; `tsc --noEmit` și cele 161 de teste trec. Lanțul: `eslint-config-next` → `typescript-eslint: "^8.46.0"`, avem 8.62.0. **Nu așteptăm o versiune nouă de Next** — caret-ul face ca orice `8.x` cu suport TS 7 să intre singur la `npm install`. **Cum aflăm că s-a deblocat:** dependabot redeschide PR-ul de bump `typescript`, iar check-ul `test` din CI (care rulează `lint`) trece verde — nimic de verificat manual, PR verde = se poate merge-a. Verificat 2026-08-25 | typescript-eslint (upstream) |
@@ -371,14 +371,46 @@ jos, și **fiecare rând de mai jos costă mai mult decât cel de deasupra**.
 | ⬜ | **Normalizarea emailului la înregistrare** | Andrei | `trial-14-zile` | Cea mai ieftină măsură și prinde majoritatea cazurilor leneșe: `e.l.e.v+bac2@gmail.com` și `elev@gmail.com` sunt **același** cont la Gmail. De stocat o coloană `email_normalizat` (puncte scoase, `+tag` tăiat, domeniu în litere mici, `googlemail.com`→`gmail.com`), **unică**. Atenție: normalizarea punctelor e corectă doar la Gmail, nu la orice domeniu |
 | ⬜ | **Blocarea domeniilor de unică folosință** | Andrei | `trial-14-zile` | Listă de domenii temporare (mailinator, temp-mail, 10minutemail…), reîmprospătată periodic. Prinde al doilea val de abuz. Listă, nu euristică — o euristică respinge și adrese legitime de școală |
 | ⬜ | **Un singur trial per elev, nu per cont** | Andrei | `trial-14-zile` | Trial-ul se leagă de `email_normalizat`, nu de rândul din `users`. Un cont nou pe același email normalizat pornește **fără** trial. Fără asta, primele două măsuri doar încetinesc abuzul |
-| ❓ | **Card obligatoriu la începutul trial-ului** | Andrei | — | **Cea mai eficientă măsură — și cea mai riscantă pentru noi.** Oprește aproape complet reînregistrarea, dar publicul e format din elevi de 17-18 ani, dintre care mulți nu au card; plătește părintele. Poate tăia conversia mai mult decât taie abuzul. **De decis abia după ce vedem cifre reale de abuz**, nu preventiv |
+| ❌ | ~~Card obligatoriu la începutul trial-ului~~ | — | — | **Respins (2026-09-03).** Ar fi oprit aproape complet reînregistrarea, dar pierdem elevii care nu au card sau nu vor să-l dea înainte de a fi convinși. La un public de 17-18 ani, asta e o felie prea mare din pâlnie ca să merite |
+| ⬜ | **Verificare prin SMS la înregistrare** | Andrei | `antiabuz-telefon` | Înlocuitorul cardului. Numărul de telefon e **mult mai greu de schimbat decât un email și mult mai ușor de dat decât un card**. Clerk o are nativ (`phone_number` ca identificator + cod SMS), deci nu adăugăm infrastructură. Trial legat de număr, ca și de emailul normalizat. Cost ~0,03-0,05 EUR/SMS, plătit o dată per elev real |
 
 **Regula de proporție, asumată:** un elev cinstit nu trebuie să simtă niciuna dintre
 măsurile de mai sus. Dacă o măsură anti-abuz creează fricțiune vizibilă la înregistrare,
 costă mai mult decât abuzul pe care îl previne — la volumele noastre, câțiva elevi care
 prelungesc trial-ul sunt mai ieftini decât o scădere de conversie.
 
-### Alocarea lucrărilor — **propunere: lipicioasă, cu revenire în pool**
+### De ce nu urmărim IP-ul sau amprenta de browser
+
+Întrebate explicit (2026-09-03) ca înlocuitor al cardului. **Nu le folosim**, din motive
+care sunt în primul rând practice, nu juridice.
+
+**IP-ul nu identifică un elev, identifică o rețea.** Frații din aceeași casă, colegii de
+la aceeași școală și copiii dintr-un internat au **același IP public**. La un produs
+vândut prin școli, blocarea pe IP ar respinge exact grupurile pe care le vrem: al doilea
+elev dintr-o clasă care încearcă platforma ar fi tratat drept fraudă. În același timp,
+**IP-ul e printre cele mai ușor de schimbat lucruri** — date mobile în loc de Wi-Fi și e
+alt IP, fără nicio unealtă. Mulți operatori mobili pun oricum sute de abonați în spatele
+aceluiași IP (CGNAT), iar la alții IP-ul se schimbă singur la fiecare reconectare. Deci
+prinde greșit oamenii cinstiți și nu prinde deloc pe cineva care încearcă intenționat.
+
+**Amprenta de browser e mai stabilă, dar plătim scump pentru ea.** Tehnic funcționează mai
+bine decât IP-ul. Juridic însă, citirea de caracteristici ale dispozitivului pentru
+identificare intră sub ePrivacy și cere **consimțământ explicit** — adică exact bannerul pe
+care ar trebui să-l punem în fața unui elev la înregistrare, ca să-i spunem că îi luăm
+amprenta dispozitivului. La un public din care o parte sunt minori, e o discuție pe care
+nu vrem să o purtăm pentru câteva trial-uri prelungite. În plus se sparge singură: alt
+browser, mod incognito, alt telefon — și amprenta e alta.
+
+**Ce facem în loc: verificarea prin SMS.** Numărul de telefon nimerește exact golul dintre
+email și card — **mult mai greu de schimbat decât un email, mult mai ușor de dat decât un
+card**. Aproape orice elev de liceu are telefon; foarte puțini au card. Nu cere consimțământ
+special dincolo de politica obișnuită, fiindcă e un identificator pe care utilizatorul îl
+dă conștient, nu unul luat din spatele paginii. Și e deja în Clerk.
+
+**Principiul, pentru data viitoare:** preferăm un identificator pe care elevul **ni-l dă**
+unuia pe care **i-l luăm**. Primul e mai onest, mai stabil și mai ușor de explicat.
+
+### Alocarea lucrărilor — **decis: lipicioasă, cu revenire în pool**
 
 Cele două variante evidente eșuează fiecare în alt fel, și amândouă eșuările sunt reale:
 
@@ -405,6 +437,20 @@ o problemă tăcută: sistemul o rezolvă singur, prin trecerea timpului.
 **De ce „tragere", nu „împingere":** nu putem forța disponibilitatea unor oameni care
 corectează în timpul lor. Un round-robin care *atribuie* presupune că cel atribuit e
 liber. Pool-ul din care se *ia* nu presupune nimic.
+
+**Confirmat de Andrei pe 2026-09-03.** Sarcinile care decurg:
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | Migrare: `mentor_rezervat_id`, `rezervat_pana`, `preluat_la` pe `tickets` | Andrei | `alocare-tichete` | Fără tabel de alocări. Expirarea e o comparație de timp la citire, nu un job de fundal |
+| ⬜ | La creare, rezervă tichetul pentru ultimul mentor al elevului | Andrei | `alocare-tichete` | „Ultimul mentor" = autorul ultimului mesaj non-elev din firele acelui elev. Dacă nu există, tichetul intră direct în pool |
+| ⬜ | `GET /api/tickets` întoarce **două** liste: rezervate mie + pool | Andrei | `alocare-tichete` | Un tichet cu `rezervat_pana` trecut apare în pool pentru toți, fără să fie nevoie să-l atingă cineva |
+| ⬜ | `POST /api/tickets/[id]/preia` — preluare din pool | Andrei | `alocare-tichete` | Trebuie să fie **atomic**: doi mentori care apasă simultan, unul singur câștigă. Condiție pe `preluat_la IS NULL` în `UPDATE`, nu verificare-apoi-scriere |
+| ⬜ | Marcarea tichetelor întârziate (al doilea prag) | Andrei | `alocare-tichete` | Sus în listă + vizibil ca întârziat. Fără el, un tichet pe care nu-l vrea nimeni stă în pool la nesfârșit — exact eșecul tăcut pe care modelul îl evită |
+| ⬜ | UI mentor: „Ale mele" vs. „Disponibile" + buton Preia | Bogdan | — | Depinde de rutele de mai sus. **Blocat de reconectarea UI-ului de tichete** (Săpt. 9-10) |
+
+**Praguri propuse, de calibrat pe date reale:** 8 ore lucrătoare pentru rezervare, 24 de ore
+până la marcarea ca întârziat. Sunt puncte de pornire, nu cifre sfinte.
 
 **Cost de implementare:** trei coloane pe `tickets` (`mentor_rezervat_id`,
 `rezervat_pana`, `preluat_la`) și o interogare. Fără tabel de alocări, fără job de fundal —
