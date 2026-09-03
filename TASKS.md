@@ -337,6 +337,23 @@ XII-a. De reevaluat fragmentarea materiei în consecință.
 
 ---
 
+## Întreținere recurentă
+
+> Lucruri care **reapar**, nu care se termină. Fiecare rând de aici există fiindcă
+> problema a picat deja de cel puțin două ori și a costat timp de diagnostic.
+
+| Când se declanșează | Ce e de făcut | De ce e aici |
+|---|---|---|
+| **Orice bump de `stripe`** (PR dependabot care atinge pachetul) | Actualizează `apiVersion` în `lib/stripe.ts` la valoarea nouă din `node_modules/stripe/esm/apiVersion.d.ts`, **în același PR cu bump-ul**. Înainte de a schimba stringul, citește `node_modules/stripe/CHANGELOG.md` pentru versiunea nouă și verifică explicit dacă schimbările ating Checkout Sessions sau webhook-ul | SDK-ul fixează versiunea de API în tipuri, deci `typecheck` pică — și cu el CI-ul **și** build-ul Vercel. S-a întâmplat la PR #56 (`ERRORS.md` #022) și la PR #61 (#023). Simptomul e mereu același: `TS2322` pe un string literal, într-un PR care atinge doar `package.json` |
+
+**De ce nu automatizăm bump-ul:** s-ar putea scrie `apiVersion: Stripe.LatestApiVersion`,
+derivat din tip, și eroarea ar dispărea pentru totdeauna. **Deliberat nu facem asta.**
+Constrângerea de tip e pusă de Stripe *intenționat*, ca să nu treci pe o versiune nouă de
+API fără să știi. Într-un modul de plăți, o actualizare tăcută e mai scumpă decât cinci
+minute de citit changelog. Ce automatizăm e *reamintirea*, nu *decizia*.
+
+---
+
 ## Reguli Git (rezumat)
 
 - **Niciodată pe `main` direct.** Branch nou pentru fiecare grup de sarcini.
