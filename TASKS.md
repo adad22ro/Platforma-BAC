@@ -29,7 +29,7 @@
 - **Frontend Săpt. 9-10:** UI-ul există (buton „Nu am înțeles", tichete la profesor, `/intrebari`), dar e scris pe **contractul vechi** și e **dezactivat în producție** prin `TICHETE_UI_ACTIVE` — de reconectat la firul de mesaje, vezi tabelul Săpt. 9-10
 - **Faza 2 (direcție de produs):** planificată — vezi secțiunea de la finalul fișierului. Decis în ședința din 12 august: jurnal de evenimente acum, repetiție spațiată cu **FSRS**, structura materiei în patru secțiuni, corectare stratificată (auto pe ce e fix, pre-notare pe text liber, mentor integral pe testele mari), public-țintă a XI-a + a XII-a
 - **Bottleneck:** reconectarea frontendului de tichete la contractul de mesaje (Bogdan)
-- **Ultima actualizare:** 2026-08-12 (Faza 2 + merge `main` → `teste-progres`)
+- **Ultima actualizare:** 2026-09-03 (audit de branch-uri; curățate 20 de branch-uri mergeate)
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -116,6 +116,7 @@
 | ✅ | Integrare Stripe Checkout pentru abonament lunar | Andrei | `auth-cont-elev` | `app/api/checkout/route.ts` — creează Checkout Session, întoarce `url`. |
 | ✅ | Webhook Stripe — activare/dezactivare abonament în DB | Andrei | `auth-cont-elev` | `app/api/webhooks/stripe/route.ts` — testat E2E cu Stripe CLI (`subscription_status` → `active`/`cancelled`). |
 | ✅ | Pagină `/upgrade` (pornește checkout + redirect Stripe) | Andrei | `auth-cont-elev` | `app/upgrade/page.tsx` — reutilizată de butonul „Upgrade" și de fluxul premium-la-înregistrare. |
+| ⬜ | **`POST /api/checkout` nu verifică rolul** — un profesor ajuns direct pe `/upgrade` e trimis pe Stripe și poate plăti un abonament de care nu are nevoie | Andrei | — | Butoanele de upgrade sunt deja ascunse pentru `teacher` (Bogdan, sesiunea 6), dar ruta rămâne deschisă pe URL direct. De blocat **în API**, nu în UI: `getCurrentAppUser` + `isTeacher` → `apiError(403)`. Semnalat de Bogdan în DEVLOG la 2026-08-10, netransformat în sarcină până acum |
 | ✅ | Alegere plan la înregistrare (`?plan=premium`) | Andrei | `auth-cont-elev` | `app/sign-up` citește `?plan=` → `forceRedirectUrl` (`/upgrade` vs `/dashboard`). |
 
 ---
