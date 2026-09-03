@@ -116,7 +116,7 @@
 | ✅ | Integrare Stripe Checkout pentru abonament lunar | Andrei | `auth-cont-elev` | `app/api/checkout/route.ts` — creează Checkout Session, întoarce `url`. |
 | ✅ | Webhook Stripe — activare/dezactivare abonament în DB | Andrei | `auth-cont-elev` | `app/api/webhooks/stripe/route.ts` — testat E2E cu Stripe CLI (`subscription_status` → `active`/`cancelled`). |
 | ✅ | Pagină `/upgrade` (pornește checkout + redirect Stripe) | Andrei | `auth-cont-elev` | `app/upgrade/page.tsx` — reutilizată de butonul „Upgrade" și de fluxul premium-la-înregistrare. |
-| ⬜ | **`POST /api/checkout` nu verifică rolul** — un profesor ajuns direct pe `/upgrade` e trimis pe Stripe și poate plăti un abonament de care nu are nevoie | Andrei | — | Butoanele de upgrade sunt deja ascunse pentru `teacher` (Bogdan, sesiunea 6), dar ruta rămâne deschisă pe URL direct. De blocat **în API**, nu în UI: `getCurrentAppUser` + `isTeacher` → `apiError(403)`. Semnalat de Bogdan în DEVLOG la 2026-08-10, netransformat în sarcină până acum |
+| ✅ | **`POST /api/checkout` nu verifică rolul** — un profesor ajuns direct pe `/upgrade` e trimis pe Stripe și poate plăti un abonament de care nu are nevoie | Andrei | `checkout-rol` | Blocat în API (403 pentru `teacher`/`mentor`), nu în UI: ascunderea butoanelor nu închide ruta, fiindcă `/upgrade` pornește checkout-ul din `useEffect`. Un cont fără rând în `users` nu e blocat, ca un elev nou să poată plăti. 4 teste noi |
 | ✅ | Alegere plan la înregistrare (`?plan=premium`) | Andrei | `auth-cont-elev` | `app/sign-up` citește `?plan=` → `forceRedirectUrl` (`/upgrade` vs `/dashboard`). |
 
 ---
@@ -329,9 +329,8 @@ XII-a. De reevaluat fragmentarea materiei în consecință.
 | Structura reală de capitole BAC | Profesorul partener nu este disponibil încă | Profesorul partener |
 | Conținut real lecții | Idem | Profesorul partener |
 | **Ordinea secțiunilor** — cu care dintre cele patru începem | Structura e decisă (vezi G); ordinea se discută cu profesorul | Andrei + profesorul partener |
-| **Model free vs. premium** | Nedecis. Se vrea **o formă de free**, dar nu e ales tipul: *free-tier permanent* (acces la învățare, se plătește pentru mentorat/AI/simulări) sau *trial pe durată limitată*. Blochează gating-ul funcțiilor noi (B, D) — nu se știe ce e gratuit și ce nu | Andrei |
+| **Alocarea lucrărilor la corectori** | **Propunere pe masă (2026-09-03): alocare lipicioasă cu revenire în pool.** Vezi secțiunea „Model de abonament și alocare" de mai jos. Rămâne blocat până la confirmare | Andrei |
 | **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Andrei |
-| **Alocarea lucrărilor la corectori** | Rolurile `teacher` și `mentor` există și amândoi pot corecta, dar **nu e gândit cum se împart lucrările**: cine primește ce, în ce ordine, ce se întâmplă când un corector e plin. Blochează interfața mentorului și calculul de capacitate | Andrei |
 | **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Andrei |
 | **TypeScript 7** (bump `6.0.3` → `7.0.2`) | `npm run lint` crapă cu `typescript-eslint does not support TS 7.0`; `tsc --noEmit` și cele 161 de teste trec. Lanțul: `eslint-config-next` → `typescript-eslint: "^8.46.0"`, avem 8.62.0. **Nu așteptăm o versiune nouă de Next** — caret-ul face ca orice `8.x` cu suport TS 7 să intre singur la `npm install`. **Cum aflăm că s-a deblocat:** dependabot redeschide PR-ul de bump `typescript`, iar check-ul `test` din CI (care rulează `lint`) trece verde — nimic de verificat manual, PR verde = se poate merge-a. Verificat 2026-08-25 | typescript-eslint (upstream) |
 | Structura reală de capitole în interiorul secțiunilor | Cele patru secțiuni sunt decise; ce conține fiecare, nu | Profesorul partener |
@@ -352,6 +351,64 @@ derivat din tip, și eroarea ar dispărea pentru totdeauna. **Deliberat nu facem
 Constrângerea de tip e pusă de Stripe *intenționat*, ca să nu treci pe o versiune nouă de
 API fără să știi. Într-un modul de plăți, o actualizare tăcută e mai scumpă decât cinci
 minute de citit changelog. Ce automatizăm e *reamintirea*, nu *decizia*.
+
+---
+
+## Model de abonament și alocare (decis 2026-09-03)
+
+### Abonament — **decis: trial 14 zile, apoi plată**
+
+Nu free-tier permanent. Paisprezece zile de acces complet, apoi abonament.
+
+**Problema reală nu e trial-ul, e reînregistrarea.** Un elev care își face cont nou la
+fiecare două săptămâni stă gratis la nesfârșit. Contramăsurile de mai jos sunt ordonate
+după raportul dintre cât prind și cât deranjează un elev cinstit — se aplică de sus în
+jos, și **fiecare rând de mai jos costă mai mult decât cel de deasupra**.
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | **Trial în Stripe, nu în coloane proprii** | Andrei | `trial-14-zile` | `subscription_data.trial_period_days: 14` pe sesiunea de Checkout. Stripe ține ceasul, trimite `customer.subscription.trial_will_end` și trece singur la plată. **Nu ne scriem propriul ceas de trial** — ar însemna încă o sursă de adevăr lângă `subscription_status`, care se poate desincroniza de Stripe |
+| ⬜ | **Normalizarea emailului la înregistrare** | Andrei | `trial-14-zile` | Cea mai ieftină măsură și prinde majoritatea cazurilor leneșe: `e.l.e.v+bac2@gmail.com` și `elev@gmail.com` sunt **același** cont la Gmail. De stocat o coloană `email_normalizat` (puncte scoase, `+tag` tăiat, domeniu în litere mici, `googlemail.com`→`gmail.com`), **unică**. Atenție: normalizarea punctelor e corectă doar la Gmail, nu la orice domeniu |
+| ⬜ | **Blocarea domeniilor de unică folosință** | Andrei | `trial-14-zile` | Listă de domenii temporare (mailinator, temp-mail, 10minutemail…), reîmprospătată periodic. Prinde al doilea val de abuz. Listă, nu euristică — o euristică respinge și adrese legitime de școală |
+| ⬜ | **Un singur trial per elev, nu per cont** | Andrei | `trial-14-zile` | Trial-ul se leagă de `email_normalizat`, nu de rândul din `users`. Un cont nou pe același email normalizat pornește **fără** trial. Fără asta, primele două măsuri doar încetinesc abuzul |
+| ❓ | **Card obligatoriu la începutul trial-ului** | Andrei | — | **Cea mai eficientă măsură — și cea mai riscantă pentru noi.** Oprește aproape complet reînregistrarea, dar publicul e format din elevi de 17-18 ani, dintre care mulți nu au card; plătește părintele. Poate tăia conversia mai mult decât taie abuzul. **De decis abia după ce vedem cifre reale de abuz**, nu preventiv |
+
+**Regula de proporție, asumată:** un elev cinstit nu trebuie să simtă niciuna dintre
+măsurile de mai sus. Dacă o măsură anti-abuz creează fricțiune vizibilă la înregistrare,
+costă mai mult decât abuzul pe care îl previne — la volumele noastre, câțiva elevi care
+prelungesc trial-ul sunt mai ieftini decât o scădere de conversie.
+
+### Alocarea lucrărilor — **propunere: lipicioasă, cu revenire în pool**
+
+Cele două variante evidente eșuează fiecare în alt fel, și amândouă eșuările sunt reale:
+
+- **Pool liber, fiecare ia ce vrea:** nimeni nu rămâne fără răspuns, dar elevul primește
+  răspunsuri de la mentori diferiți. La corectarea de eseuri asta doare — mentorul care
+  ți-a corectat data trecută știe ce ai greșit atunci.
+- **Alocare fixă pe mentor:** continuitate perfectă, dar dacă mentorul nu are timp,
+  **elevii lui așteaptă la nesfârșit** și nimeni altcineva nu vede problema.
+
+**Propunerea combină ce e bun din amândouă:**
+
+1. Tichetul nou se **rezervă** pentru mentorul care a răspuns ultima dată acelui elev.
+2. Rezervarea are **termen** (propunere: 8 ore lucrătoare). Mentorul are dreptul de
+   primul refuz, nu proprietate pe elev.
+3. La expirare, tichetul **cade singur în pool-ul comun**, vizibil pentru toți.
+4. Orice corector liber îl poate lua din pool.
+5. Un tichet nerevendicat după un al doilea prag urcă în capul listei și devine vizibil ca
+   întârziat.
+
+Continuitatea devine **implicită** — în cazul obișnuit răspunde același om — dar nu e
+garantată cu prețul unui elev lăsat fără răspuns. Indisponibilitatea unui mentor nu mai e
+o problemă tăcută: sistemul o rezolvă singur, prin trecerea timpului.
+
+**De ce „tragere", nu „împingere":** nu putem forța disponibilitatea unor oameni care
+corectează în timpul lor. Un round-robin care *atribuie* presupune că cel atribuit e
+liber. Pool-ul din care se *ia* nu presupune nimic.
+
+**Cost de implementare:** trei coloane pe `tickets` (`mentor_rezervat_id`,
+`rezervat_pana`, `preluat_la`) și o interogare. Fără tabel de alocări, fără job de fundal —
+expirarea e o comparație de timp la citire.
 
 ---
 
