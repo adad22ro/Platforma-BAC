@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe'
+import { getCurrentAppUser } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
 import { apiError } from '@/lib/api-error'
 
@@ -9,6 +10,18 @@ export async function POST() {
   const { userId } = await auth()
   if (!userId) {
     return apiError(401, 'Unauthorized')
+  }
+
+  // Profesorii si mentorii au acces prin rol, nu prin abonament — o plata de la ei
+  // ar fi bani luati degeaba, cu rambursare si abonament de anulat manual.
+  //
+  // Verificarea sta AICI, nu in UI. Butoanele de upgrade sunt deja ascunse pentru
+  // `teacher` (`/dashboard`, `/profil`), dar ascunderea unui buton nu inchide o
+  // ruta: `/upgrade` porneste checkout-ul din `useEffect`, deci simpla vizitare a
+  // adresei duce pe Stripe. Singurul loc care opreste asta e ruta de API.
+  const appUser = await getCurrentAppUser()
+  if (appUser && appUser.role !== 'student') {
+    return apiError(403, `Rolul ${appUser.role} are acces prin rol, nu prin abonament`)
   }
 
   const priceId = process.env.STRIPE_PRICE_ID_MONTHLY

@@ -6,6 +6,50 @@
 
 ---
 
+## 2026-09-03 — Andrei (deciziile de model + `/api/checkout` respinge rolurile)
+
+**Trial 14 zile, apoi plată.** Nu free-tier permanent. Deblochează gating-ul din grupele
+B și D — se știe acum ce e gratuit: totul, paisprezece zile.
+
+**Decizia de implementare: ceasul trial-ului stă în Stripe, nu la noi.**
+`subscription_data.trial_period_days` — Stripe numără, anunță prin
+`customer.subscription.trial_will_end` și trece singur la plată. Alternativa, o coloană
+proprie cu data de expirare, ar fi a doua sursă de adevăr lângă `subscription_status` și
+s-ar desincroniza exact în cazurile care dor: plată eșuată, anulare la mijloc de trial,
+reluare.
+
+**Anti-abuz: ordonat după fricțiune, nu după eficacitate.** Riscul real nu e trial-ul, e
+reînregistrarea la fiecare două săptămâni. Normalizarea emailului (Gmail ignoră punctele
+și `+tag`) prinde majoritatea cazurilor leneșe și e invizibilă pentru un elev cinstit;
+lista de domenii temporare prinde al doilea val; legarea trial-ului de emailul normalizat,
+nu de rândul din `users`, e ce face primele două să conteze.
+
+Cardul obligatoriu la trial — cea mai eficientă măsură — a rămas deliberat cu `❓`.
+Publicul e format din elevi de 17-18 ani, dintre care mulți nu au card. Ar putea tăia
+conversia mai mult decât taie abuzul, și **nu avem încă nicio cifră de abuz** care să
+justifice costul. De reluat când există date, nu preventiv.
+
+**Alocarea lucrărilor: propunere, nu decizie — alocare lipicioasă cu revenire în pool.**
+Întrebarea pusă a identificat corect ambele eșecuri: pool-ul liber sparge continuitatea
+(elevul primește răspunsuri de la oameni diferiți), alocarea fixă lasă elevii unui mentor
+ocupat fără răspuns. Propunerea dă mentorului anterior **drept de primul refuz cu termen**,
+după care tichetul cade singur în pool-ul comun.
+
+Miezul: continuitatea devine implicită, nu garantată. E preferabil, fiindcă singurul mod de
+a o garanta e să accepți că un elev poate aștepta la nesfârșit. Și motivul pentru „tragere"
+în loc de „împingere": nu poți atribui muncă unor oameni care corectează în timpul lor —
+un round-robin presupune că cel atribuit e liber, un pool nu presupune nimic.
+
+**`POST /api/checkout` respinge acum `teacher` și `mentor`** (403) — sarcina găsită în
+auditul de dimineață. Verificarea stă în API, nu în UI: butoanele erau deja ascunse, dar
+`/upgrade` pornește checkout-ul dintr-un `useEffect`, deci simpla vizitare a adresei ducea
+pe Stripe. Un cont **fără rând în `users`** nu e blocat — altfel un elev nou n-ar putea
+plăti exact în fereastra în care vrea; riscul invers nu există, fiindcă rolul se dă tocmai
+pe acel rând. Patru teste noi (227), verificate prin scoaterea temporară a fixului: două
+pică fără el.
+
+---
+
 ## 2026-09-03 — Andrei (audit de branch-uri + o sarcină pierdută)
 
 Verificare completă a branch-urilor, nu doar a lui `main`. `origin/dashboard-elev`
