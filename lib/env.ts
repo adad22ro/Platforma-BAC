@@ -35,6 +35,16 @@ const schema = z.object({
   // LanguageTool self-hostat (ortografie/punctuatie pentru stratul 1 de corectare).
   // Fara el, criteriile de limba ies „indisponibil" — nu 0 — si trec la mentor.
   LANGUAGETOOL_URL: z.union([z.string().url(), z.literal("")]).optional(),
+
+  // Email tranzactional (Resend). Fara RESEND_API_KEY nu se trimite nimic si
+  // fluxul merge mai departe — vezi lib/email.ts. Optionala DELIBERAT: mediile de
+  // dezvoltare si preview nu trebuie sa trimita email adevarat elevilor.
+  //
+  // EMAIL_FROM trebuie sa foloseasca un domeniu VERIFICAT in Resend. Cu un domeniu
+  // neverificat, Resend accepta trimiterea doar catre adresa proprietarului
+  // contului — deci ar merge in test si ar tacea in productie.
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;

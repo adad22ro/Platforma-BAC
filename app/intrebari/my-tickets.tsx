@@ -92,7 +92,7 @@ export function MyTickets() {
           {fararaspuns === 1
             ? "O întrebare așteaptă răspuns."
             : `${fararaspuns} întrebări așteaptă răspuns.`}{" "}
-          Primești un email când sunt gata.
+          Revino aici ca să vezi răspunsul.
         </p>
       )}
 

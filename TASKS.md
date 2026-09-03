@@ -166,7 +166,7 @@
 | ✅ | API route — creare tichet | Andrei | `sistem-tichete-mentorat` | `POST /api/tickets` — **cere `lesson_id`**; capturează pe server lecția, capitolul, titlul și progresul la test; de la client doar selecția + poziția. `docs/api.md` |
 | 🟡 | Interfață profesor — listă tichete organizate pe capitol | Bogdan | `teste-progres` | Secțiunea „Tichete" din `/profesor` — grupare, filtru, detaliu desfășurabil: gata. **De reconectat** la firul de mesaje și la contextul nou (poziție, fragment selectat, progres la test) |
 | 🟡 | Funcționalitate răspuns profesor la tichet | Andrei + Bogdan | `teste-progres` | **API gata** (Andrei): `POST /api/tickets/[id]/messages` — fir de discuție, status după ultimul vorbitor. UI-ul lui Bogdan trimite încă la `/answer` și presupune un singur răspuns — **de rescris pe fir** |
-| ❌ | Notificare email elev la primirea răspunsului | Andrei | `sistem-tichete-mentorat` | **Blocat:** nu e ales/configurat un serviciu de email. Locul de apel e marcat în `POST /api/tickets/[id]/messages` |
+| 🟡 | Notificare email elev la primirea răspunsului | Andrei | `notificare-email-resend` | **Cod gata** (Resend, `lib/email.ts` + apel în `POST /api/tickets/[id]/messages`). Tace dacă `RESEND_API_KEY` lipsește, deci merge deja în CI și preview fără să trimită nimic. **Rămâne un pas care nu ține de cod: un domeniu propriu, verificat în Resend** — vezi rândurile de mai jos |
 | 🟡 | Pagină elev — vizualizare răspuns primit | Bogdan | `teste-progres` | `/intrebari` — listă + link în antet: gata. **De reconectat** la fir (mai multe mesaje per tichet, nu un singur `answer`) |
 | ⬜ | **Pune `TICHETE_UI_ACTIVE` pe `true`** — ultimul pas al reconectării | Bogdan | — | Fără el, munca de mai sus rămâne invizibilă în producție. `app/_components/feature-flags.ts`. De verificat toate cele șase suprafețe: antet, `/profesor`, pagina de lecție, două în pagina de test, plus ruta `/intrebari` (care dă acum 404) |
 
@@ -330,7 +330,6 @@ XII-a. De reevaluat fragmentarea materiei în consecință.
 | Structura reală de capitole BAC | Profesorul partener nu este disponibil încă | Profesorul partener |
 | Conținut real lecții | Idem | Profesorul partener |
 | **Ordinea secțiunilor** — cu care dintre cele patru începem | Structura e decisă (vezi G); ordinea se discută cu profesorul | Andrei + profesorul partener |
-| **Serviciu de email** (Resend / Postmark / SendGrid) | Nedecis. Blochează notificarea de tichet, restul e implementat | Andrei |
 | **Banca de texte la prima vedere** (Subiectul I) | Textele sunt fragmente din volume publicate; republicarea în aplicație **trebuie verificată juridic** | Andrei |
 | **TypeScript 7** (bump `6.0.3` → `7.0.2`) | `npm run lint` crapă cu `typescript-eslint does not support TS 7.0`; `tsc --noEmit` și cele 161 de teste trec. Lanțul: `eslint-config-next` → `typescript-eslint: "^8.46.0"`, avem 8.62.0. **Nu așteptăm o versiune nouă de Next** — caret-ul face ca orice `8.x` cu suport TS 7 să intre singur la `npm install`. **Cum aflăm că s-a deblocat:** dependabot redeschide PR-ul de bump `typescript`, iar check-ul `test` din CI (care rulează `lint`) trece verde — nimic de verificat manual, PR verde = se poate merge-a. Verificat 2026-08-25 | typescript-eslint (upstream) |
 | Structura reală de capitole în interiorul secțiunilor | Cele patru secțiuni sunt decise; ce conține fiecare, nu | Profesorul partener |
@@ -351,6 +350,55 @@ derivat din tip, și eroarea ar dispărea pentru totdeauna. **Deliberat nu facem
 Constrângerea de tip e pusă de Stripe *intenționat*, ca să nu treci pe o versiune nouă de
 API fără să știi. Într-un modul de plăți, o actualizare tăcută e mai scumpă decât cinci
 minute de citit changelog. Ce automatizăm e *reamintirea*, nu *decizia*.
+
+---
+
+## Email tranzacțional (Resend) — cod gata, domeniu lipsă
+
+Codul e scris și testat. Ce lipsește nu se rezolvă cu un commit.
+
+> ⚠️ **Stare: SUSPENDAT (decis 2026-09-03).** Domeniul nu se cumpără acum. Codul e
+> complet, testat și **inert** — fără `RESEND_API_KEY` nu trimite nimic și nu loghează
+> nimic. Nu e o scăpare, e o decizie; dacă depanezi de ce un elev n-a primit email,
+> răspunsul e aici, nu în cod.
+
+### Blocajul real: nu avem domeniu propriu
+
+`vercel domains ls` → **0 domenii**. Aplicația rulează pe `platforma-bac.vercel.app`, iar
+pe un subdomeniu `.vercel.app` **nu putem verifica un expeditor în Resend** — n-avem
+control pe DNS-ul lui.
+
+Ce se întâmplă fără domeniu verificat: Resend acceptă trimiterea **doar către adresa
+proprietarului contului**. Adică ar merge perfect în testele lui Andrei și ar tăcea pentru
+fiecare elev real. E cel mai prost tip de eșec — invizibil exact în producție.
+
+În plus, chiar dacă s-ar putea, un email de la un subdomeniu `.vercel.app` fără SPF/DKIM
+proprii ajunge în spam la majoritatea furnizorilor. Domeniul propriu nu e o formalitate; e
+condiția ca emailurile să fie citite.
+
+| Status | Sarcină | Cine | Branch | Note |
+|---|---|---|---|---|
+| ⬜ | **Cumpărat domeniu propriu** | Andrei | — | Precondiție pentru tot ce urmează. E nevoie oricum înainte de lansare — nu vindem un produs pe `*.vercel.app`. Un `.ro` costă ~10-15 EUR/an |
+| ⬜ | Domeniul adăugat în Vercel + în Resend, DNS verificat | Andrei | — | Aceleași DNS, două locuri: Vercel pentru site, Resend pentru SPF + DKIM. Resend arată exact ce înregistrări trebuie adăugate |
+| ⬜ | `RESEND_API_KEY` + `EMAIL_FROM` în Vercel (Production) | Andrei | — | **Nu și în Preview.** Un deploy de preview care trimite emailuri reale elevilor e o greșeală ușor de făcut și greu de reparat |
+| ⬜ | Verificare cap-coadă cu un tichet real | Andrei | — | După ce cheia e pusă: un răspuns de profesor → emailul chiar ajunge, linkul duce în firul corect |
+| ⬜ | **Textele din UI care promit email, puse la loc** | Bogdan | `notificare-email-resend` | Trei locuri spuneau elevului „Primești un email" — o promisiune pe care sistemul nu o putea ține. Schimbate pe 2026-09-03 în „vezi răspunsul în «Întrebările mele»": `help-button.tsx`, `intrebari/my-tickets.tsx`, `profesor/teacher-tickets.tsx`. **Când emailul devine activ, textele se schimbă înapoi** — altfel funcția merge și nimeni nu o anunță elevului |
+
+### Ce e deja făcut și nu mai trebuie atins
+
+- `lib/email.ts` — client peste API-ul Resend, prin `fetch` (fără pachet în plus).
+  **Nu aruncă niciodată**: întoarce `{ trimis: false, motiv }`. Fără cheie nu loghează
+  nimic — absența e o stare așteptată, nu o eroare.
+- Apelul din `POST /api/tickets/[id]/messages`, **după** scrierea în DB și doar când
+  răspunde un corector, învelit în `try` propriu. Un email nelivrat nu are voie să facă
+  un profesor să creadă că răspunsul lui s-a pierdut.
+- Emailul conține **doar primele 200 de caractere** din răspuns, nu tot. Răspunsul unui
+  profesor conține adesea corectura personală a elevului, iar emailul ajunge pe telefoane
+  și în inboxuri de familie. Restul se citește în aplicație.
+- Variantă `text` alături de HTML la fiecare trimitere — un email doar-HTML e semnal de spam.
+- 10 teste: fără cheie nu se apelează nimic, domeniu neverificat → log cu detaliul de la
+  Resend, rețeaua căzută nu aruncă, elevul care revine în fir nu-și trimite email sieși,
+  iar un eșec de email lasă răspunsul salvat și ruta pe 201.
 
 ---
 

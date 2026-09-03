@@ -6,6 +6,65 @@
 
 ---
 
+## 2026-09-03 — Andrei (notificarea pe email, prin Resend)
+
+Ultimul blocaj din grupul de decizii. Codul e gata; ce lipsește nu se rezolvă cu un commit.
+
+**Descoperirea care schimbă ordinea pașilor: nu avem domeniu propriu.** `vercel domains ls`
+întoarce zero. Fără un domeniu verificat în Resend, API-ul acceptă trimiterea **doar către
+adresa proprietarului contului** — ar fi mers impecabil în testele mele și ar fi tăcut
+pentru fiecare elev real. Cel mai prost tip de eșec: invizibil exact în producție. Și chiar
+dacă s-ar putea trimite, un email fără SPF/DKIM pe domeniu propriu ajunge în spam. Deci
+domeniul nu e o formalitate administrativă, e condiția ca emailurile să fie citite.
+
+**Resend prin `fetch`, fără SDK.** API-ul e o singură rută cu un Bearer. Un pachet în plus
+ar fi însemnat încă o dependență de urmărit la fiecare bump al lui dependabot, pentru zece
+rânduri de cod.
+
+**`trimiteEmail` nu aruncă niciodată** — întoarce `{ trimis, motiv }`. Fără cheie nu
+loghează nimic: absența serviciului e o stare așteptată, nu o eroare. Același principiu ca
+la LanguageTool. Miza e mai mare decât pare: apelul vine după ce profesorul a scris un
+răspuns, iar o excepție l-ar face să creadă că munca lui s-a pierdut. Nu s-a pierdut — e în
+DB înainte de a se ajunge la email.
+
+**Un test scris ca apărare în adâncime a găsit un bug adevărat.** Testul „eșecul emailului
+nu strică răspunsul deja salvat" a picat: deși `trimiteEmail` promite că nu aruncă,
+`notificaElevul` mai face și o interogare în `users`, care poate. Adăugat `try` propriu în
+jurul apelului. Contractul unei funcții se poate schimba fără ca cineva să se uite înapoi
+la apelanți; un efect secundar nu are voie să dărâme o rută care și-a făcut treaba.
+
+**Emailul conține doar primele 200 de caractere din răspuns.** Nu din economie, ci fiindcă
+răspunsul unui profesor conține adesea corectura personală a elevului, iar emailul e un
+canal pe care nu-l controlăm — ajunge pe telefonul familiei, în inboxuri partajate. Restul
+se citește în aplicație, unde există autentificare. Efect secundar util: elevul se întoarce
+în produs.
+
+**De notat pentru configurare:** cheia se pune în Vercel **doar pe Production**, nu pe
+Preview. Un deploy de preview care trimite emailuri reale elevilor e o greșeală ușor de
+făcut și imposibil de retras.
+
+10 teste noi (236).
+
+**Completare, după decizia de a nu cumpăra domeniu acum.** Emailul rămâne **suspendat**,
+și am tratat asta ca stare declarată, nu ca lipsă tăcută: antet vizibil în `lib/email.ts`
+(„dacă depanezi de ce un elev n-a primit email, nu căuta bug aici"), notă în `TASKS.md`,
+și un rând separat de reactivare — exact lecția de la `TICHETE_UI_ACTIVE`, unde munca a
+rămas invizibilă în producție fiindcă nimeni nu notase pasul de aprindere.
+
+**Și o problemă găsită căutând-o pe asta: UI-ul promitea un email pe care nu-l putea
+trimite.** Trei locuri — `help-button.tsx` („Primești un email când răspunsul e gata"),
+`intrebari/my-tickets.tsx`, `profesor/teacher-tickets.tsx` (unde îi spunea profesorului că
+elevul primește email). Primele două sunt ascunse azi de `TICHETE_UI_ACTIVE`, deci nu mint
+pe nimeni **încă** — dar ar fi devenit vizibile exact la reconectarea lui Bogdan, adică
+tocmai când nimeni nu s-ar mai fi uitat la ele. Textele spun acum că răspunsul se vede în
+„Întrebările mele", ceea ce e adevărat indiferent de starea emailului. Schimbarea inversă e
+rând în TASKS.
+
+Merită numit tiparul: o funcție dezactivată nu e neutră. Restul produsului continuă să
+vorbească despre ea.
+
+---
+
 ## 2026-09-03 — Andrei (alocarea confirmată, cardul respins, SMS în loc de IP)
 
 **Alocarea lucrărilor: decisă** — lipicioasă, cu revenire în pool. Iese din „Blocat" după
