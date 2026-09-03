@@ -5,6 +5,20 @@
 
 ---
 
+## #024 — `typecheck` roșu local pe un branch care nu atinge codul: `node_modules` rămas din alt branch
+**Data:** 2026-09-03
+**Context:** Pe `intretinere-recurenta` — un branch care modifică **doar** `TASKS.md` și `DEVLOG.md` — hook-ul pre-push a oprit push-ul cu `lib/stripe.ts(5,3): error TS2322`. Exact eroarea de la #023, dar pe un branch care nu atinge nici `lib/stripe.ts`, nici `package.json`.
+**Cauză:** `node_modules` rămăsese instalat de pe branch-ul anterior (`dep61`, cu `stripe@22.6.0`), iar branch-ul nou e pornit din `main`, unde lock-ul cere `stripe@22.5.0` și `apiVersion` e încă `2026-07-29.dahlia`. `git checkout` schimbă `package-lock.json`, dar **nu reinstalează `node_modules`** — deci tipurile veneau de la 22.6.0, iar codul de la `main`. Combinație care nu există nici pe `main`, nici pe branch-ul de bump.
+**Diagnostic cheie:** eroare de tip într-un fișier pe care branch-ul **nu îl atinge** = mediu local desincronizat, nu cod stricat. Compară versiunea instalată cu cea din lock înainte de a căuta în cod:
+```
+grep '"version"' node_modules/stripe/package.json
+python -c "import json;print(json.load(open('package-lock.json'))['packages']['node_modules/stripe']['version'])"
+```
+**Soluție:** `npm ci` (nu `npm install` — `ci` respectă lock-ul exact). Typecheck verde imediat după.
+**Dacă reapare:** la orice schimbare de branch între unul cu bump de dependențe și unul fără, rulează `npm ci` înainte de a crede o eroare de typecheck. Nu e legată de #019 (cache vitest corupt), deși hook-ul sugerează asta în mesajul lui de eșec — acolo simptomul e „trecea verde acum un minut", aici e „branch nou, eroare într-un fișier neatins".
+
+---
+
 ## #022 — CI roșu pe PR-ul dependabot: `apiVersion` Stripe incompatibil după bump
 **Data:** 2026-08-25
 **Context:** PR #56 (dependabot, 9 pachete minor+patch) avea `test` și Vercel roșii. `npm test` trecea; pica `typecheck`: `lib/stripe.ts(5,3): error TS2322: Type '"2026-06-24.dahlia"' is not assignable to type '"2026-07-29.dahlia"'`.

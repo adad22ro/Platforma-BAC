@@ -6,6 +6,30 @@
 
 ---
 
+## 2026-09-03 — Andrei (întreținere: PR #61 + regulă recurentă)
+
+PR #61 (dependabot, 7 pachete) avea `test` și Vercel roșii. Aceeași cauză, a doua oară:
+`stripe@22.6.0` mută versiunea de API pe `2026-08-26.dahlia`, iar literalul din
+`lib/stripe.ts` nu mai e atribuibil → `typecheck` pică, deci pică și CI, și build-ul Vercel
+(care rulează același `tsc`). Actualizat `apiVersion`, după ce am citit changelog-ul lui
+22.6.0 — nu atinge Checkout Sessions sau webhook-ul. Verde: lint, typecheck, 223 de teste.
+`ERRORS.md` #023.
+
+**Decizia: reamintim, nu automatizăm.** S-ar putea scrie `apiVersion: Stripe.LatestApiVersion`
+și problema ar dispărea definitiv. Am ales să nu. Constrângerea de tip e pusă de Stripe
+intenționat, ca să nu ajungi pe o versiune nouă de API fără să știi — iar într-un modul de
+plăți o actualizare tăcută costă mai mult decât cinci minute de citit changelog. Ce merită
+automatizat e *reamintirea*, nu *decizia*. De aici secțiunea nouă **„Întreținere recurentă"**
+din `TASKS.md`: intră acolo doar ce a picat de cel puțin două ori și a costat diagnostic.
+
+**Deschis, separat:** `npm audit` raportează o vulnerabilitate `high` pe `browserslist`
+(`<=4.28.6`, OOM prin cache fără evacuare + prototype write), tranzitivă prin
+`eslint-config-next → eslint-plugin-react-hooks → @babel/core`. Doar `devDependencies`, deci
+nu ajunge în runtime de producție. Ținută în afara PR-ului #61 ca să nu amestec un fix de
+securitate cu un bump de dependențe.
+
+---
+
 ## 2026-08-25 — Andrei (Grupa C — baremul ca date)
 
 Curățenie și întreținere întâi: mergeat PR #56 (9 pachete, blocat de 6 zile de un
