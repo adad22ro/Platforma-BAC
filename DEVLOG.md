@@ -45,6 +45,24 @@ făcut și imposibil de retras.
 
 10 teste noi (236).
 
+**Completare, după decizia de a nu cumpăra domeniu acum.** Emailul rămâne **suspendat**,
+și am tratat asta ca stare declarată, nu ca lipsă tăcută: antet vizibil în `lib/email.ts`
+(„dacă depanezi de ce un elev n-a primit email, nu căuta bug aici"), notă în `TASKS.md`,
+și un rând separat de reactivare — exact lecția de la `TICHETE_UI_ACTIVE`, unde munca a
+rămas invizibilă în producție fiindcă nimeni nu notase pasul de aprindere.
+
+**Și o problemă găsită căutând-o pe asta: UI-ul promitea un email pe care nu-l putea
+trimite.** Trei locuri — `help-button.tsx` („Primești un email când răspunsul e gata"),
+`intrebari/my-tickets.tsx`, `profesor/teacher-tickets.tsx` (unde îi spunea profesorului că
+elevul primește email). Primele două sunt ascunse azi de `TICHETE_UI_ACTIVE`, deci nu mint
+pe nimeni **încă** — dar ar fi devenit vizibile exact la reconectarea lui Bogdan, adică
+tocmai când nimeni nu s-ar mai fi uitat la ele. Textele spun acum că răspunsul se vede în
+„Întrebările mele", ceea ce e adevărat indiferent de starea emailului. Schimbarea inversă e
+rând în TASKS.
+
+Merită numit tiparul: o funcție dezactivată nu e neutră. Restul produsului continuă să
+vorbească despre ea.
+
 ---
 
 ## 2026-09-03 — Andrei (alocarea confirmată, cardul respins, SMS în loc de IP)

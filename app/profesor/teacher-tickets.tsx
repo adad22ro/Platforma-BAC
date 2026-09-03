@@ -364,7 +364,7 @@ function AnswerForm({
         autoFocus
       />
       <p className="mt-1 text-xs text-zinc-500">
-        {answer.length}/{MAX_ANSWER} · elevul primește un email cu răspunsul.
+        {answer.length}/{MAX_ANSWER} · elevul vede răspunsul în &bdquo;Întrebările mele&rdquo;.
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">

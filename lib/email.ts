@@ -1,5 +1,19 @@
 // Trimiterea de email, prin Resend.
 //
+// ┌─────────────────────────────────────────────────────────────────────────┐
+// │ STARE: INACTIV IN PRODUCTIE (decis 2026-09-03).                         │
+// │                                                                          │
+// │ Codul e complet si testat, dar NU trimite nimic si nu va trimite pana    │
+// │ cand nu exista un domeniu propriu verificat in Resend. Nu avem inca      │
+// │ unul, si nu se cumpara acum — decizie explicita, nu omisiune.            │
+// │                                                                          │
+// │ Deci: daca depanezi de ce un elev n-a primit email, NU cauta bug aici.   │
+// │ Raspunsul e ca `RESEND_API_KEY` nu e setat, si asta e intentionat.       │
+// │                                                                          │
+// │ De reactivat: vezi „Email tranzactional" in TASKS.md — patru pasi, din   │
+// │ care niciunul nu e cod.                                                  │
+// └─────────────────────────────────────────────────────────────────────────┘
+//
 // De ce Resend si nu Postmark/SendGrid: se integreaza printr-un singur POST, nu
 // cere pachet in plus, iar nivelul gratuit acopera cu mult volumul nostru.
 //

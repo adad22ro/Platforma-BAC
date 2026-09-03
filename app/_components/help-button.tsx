@@ -93,8 +93,8 @@ export function HelpButton({
           Întrebarea a fost trimisă.
         </p>
         <p className="mt-1 text-sm text-green-700 dark:text-green-400">
-          Un profesor îți răspunde în cel mult 24 de ore. Primești un email când
-          răspunsul e gata.
+          Un profesor îți răspunde în cel mult 24 de ore. Găsești răspunsul în
+          pagina &bdquo;Întrebările mele&rdquo;.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-4">
           <button

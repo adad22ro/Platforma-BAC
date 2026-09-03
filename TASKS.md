@@ -357,6 +357,11 @@ minute de citit changelog. Ce automatizăm e *reamintirea*, nu *decizia*.
 
 Codul e scris și testat. Ce lipsește nu se rezolvă cu un commit.
 
+> ⚠️ **Stare: SUSPENDAT (decis 2026-09-03).** Domeniul nu se cumpără acum. Codul e
+> complet, testat și **inert** — fără `RESEND_API_KEY` nu trimite nimic și nu loghează
+> nimic. Nu e o scăpare, e o decizie; dacă depanezi de ce un elev n-a primit email,
+> răspunsul e aici, nu în cod.
+
 ### Blocajul real: nu avem domeniu propriu
 
 `vercel domains ls` → **0 domenii**. Aplicația rulează pe `platforma-bac.vercel.app`, iar
@@ -377,6 +382,7 @@ condiția ca emailurile să fie citite.
 | ⬜ | Domeniul adăugat în Vercel + în Resend, DNS verificat | Andrei | — | Aceleași DNS, două locuri: Vercel pentru site, Resend pentru SPF + DKIM. Resend arată exact ce înregistrări trebuie adăugate |
 | ⬜ | `RESEND_API_KEY` + `EMAIL_FROM` în Vercel (Production) | Andrei | — | **Nu și în Preview.** Un deploy de preview care trimite emailuri reale elevilor e o greșeală ușor de făcut și greu de reparat |
 | ⬜ | Verificare cap-coadă cu un tichet real | Andrei | — | După ce cheia e pusă: un răspuns de profesor → emailul chiar ajunge, linkul duce în firul corect |
+| ⬜ | **Textele din UI care promit email, puse la loc** | Bogdan | `notificare-email-resend` | Trei locuri spuneau elevului „Primești un email" — o promisiune pe care sistemul nu o putea ține. Schimbate pe 2026-09-03 în „vezi răspunsul în «Întrebările mele»": `help-button.tsx`, `intrebari/my-tickets.tsx`, `profesor/teacher-tickets.tsx`. **Când emailul devine activ, textele se schimbă înapoi** — altfel funcția merge și nimeni nu o anunță elevului |
 
 ### Ce e deja făcut și nu mai trebuie atins
 
