@@ -5,6 +5,15 @@
 
 ---
 
+## #023 — Aceeași eroare ca #022, a doua oară: `apiVersion` Stripe după bump
+**Data:** 2026-09-03
+**Context:** PR #61 (dependabot, 7 pachete) avea `test` și Vercel roșii. Identic cu #022, doar cu datele mutate: `lib/stripe.ts(5,3): error TS2322: Type '"2026-07-29.dahlia"' is not assignable to type '"2026-08-26.dahlia"'`. Vercel pica din aceeași cauză — build-ul Next rulează `tsc`.
+**Cauză:** aceeași ca la #022 — `stripe@22.6.0` mută `ApiVersion` pe `2026-08-26.dahlia`, iar literalul nostru din `lib/stripe.ts` nu mai e atribuibil. **Recidivă, nu eroare nouă:** se va repeta la fiecare bump de `stripe` care schimbă versiunea de API.
+**Soluție:** actualizat `apiVersion` la `'2026-08-26.dahlia'`. Verificat `CHANGELOG`-ul lui `stripe` pentru 22.6.0 — schimbările nu ating Checkout Sessions sau webhook-ul nostru (adaugă `Billing.FeedbackOption`, câmpuri noi opționale, `EventNotificationHandler`; singura eliminare, `cryptogram` pe `PaymentAttemptRecord`, nu e folosită la noi). `lint` + `typecheck` + 223 de teste, verde local.
+**Dacă reapare:** nu mai investiga — e mecanica de la #022. De luat în calcul o soluție durabilă, ca să nu fie a treia oară: fie `apiVersion: Stripe.LatestApiVersion` derivat din tip (dar pierzi actualizarea conștientă, care e tocmai rostul constrângerii), fie un rând recurent în `TASKS.md` la fiecare bump de `stripe`. Vezi și #022.
+
+---
+
 ## #022 — CI roșu pe PR-ul dependabot: `apiVersion` Stripe incompatibil după bump
 **Data:** 2026-08-25
 **Context:** PR #56 (dependabot, 9 pachete minor+patch) avea `test` și Vercel roșii. `npm test` trecea; pica `typecheck`: `lib/stripe.ts(5,3): error TS2322: Type '"2026-06-24.dahlia"' is not assignable to type '"2026-07-29.dahlia"'`.
