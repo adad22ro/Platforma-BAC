@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { AppUser } from "@/lib/current-user";
 
+type MesajEmail = { catre: string; subiect: string; html: string; text: string };
+type TrimiteEmail = (m: MesajEmail) => Promise<{ trimis: boolean; id?: string }>;
+
 // Acelasi mock de query builder ca in questions-api.test.ts: rezultate per tabel,
 // consumate in ordinea apelurilor, cu inregistrarea apelurilor ca sa verificam
 // filtrarea (esential aici — un elev nu trebuie sa vada tichetele altcuiva).
@@ -44,11 +47,16 @@ const h = vi.hoisted(() => {
     supabaseAdmin: { from: vi.fn(from) },
     logError: vi.fn(async () => {}),
     getCurrentAppUser: vi.fn(async () => state.user),
+    trimiteEmail: vi.fn<TrimiteEmail>(async () => ({ trimis: true, id: "em_1" })),
   };
 });
 
 vi.mock("@/lib/supabase-admin", () => ({ supabaseAdmin: h.supabaseAdmin }));
 vi.mock("@/lib/log-error", () => ({ logError: h.logError }));
+vi.mock("@/lib/email", async (importActual) => {
+  const actual = await importActual<typeof import("@/lib/email")>();
+  return { ...actual, trimiteEmail: h.trimiteEmail };
+});
 vi.mock("@/lib/current-user", async (importActual) => {
   const actual = await importActual<typeof import("@/lib/current-user")>();
   return { ...actual, getCurrentAppUser: h.getCurrentAppUser };
@@ -369,6 +377,48 @@ describe("POST /api/tickets/[id]/messages", () => {
     h.state.user = teacher;
     h.state.results = { tickets: [{ data: null, error: null }] };
     expect((await messagePOST(jsonReq({ body: "x" }), ctx("t1"))).status).toBe(404);
+  });
+
+  // Notificarea pleaca DOAR cand raspunde un corector. Un elev care revine in fir
+  // si-ar trimite email siesi.
+  it("raspunsul corectorului notifica elevul pe email", async () => {
+    h.state.user = teacher;
+    h.state.results = {
+      tickets: [{ data: { id: "t1", user_id: "u-s", status: "open", lesson_title: "Balada" }, error: null }],
+      ticket_messages: [{ data: { id: "m2" }, error: null }],
+      users: [{ data: { email: "elev@example.com", full_name: "Ion Popescu" }, error: null }],
+    };
+
+    await messagePOST(jsonReq({ body: "Uite cum se rezolva" }), ctx("t1"));
+
+    expect(h.trimiteEmail).toHaveBeenCalledOnce();
+    const arg = h.trimiteEmail.mock.calls[0]![0];
+    expect(arg.catre).toBe("elev@example.com");
+    expect(arg.subiect).toContain("Balada");
+    // Se foloseste prenumele, nu numele intreg.
+    expect(arg.text).toContain("Salut, Ion!");
+    expect(arg.html).toContain("/intrebari?tichet=t1");
+  });
+
+  it("revenirea elevului NU trimite email", async () => {
+    h.state.user = student;
+    h.state.results = threadResults();
+    await messagePOST(jsonReq({ body: "tot nu am inteles" }), ctx("t1"));
+    expect(h.trimiteEmail).not.toHaveBeenCalled();
+  });
+
+  // Emailul e un efect secundar: daca pica, mesajul ramane scris si ruta da tot 201.
+  it("esecul emailului nu strica raspunsul deja salvat", async () => {
+    h.state.user = teacher;
+    h.trimiteEmail.mockRejectedValueOnce(new Error("resend down"));
+    h.state.results = {
+      tickets: [{ data: { id: "t1", user_id: "u-s", status: "open", lesson_title: null }, error: null }],
+      ticket_messages: [{ data: { id: "m2" }, error: null }],
+      users: [{ data: { email: "elev@example.com", full_name: null }, error: null }],
+    };
+
+    const res = await messagePOST(jsonReq({ body: "raspuns" }), ctx("t1"));
+    expect(res.status).toBe(201);
   });
 
   it("un elev strain nu poate scrie in fir (404, nu 403)", async () => {
