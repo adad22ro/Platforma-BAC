@@ -6,6 +6,34 @@
 
 ---
 
+## 2026-09-03 — Andrei (audit de branch-uri + o sarcină pierdută)
+
+Verificare completă a branch-urilor, nu doar a lui `main`. `origin/dashboard-elev`
+(Bogdan) arăta ca scenariul din regulă — ahead 3, behind 85, ultimul commit acum 23 de
+zile. **Nu era.** Două din cele trei commituri erau deja în `main` sub alte hash-uri
+(`110f285`, `01e47a2`), iar jurnalul ajunsese și el acolo pe alt drum. Contractele se
+potrivesc: UI-ul trimite exact ce cere `POST /api/lessons`, iar la erori se uită doar la
+codul HTTP — deci trecerea la formatul JSON de eroare nu îl atinge. Branch-ul era
+redundant, nu periculos. Șterse cele 22 de branch-uri complet mergeate (ahead 0).
+`dashboard-elev` **păstrat** deși conținutul lui e integrat: e singurul cu commituri
+proprii ca hash, e al lui Bogdan, iar ștergerea nu aduce nimic în plus față de a-l lăsa —
+decizia e a lui.
+
+**Ce chiar se pierduse, și nu era cod.** Jurnalul lui Bogdan din 2026-08-10 se încheia cu
+un „rămas deschis": `/upgrade` rămâne accesibil unui profesor care intră direct pe URL.
+Observația a stat în DEVLOG treisprezece săptămâni fără să devină sarcină. Verificat azi:
+încă e valabilă — nici `app/upgrade/page.tsx`, nici `POST /api/checkout` nu se uită la rol,
+deci un profesor poate ajunge pe Stripe Checkout și plăti un abonament de care nu are
+nevoie. Acum e rând în `TASKS.md`.
+
+**Ce arată asta despre proces.** Regula existentă spune să notăm ce afectează pe altcineva.
+Aici nimeni nu era afectat — Bogdan a scris corect, în locul potrivit, la momentul potrivit.
+Ce a lipsit e pasul următor: un „rămas deschis" dintr-un jurnal nu se transformă singur în
+sarcină. DEVLOG-ul e narativ și se citește o dată; `TASKS.md` e lista de lucru. Ce rămâne
+doar în primul dispare, chiar dacă e scris impecabil.
+
+---
+
 ## 2026-09-03 — Andrei (întreținere: PR #61 + regulă recurentă)
 
 PR #61 (dependabot, 7 pachete) avea `test` și Vercel roșii. Aceeași cauză, a doua oară:
@@ -421,6 +449,7 @@ N-am scris sarcini pentru punctele nedecise. Un rând „⬜ de făcut" pe o dec
 - **Fără CTA de upgrade pentru profesori:** butonul „Treci la Premium" de pe `/dashboard` și „Upgrade la Premium" de pe `/profil` se ascund pentru rolul `teacher` (are acces la conținut prin rol, nu prin abonament). Pe `/profil`, cardul de abonament arată „Profesor · activ" + „Ca profesor ai acces complet la conținut, fără abonament." Două teste noi (57/57). Verificat în browser cu contul de profesor.
 
 **Rămas deschis:** `/upgrade` rămâne accesibil dacă un profesor intră direct pe URL — nu mai are cum să ajungă acolo dintr-un buton, dar ruta nu blochează rolul teacher. Urmează Săpt. 7-8 — teste grilă + progres.
+
 ---
 
 ## 2026-08-07 — Andrei (Sesiunea backend — restanțe)
