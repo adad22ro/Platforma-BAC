@@ -31,7 +31,7 @@ const h = vi.hoisted(() => {
         record.calls.push([name, ...args]);
         return b;
       };
-    for (const m of ["select", "order", "eq", "in", "insert", "update", "delete", "upsert"]) {
+    for (const m of ["select", "order", "eq", "neq", "in", "limit", "is", "insert", "update", "delete", "upsert"]) {
       b[m] = chain(m);
     }
     b.single = () => Promise.resolve(result);

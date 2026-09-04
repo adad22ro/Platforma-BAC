@@ -32,7 +32,8 @@
 - **Model de abonament:** **trial 14 zile**, apoi plată. Anti-abuz fără card: email normalizat + domenii temporare + verificare SMS. Detalii în „Model de abonament și alocare"
 - **Email tranzacțional:** cod gata (Resend), **suspendat conștient** — nu avem domeniu propriu și nu se cumpără acum. Vezi „Email tranzacțional"
 - **Trial 14 zile:** **implementat** (`trial-14-zile`) — Stripe ține ceasul, dreptul la trial se leagă de emailul normalizat. Rămâne **aplicarea migrării în producție**
-- **Ultima actualizare:** 2026-09-04 — trial 14 zile implementat cap-coadă (normalizare email + domenii temporare + `trialuri_consumate`), 15 teste noi
+- **Alocarea tichetelor:** **backend complet** (`alocare-tichete`) — rezervare lipicioasă, cădere în pool prin trecerea timpului, preluare atomică. UI-ul lui Bogdan rămâne blocat de reconectarea tichetelor
+- **Ultima actualizare:** 2026-09-04 — alocarea tichetelor (backend); trial 14 zile implementat cap-coadă (normalizare email + domenii temporare + `trialuri_consumate`), 15 teste noi
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -495,12 +496,13 @@ liber. Pool-ul din care se *ia* nu presupune nimic.
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Migrare: `mentor_rezervat_id`, `rezervat_pana`, `preluat_la` pe `tickets` | Andrei | `alocare-tichete` | Fără tabel de alocări. Expirarea e o comparație de timp la citire, nu un job de fundal |
-| ⬜ | La creare, rezervă tichetul pentru ultimul mentor al elevului | Andrei | `alocare-tichete` | „Ultimul mentor" = autorul ultimului mesaj non-elev din firele acelui elev. Dacă nu există, tichetul intră direct în pool |
-| ⬜ | `GET /api/tickets` întoarce **două** liste: rezervate mie + pool | Andrei | `alocare-tichete` | Un tichet cu `rezervat_pana` trecut apare în pool pentru toți, fără să fie nevoie să-l atingă cineva |
-| ⬜ | `POST /api/tickets/[id]/preia` — preluare din pool | Andrei | `alocare-tichete` | Trebuie să fie **atomic**: doi mentori care apasă simultan, unul singur câștigă. Condiție pe `preluat_la IS NULL` în `UPDATE`, nu verificare-apoi-scriere |
-| ⬜ | Marcarea tichetelor întârziate (al doilea prag) | Andrei | `alocare-tichete` | Sus în listă + vizibil ca întârziat. Fără el, un tichet pe care nu-l vrea nimeni stă în pool la nesfârșit — exact eșecul tăcut pe care modelul îl evită |
-| ⬜ | UI mentor: „Ale mele" vs. „Disponibile" + buton Preia | Bogdan | — | Depinde de rutele de mai sus. **Blocat de reconectarea UI-ului de tichete** (Săpt. 9-10) |
+| ✅ | Migrare: `mentor_rezervat_id`, `rezervat_pana`, `preluat_la` pe `tickets` | Andrei | `alocare-tichete` | Fără tabel de alocări și fără job de fundal — expirarea e o comparație de timp la citire. Index parțial pe pool. **Migrarea nu e încă aplicată în producție** (rând separat mai jos) |
+| ✅ | La creare, rezervă tichetul pentru ultimul mentor al elevului | Andrei | `alocare-tichete` | O singură interogare cu join intern pe tichet (`ticket_messages` → `tickets!inner`), nu doi pași cu `in` — lista de id-uri ar fi crescut cu fiecare întrebare pusă vreodată de acel elev. Fără mentor găsit, tichetul intră direct în pool, fără termen |
+| ✅ | `GET /api/tickets` întoarce **două** liste: rezervate mie + pool | Andrei | `alocare-tichete` | Pentru corectori: `alemele` + `pool`, **pe lângă** `tickets`, care rămâne neschimbat ca să nu se rupă nimic din UI. Fiecare tichet primește `intarziat: boolean`. Pool-ul e FIFO — întârziatele în cap, apoi cel mai vechi primul |
+| ✅ | `POST /api/tickets/[id]/preia` — preluare din pool | Andrei | `alocare-tichete` | Atomic: `update ... where preluat_la is null`. Zero rânduri ⇒ `409`, nu `500` — cursa pierdută e un rezultat normal, nu o eroare. **Propria rezervare se poate prelua**: asta e chiar exercitarea dreptului de prim refuz. Test dedicat pe cursă |
+| ✅ | Marcarea tichetelor întârziate (al doilea prag) | Andrei | `alocare-tichete` | `intarziat` calculat la citire (24h, nepreluat, nu `closed`) + sortare cu ele în cap. Un tichet preluat NU e întârziat oricât ar sta: are un om pe el, iar problema semnalată aici e că nu-l vrea nimeni |
+| ⬜ | UI mentor: „Ale mele" vs. „Disponibile" + buton Preia | Bogdan | — | **Backendul e gata** (`alocare-tichete`): `GET /api/tickets` dă `alemele` + `pool` + `intarziat`, iar `POST /api/tickets/[id]/preia` întoarce `409` când pierzi cursa — de tratat ca stare normală, cu reîncărcarea listei, nu ca eroare. Rămâne **blocat de reconectarea UI-ului de tichete** (Săpt. 9-10) |
+| ⬜ | **Migrarea `20260904140000_alocare_tichete.sql`, aplicată în producție** | Andrei | `alocare-tichete` | Până atunci rutele citesc coloane inexistente. `npx supabase db push` |
 
 **Praguri propuse, de calibrat pe date reale:** 8 ore lucrătoare pentru rezervare, 24 de ore
 până la marcarea ca întârziat. Sunt puncte de pornire, nu cifre sfinte.

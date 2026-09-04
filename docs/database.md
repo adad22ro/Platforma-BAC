@@ -458,6 +458,32 @@ DDL: [`20260904120000_trial_14_zile.sql`](../supabase/migrations/20260904120000_
 
 ---
 
+### tickets — alocare
+
+Trei coloane adăugate pentru alocarea lipicioasă cu revenire în pool:
+
+```sql
+alter table public.tickets
+  add column if not exists mentor_rezervat_id uuid references public.users(id) on delete set null,
+  add column if not exists rezervat_pana timestamptz,
+  add column if not exists preluat_la timestamptz;
+```
+
+`mentor_rezervat_id` înseamnă „rezervat pentru" înainte de preluare și „al lui" după.
+`rezervat_pana` trecut ⇒ tichetul e în pool, **fără să-l atingă nimeni**. `preluat_la`
+non-null ⇒ revendicare fermă, care nu mai expiră — și e exact condiția pe care se sprijină
+preluarea atomică (`where preluat_la is null`).
+
+Index parțial `tickets_pool_idx` pe `created_at` doar pentru `preluat_la is null and
+status <> 'closed'`: tichetele preluate și cele închise nu se caută niciodată așa.
+
+Logica: [`lib/alocare-tichete.ts`](../lib/alocare-tichete.ts). Rutele și pragurile:
+[`docs/api.md`](api.md).
+
+DDL: [`20260904140000_alocare_tichete.sql`](../supabase/migrations/20260904140000_alocare_tichete.sql)
+
+---
+
 ## Conexiunea la Supabase
 
 Fișier: `lib/supabase.ts`
@@ -475,7 +501,7 @@ Pentru operațiuni de server (webhook, panou admin) se folosește clientul admin
 
 ---
 
-> Actualizat la: 2026-09-04 — trial de 14 zile (`trialuri_consumate` + `users.email_normalizat`).
+> Actualizat la: 2026-09-04 — alocarea tichetelor (3 coloane pe `tickets`); trial de 14 zile (`trialuri_consumate` + `users.email_normalizat`).
 > Anterior: 2026-08-25 — adăugat baremul ca date (`barem_versions` / `barem_rubrici` / `barem_criterii`).
 > Anterior: 2026-07-01 — `processed_events` (idempotență webhook Stripe).
 > Schema mutată în migrări versionate (`supabase/migrations/`) + tipuri generate (`types/database.ts`).

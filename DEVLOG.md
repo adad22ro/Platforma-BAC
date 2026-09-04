@@ -6,6 +6,56 @@
 
 ---
 
+## 2026-09-04 — Andrei (alocarea tichetelor: backend)
+
+A doua bucată a zilei, luată pentru că nu depinde nici de domeniu, nici de Bogdan.
+
+**Trei coloane și nicio infrastructură.** `mentor_rezervat_id`, `rezervat_pana`,
+`preluat_la` pe `tickets`. Fără tabel de alocări, fără job de fundal. Expirarea rezervării
+e o **comparație de timp la citire** — nu există proces care „eliberează" nimic, deci nu
+există proces care să poată să nu ruleze. Un cron care ar fi făcut asta ar fi fost a doua
+sursă de adevăr peste ceas, iar când nu rulează tichetele rămân blocate tăcut, adică exact
+eșecul pe care modelul îl evită.
+
+**Preluarea e o singură scriere condiționată**, nu verificare-apoi-scriere:
+`update ... where preluat_la is null`. Doi mentori care apasă în aceeași secundă: al doilea
+atinge zero rânduri și primește `409`. Nu există fereastră de cursă fiindcă nu există
+verificare separată. Citirea de dinainte servește doar mesajului de eroare, și e scris ca
+atare în cod ca să nu creadă cineva peste un an că pe ea se sprijină corectitudinea. Are
+test dedicat.
+
+**O greșeală de proiectare prinsă la timp.** Prima variantă întorcea `409` și când tichetul
+era propria ta rezervare încă valabilă. E fix invers decât trebuie: rezervarea *este* un
+drept de prim refuz, iar preluarea e chiar exercitarea lui — transformă un termen care curge
+într-o revendicare fermă. Acum propria rezervare se poate prelua oricând.
+
+**„Ultimul mentor al elevului" — o interogare, nu două.** Varianta evidentă (întâi id-urile
+tichetelor elevului, apoi mesajele cu `in`) construiește o listă care crește cu fiecare
+întrebare pusă vreodată de acel elev. Merge perfect în teste și devine o problemă abia după
+câteva luni de folosire reală. Am înlocuit-o cu un join intern pe tichet.
+
+**Contractul lui `GET /api/tickets` s-a extins, nu s-a schimbat.** Corectorii primesc
+`alemele` și `pool` **pe lângă** `tickets`, care a rămas exact cum era; elevii primesc
+același răspuns ca înainte. Pool-ul e FIFO cu întârziatele în cap — ordinea „ultima
+activitate întâi", bună pentru arhivă, ar fi lăsat ultimul exact tichetul uitat de toți.
+
+**Praguri: 8 și 24 de ore de ceas.** Decizia spunea „8 ore lucrătoare"; orele lucrătoare ar
+fi cerut un calendar (weekenduri, sărbători, fusul fiecărui mentor) pentru un câștig care nu
+există — expirarea nu ia nimic nimănui, doar face tichetul vizibil și pentru alții. Un
+tichet care cade în pool sâmbătă dimineața e exact ce vrem: elevul nu așteaptă până luni.
+Rămân de calibrat pe date reale.
+
+**Ce nu se vede în producție.** UI-ul de mentor („Ale mele" / „Disponibile" + Preia) e al lui
+Bogdan și e blocat de reconectarea tichetelor la firul de mesaje. Backendul ăsta stă gata și
+nefolosit până atunci — notat ca atare în TASKS, ca să nu pară muncă dispărută.
+
+**Rămas deschis:** aplicarea migrării în producție. Spre deosebire de trial, aici eșecul
+**nu** e tăcut — rutele citesc coloane care încă nu există.
+
+24 de teste noi (287 în total), lint și typecheck curate.
+
+---
+
 ## 2026-09-04 — Andrei (trial de 14 zile, cu tot cu anti-abuz)
 
 Prima bucată de cod din secțiunea de abonament decisă ieri. Domeniul propriu s-a amânat
