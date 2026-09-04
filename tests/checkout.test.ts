@@ -7,12 +7,16 @@ const h = vi.hoisted(() => {
     sessionUrl: 'https://checkout.stripe.com/s/test' as string | null,
     createThrows: false,
     role: 'student' as 'student' | 'teacher' | 'mentor' | null,
+    trialAcordat: true,
   }
   const auth = vi.fn(async () => ({ userId: state.userId }))
   const currentUser = vi.fn(async () => ({
     emailAddresses: state.email ? [{ emailAddress: state.email }] : [],
   }))
-  const sessionsCreate = vi.fn(async () => {
+  // Parametrul e tipat (si folosit trivial) ca `mock.calls[0][0]` sa nu fie `never`:
+  // vrem sa putem inspecta ce s-a trimis la Stripe, nu doar sa comparam cu un obiect.
+  const sessionsCreate = vi.fn(async (params: Record<string, unknown>) => {
+    void params
     if (state.createThrows) throw new Error('stripe error')
     return { url: state.sessionUrl }
   })
@@ -23,7 +27,12 @@ const h = vi.hoisted(() => {
   function h_role() {
     return state.role
   }
-  return { state, auth, currentUser, sessionsCreate, logError, getCurrentAppUser }
+  const decideTrial = vi.fn(async () => ({
+    acordat: state.trialAcordat,
+    motiv: state.trialAcordat ? 'acordat' : 'deja-consumat',
+    emailNormalizat: 'elev@example.com',
+  }))
+  return { state, auth, currentUser, sessionsCreate, logError, getCurrentAppUser, decideTrial }
 })
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: h.auth, currentUser: h.currentUser }))
@@ -32,6 +41,7 @@ vi.mock('@/lib/stripe', () => ({
 }))
 vi.mock('@/lib/log-error', () => ({ logError: h.logError }))
 vi.mock('@/lib/current-user', () => ({ getCurrentAppUser: h.getCurrentAppUser }))
+vi.mock('@/lib/trial', () => ({ decideTrial: h.decideTrial, ZILE_TRIAL: 14 }))
 
 import { POST } from '@/app/api/checkout/route'
 
@@ -42,6 +52,7 @@ beforeEach(() => {
   h.state.sessionUrl = 'https://checkout.stripe.com/s/test'
   h.state.createThrows = false
   h.state.role = 'student'
+  h.state.trialAcordat = true
   process.env.STRIPE_PRICE_ID_MONTHLY = 'price_123'
   process.env.NEXT_PUBLIC_APP_URL = 'https://app.test'
 })
@@ -72,7 +83,7 @@ describe('POST /api/checkout', () => {
         client_reference_id: 'user_1',
         customer_email: 'elev@example.com',
         line_items: [{ price: 'price_123', quantity: 1 }],
-        metadata: { clerk_id: 'user_1' },
+        metadata: expect.objectContaining({ clerk_id: 'user_1' }),
       })
     )
   })
@@ -124,5 +135,40 @@ describe('POST /api/checkout — rolul cu acces prin rol nu plateste', () => {
     const res = await POST()
     expect(res.status).toBe(200)
     expect(h.sessionsCreate).toHaveBeenCalledOnce()
+  })
+})
+
+// Trial-ul e o conditie a ofertei, deci se decide pe server. UI-ul nu are cuvant:
+// pretul si zilele gratuite nu se negociaza din browser.
+describe('POST /api/checkout — trial de 14 zile', () => {
+  it('elev eligibil -> trial_period_days pe abonament', async () => {
+    await POST()
+    expect(h.sessionsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subscription_data: expect.objectContaining({ trial_period_days: 14 }),
+        metadata: expect.objectContaining({
+          trial: 'da',
+          email_normalizat: 'elev@example.com',
+        }),
+      })
+    )
+  })
+
+  it('trial deja consumat -> sesiune FARA trial_period_days', async () => {
+    h.state.trialAcordat = false
+    await POST()
+    const arg = h.sessionsCreate.mock.calls[0]?.[0] as {
+      subscription_data: Record<string, unknown>
+      metadata: Record<string, string>
+    }
+    expect(arg.subscription_data).not.toHaveProperty('trial_period_days')
+    expect(arg.metadata.trial).toBe('nu')
+  })
+
+  // Fara asta, webhook-ul ar marca drept consumat un trial pe care nu l-a dat nimeni.
+  it('profesorul nici nu ajunge la decizia de trial', async () => {
+    h.state.role = 'teacher'
+    await POST()
+    expect(h.decideTrial).not.toHaveBeenCalled()
   })
 })

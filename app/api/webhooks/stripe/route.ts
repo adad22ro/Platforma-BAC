@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/log-error'
+import { marcheazaTrialConsumat } from '@/lib/trial'
 
 // La versiunea API 2026-06-24.dahlia `current_period_end` este per-item,
 // nu pe obiectul Subscription. Citim defensiv ambele variante.
@@ -106,6 +107,19 @@ export async function POST(req: NextRequest) {
           },
           { clerk_id: clerkId ?? undefined }
         )
+
+        // Trial-ul se marcheaza consumat abia AICI, cand checkout-ul chiar s-a
+        // terminat — nu la crearea sesiunii. Intre "Upgrade" si Stripe elevul poate
+        // renunta, iar un trial ars pe un checkout abandonat nu se repara singur.
+        const emailNormalizat = session.metadata?.email_normalizat
+        if (session.metadata?.trial === 'da' && emailNormalizat) {
+          await marcheazaTrialConsumat({
+            emailNormalizat,
+            clerkId,
+            stripeSubscriptionId:
+              typeof session.subscription === 'string' ? session.subscription : null,
+          })
+        }
         break
       }
 

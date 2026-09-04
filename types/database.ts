@@ -672,11 +672,33 @@ export type Database = {
           },
         ]
       }
+      trialuri_consumate: {
+        Row: {
+          clerk_id: string | null
+          consumat_la: string
+          email_normalizat: string
+          stripe_subscription_id: string | null
+        }
+        Insert: {
+          clerk_id?: string | null
+          consumat_la?: string
+          email_normalizat: string
+          stripe_subscription_id?: string | null
+        }
+        Update: {
+          clerk_id?: string | null
+          consumat_la?: string
+          email_normalizat?: string
+          stripe_subscription_id?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           clerk_id: string
           created_at: string
           email: string
+          email_normalizat: string | null
           full_name: string | null
           id: string
           role: string
@@ -689,6 +711,7 @@ export type Database = {
           clerk_id: string
           created_at?: string
           email: string
+          email_normalizat?: string | null
           full_name?: string | null
           id: string
           role?: string
@@ -701,6 +724,7 @@ export type Database = {
           clerk_id?: string
           created_at?: string
           email?: string
+          email_normalizat?: string | null
           full_name?: string | null
           id?: string
           role?: string

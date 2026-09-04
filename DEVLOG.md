@@ -6,6 +6,57 @@
 
 ---
 
+## 2026-09-04 — Andrei (trial de 14 zile, cu tot cu anti-abuz)
+
+Prima bucată de cod din secțiunea de abonament decisă ieri. Domeniul propriu s-a amânat
+deliberat (vine în perioada de testare cu elevi), deci am luat firul care nu depinde de el.
+
+**Ceasul e la Stripe, nu la noi.** `subscription_data.trial_period_days: 14` pe sesiunea de
+Checkout. Tentația era o pereche de coloane `trial_start`/`trial_end` — și ar fi însemnat a
+doua sursă de adevăr lângă `subscription_status`, care se desincronizează de Stripe la
+primul webhook pierdut. Nu ținem nicio dată de trial în DB. Statusul `trialing` era deja
+tratat ca acces activ în webhook, deci partea de acces n-a avut nevoie de nimic.
+
+**Decizia de trial stă pe server, în `/api/checkout`.** Nu în UI: zilele gratuite sunt o
+condiție a ofertei, iar condițiile ofertei nu se negociază din browser. Aceeași logică
+pentru care verificarea de rol a ajuns tot acolo, săptămâna trecută.
+
+**Problema reală era reînregistrarea, nu trial-ul.** Trei filtre, în ordinea costului:
+forma adresei, lista de domenii temporare, apoi o citire din DB.
+
+Un detaliu care merită scris, fiindcă e ușor de greșit în direcția scumpă: **punctele se
+scot doar la Gmail**. `e.l.e.v@gmail.com` și `elev@gmail.com` sunt aceeași căsuță — dar la
+majoritatea celorlalte domenii `ion.popescu@scoala.ro` și `ionpopescu@scoala.ro` sunt doi
+oameni diferiți. O normalizare „generală" a punctelor ar fi refuzat trial-ul unor elevi
+nevinovați, tăcut, fără ca cineva să înțeleagă de ce. Are test de regresie explicit.
+Din același motiv domeniile temporare sunt **listă, nu euristică**: orice euristică
+(„domeniu tânăr", „nume scurt") respinge și adrese legitime de școală.
+
+**`trialuri_consumate` e tabel separat, nu coloană pe `users`** — și ăsta e miezul.
+Webhook-ul Clerk *șterge* rândul din `users` la `user.deleted`. Dacă dreptul la trial ar fi
+trăit pe acel rând, orice elev și-ar fi resetat trial-ul ștergându-și contul și făcându-și
+altul, adică exact atacul pe care îl închideam. Aici rândul rămâne după ștergerea contului.
+
+**Se marchează consumat la `checkout.session.completed`, nu la crearea sesiunii.** Între
+„am apăsat Upgrade" și Stripe elevul poate renunța; un trial ars pe un checkout abandonat
+e un bug pe care nici el, nici noi nu-l reparăm ușor.
+
+**Două alegeri de fail-open, conștiente.** La eroare de citire din DB, `decideTrial`
+*acordă* trial-ul și loghează. Un elev real care nu-și primește trial-ul din cauza unei
+căderi de bază de date e o pierdere mai mare decât un trial în plus dat unui abuzator.
+Consecința directă: **până se aplică migrarea în producție, limita nu e activă** — nimic nu
+crapă, toată lumea primește trial. E în TASKS ca rând separat, tocmai pentru că eșecul e
+tăcut.
+
+**Rămase deschise:** aplicarea migrării (`npx supabase db push`, cere mașina lui Andrei);
+restricțiile de domeniu în dashboard-ul Clerk, care blochează *înregistrarea*, nu doar
+trial-ul; și `customer.subscription.trial_will_end` — emailul cu 3 zile înainte de expirare,
+blocat de aceeași lipsă de domeniu propriu ca restul emailului tranzacțional.
+
+15 teste noi (263 în total), lint și typecheck curate.
+
+---
+
 ## 2026-09-03 — Andrei (curățenie de sesiune: zgomotul din unelte)
 
 Închiderea sesiunii. Două fire lăsate în urmă, amândouă mici și amândouă cu cost zilnic.

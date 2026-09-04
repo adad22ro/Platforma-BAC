@@ -31,7 +31,8 @@
 - **Bottleneck:** reconectarea frontendului de tichete la contractul de mesaje (Bogdan)
 - **Model de abonament:** **trial 14 zile**, apoi plată. Anti-abuz fără card: email normalizat + domenii temporare + verificare SMS. Detalii în „Model de abonament și alocare"
 - **Email tranzacțional:** cod gata (Resend), **suspendat conștient** — nu avem domeniu propriu și nu se cumpără acum. Vezi „Email tranzacțional"
-- **Ultima actualizare:** 2026-09-03 — sesiune lungă: trial 14 zile decis, alocare decisă, email scris și suspendat, `/api/checkout` respinge rolurile, lint curățat la zero avertismente
+- **Trial 14 zile:** **implementat** (`trial-14-zile`) — Stripe ține ceasul, dreptul la trial se leagă de emailul normalizat. Rămâne **aplicarea migrării în producție**
+- **Ultima actualizare:** 2026-09-04 — trial 14 zile implementat cap-coadă (normalizare email + domenii temporare + `trialuri_consumate`), 15 teste noi
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -416,12 +417,15 @@ jos, și **fiecare rând de mai jos costă mai mult decât cel de deasupra**.
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | **Trial în Stripe, nu în coloane proprii** | Andrei | `trial-14-zile` | `subscription_data.trial_period_days: 14` pe sesiunea de Checkout. Stripe ține ceasul, trimite `customer.subscription.trial_will_end` și trece singur la plată. **Nu ne scriem propriul ceas de trial** — ar însemna încă o sursă de adevăr lângă `subscription_status`, care se poate desincroniza de Stripe |
-| ⬜ | **Normalizarea emailului la înregistrare** | Andrei | `trial-14-zile` | Cea mai ieftină măsură și prinde majoritatea cazurilor leneșe: `e.l.e.v+bac2@gmail.com` și `elev@gmail.com` sunt **același** cont la Gmail. De stocat o coloană `email_normalizat` (puncte scoase, `+tag` tăiat, domeniu în litere mici, `googlemail.com`→`gmail.com`), **unică**. Atenție: normalizarea punctelor e corectă doar la Gmail, nu la orice domeniu |
-| ⬜ | **Blocarea domeniilor de unică folosință** | Andrei | `trial-14-zile` | Listă de domenii temporare (mailinator, temp-mail, 10minutemail…), reîmprospătată periodic. Prinde al doilea val de abuz. Listă, nu euristică — o euristică respinge și adrese legitime de școală |
-| ⬜ | **Un singur trial per elev, nu per cont** | Andrei | `trial-14-zile` | Trial-ul se leagă de `email_normalizat`, nu de rândul din `users`. Un cont nou pe același email normalizat pornește **fără** trial. Fără asta, primele două măsuri doar încetinesc abuzul |
+| ✅ | **Trial în Stripe, nu în coloane proprii** | Andrei | `trial-14-zile` | `subscription_data.trial_period_days: 14`, decis pe server în `POST /api/checkout` — UI-ul n-are cuvânt asupra ofertei. Stripe ține ceasul; `trialing` era deja tratat ca acces activ în webhook. Zero coloane proprii de trial |
+| ✅ | **Normalizarea emailului la înregistrare** | Andrei | `trial-14-zile` | [`lib/email-normalizat.ts`](lib/email-normalizat.ts); scrisă în `users.email_normalizat` de webhook-ul Clerk, la `user.created` **și** `user.updated`. Punctele se scot **doar** la gmail/googlemail — la restul domeniilor `a.b@x.ro` și `ab@x.ro` sunt căsuțe diferite, iar unirea lor ar refuza trial-ul unui om nevinovat (test de regresie explicit) |
+| ✅ | **Blocarea domeniilor de unică folosință** | Andrei | `trial-14-zile` | [`lib/domenii-temporare.ts`](lib/domenii-temporare.ts) — 36 de domenii, listă, nu euristică. Efectul e **refuzul trial-ului**, nu blocarea contului: blocarea la înregistrare se face din Clerk (restricții pe domenii, pas de dashboard) — vezi rândul separat |
+| ✅ | **Un singur trial per elev, nu per cont** | Andrei | `trial-14-zile` | Tabel `trialuri_consumate`, cheie primară pe emailul normalizat. **Tabel separat, nu coloană pe `users`**, fiindcă webhook-ul Clerk șterge rândul din `users` la `user.deleted` — altfel trial-ul se reseta ștergându-ți contul. Se marchează la `checkout.session.completed`, nu la crearea sesiunii: un checkout abandonat n-ar trebui să ardă trial-ul |
 | ❌ | ~~Card obligatoriu la începutul trial-ului~~ | — | — | **Respins (2026-09-03).** Ar fi oprit aproape complet reînregistrarea, dar pierdem elevii care nu au card sau nu vor să-l dea înainte de a fi convinși. La un public de 17-18 ani, asta e o felie prea mare din pâlnie ca să merite |
 | ⬜ | **Verificare prin SMS la înregistrare** | Andrei | `antiabuz-telefon` | Înlocuitorul cardului. Numărul de telefon e **mult mai greu de schimbat decât un email și mult mai ușor de dat decât un card**. Clerk o are nativ (`phone_number` ca identificator + cod SMS), deci nu adăugăm infrastructură. Trial legat de număr, ca și de emailul normalizat. Cost ~0,03-0,05 EUR/SMS, plătit o dată per elev real |
+| ⬜ | **Migrarea `20260904120000_trial_14_zile.sql`, aplicată în producție** | Andrei | `trial-14-zile` | Codul e merged, dar până se aplică migrarea `decideTrial` primește eroare de DB la fiecare checkout — și, prin proiectare, **acordă trial** în acel caz. Deci nu crapă nimic, dar nici nu se aplică limita. `npx supabase db push` |
+| ⬜ | **Restricții de domeniu în dashboard-ul Clerk** | Andrei | — | Lista noastră refuză *trial-ul*; blocarea *înregistrării* pe domenii temporare se configurează în Clerk (Restrictions → blocklist). Pas de dashboard, nu de cod |
+| ⬜ | **`trial_will_end` — email cu 3 zile înainte** | Andrei | — | Stripe trimite `customer.subscription.trial_will_end`; noi încă nu ascultăm evenimentul. **Blocat de domeniul propriu** (emailul e suspendat) — de reluat odată cu el |
 
 **Regula de proporție, asumată:** un elev cinstit nu trebuie să simtă niciuna dintre
 măsurile de mai sus. Dacă o măsură anti-abuz creează fricțiune vizibilă la înregistrare,
