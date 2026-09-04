@@ -4,25 +4,30 @@ import { checkChapterAccess, accessErrorResponse } from '@/lib/chapter-access'
 import { logError } from '@/lib/log-error'
 import { apiError } from '@/lib/api-error'
 import {
-  ePool,
-  eAlMeu,
   eIntarziat,
   expirareRezervare,
   ultimulMentorAlElevului,
 } from '@/lib/alocare-tichete'
+import { citestePaginarea, taiePagina } from '@/lib/paginare'
 
 const MAX_MESSAGE = 2000
 const MAX_SELECTION = 1000
+
+const CAMPURI_TICHET =
+  'id, user_id, chapter_id, lesson_id, lesson_title, message, selection, scroll_percent, progress_score, progress_total, progress_attempts, status, created_at, last_message_at, mentor_rezervat_id, rezervat_pana, preluat_la'
 
 // GET /api/tickets — lista tichetelor.
 // Elev: doar ale lui. Profesor: toate (filtrabil prin ?status=, ?chapter_id=,
 // ?lesson_id=), ordonate dupa ultima activitate — coada de lucru, nu arhiva.
 //
-// Pentru corectori raspunsul contine, PE LANGA `tickets`, doua liste derivate:
-// `alemele` (rezervate pentru mine si inca valabile, sau preluate de mine) si `pool`
-// (nerevendicate, ordonate cu intarziatele in cap). `tickets` ramane neschimbat
-// intentionat — e contractul pe care UI-ul existent se sprijina deja, iar noile
-// campuri se adauga langa el, nu in locul lui.
+// Pentru corectori raspunsul contine, PE LANGA `tickets`, doua liste: `alemele`
+// (rezervate pentru mine si inca valabile, sau preluate de mine) si `pool`
+// (nerevendicate). Toate trei sunt paginate independent, cu ?limit= si ?offset=.
+//
+// Cele doua liste se cer acum din DB, nu se filtreaza in JS peste tot tabelul.
+// Filtrarea in memorie era corecta doar cat timp raspunsul continea TOATE tichetele:
+// pe o pagina de 50, un `pool` derivat din ea ar fi fost „ce s-a nimerit in primele
+// 50 dupa ultima activitate", adica o lista falsa, nu o coada.
 export async function GET(req: Request) {
   const user = await getCurrentAppUser()
   if (!user) return apiError(401, 'Unauthorized')
@@ -31,44 +36,83 @@ export async function GET(req: Request) {
   const status = url.searchParams.get('status')
   const chapterId = url.searchParams.get('chapter_id')
   const lessonId = url.searchParams.get('lesson_id')
+  const p = citestePaginarea(url)
 
-  let query = supabaseAdmin
-    .from('tickets')
-    .select('id, user_id, chapter_id, lesson_id, lesson_title, message, selection, scroll_percent, progress_score, progress_total, progress_attempts, status, created_at, last_message_at, mentor_rezervat_id, rezervat_pana, preluat_la')
-    .order('last_message_at', { ascending: false })
+  // Filtrele din query string, aplicate la fel pe toate cele trei liste.
+  const filtre = (q: ReturnType<typeof cerereTichete>) => {
+    if (status) q = q.eq('status', status)
+    if (chapterId) q = q.eq('chapter_id', chapterId)
+    if (lessonId) q = q.eq('lesson_id', lessonId)
+    return q
+  }
+
+  let query = filtre(cerereTichete()).order('last_message_at', { ascending: false })
 
   // Elevul e legat de propriile tichete indiferent ce trimite in query string.
   // Profesorii si mentorii vad toate tichetele; elevul, doar pe ale lui.
   if (!poateCorecta(user)) query = query.eq('user_id', user.id)
 
-  if (status) query = query.eq('status', status)
-  if (chapterId) query = query.eq('chapter_id', chapterId)
-  if (lessonId) query = query.eq('lesson_id', lessonId)
-
-  const { data, error } = await query
+  const { data, error } = await query.range(p.offset, p.rangeTo)
   if (error) {
     await logError('tickets', 'GET error', { code: error.code, message: error.message })
     return apiError(500, 'Database error')
   }
 
-  const tickets = data ?? []
-  if (!poateCorecta(user)) return Response.json({ tickets })
-
   const acum = new Date()
-  const cuIntarziere = tickets.map((t) => ({ ...t, intarziat: eIntarziat(t, acum) }))
+  const { pagina, meta } = taiePagina(data ?? [], p)
+  const tickets = pagina.map((t) => ({ ...t, intarziat: eIntarziat(t, acum) }))
 
-  const alemele = cuIntarziere.filter((t) => eAlMeu(t, user.id, acum))
-  const pool = cuIntarziere
-    .filter((t) => ePool(t, acum))
-    // Intarziatele in cap, apoi cel mai vechi primul. Pool-ul e o coada FIFO: cine a
-    // asteptat cel mai mult are prioritate. Ordinea din `tickets` (ultima activitate
-    // intai) e potrivita pentru arhiva, dar ar lasa ultimul exact tichetul uitat.
-    .sort((a, b) => {
-      if (a.intarziat !== b.intarziat) return a.intarziat ? -1 : 1
-      return a.created_at.localeCompare(b.created_at)
+  if (!poateCorecta(user)) return Response.json({ tickets, meta })
+
+  const acumIso = acum.toISOString()
+
+  // „Ale mele": rezervate pentru mine si inca valabile, sau preluate de mine.
+  const cereAleMele = filtre(cerereTichete())
+    .eq('mentor_rezervat_id', user.id)
+    .or(`preluat_la.not.is.null,rezervat_pana.gt.${acumIso}`)
+    .order('last_message_at', { ascending: false })
+    .range(p.offset, p.rangeTo)
+
+  // Pool: nepreluate, fara rezervare valabila, si care nu sunt inchise.
+  //
+  // Ordonarea dupa `created_at` crescator e suficienta si pentru cerinta
+  // „intarziatele in cap": intarziat inseamna exact „mai vechi de 24 de ore", deci
+  // e o functie monotona de created_at. Sortarea pe doua chei pe care o scrisesem
+  // producea aceeasi ordine cu mai multa munca — si nu mai era exprimabila in SQL.
+  const cerePool = filtre(cerereTichete())
+    .is('preluat_la', null)
+    .neq('status', 'closed')
+    .or(`mentor_rezervat_id.is.null,rezervat_pana.is.null,rezervat_pana.lte.${acumIso}`)
+    .order('created_at', { ascending: true })
+    .range(p.offset, p.rangeTo)
+
+  const [rAleMele, rPool] = await Promise.all([cereAleMele, cerePool])
+
+  if (rAleMele.error || rPool.error) {
+    await logError('tickets', 'GET liste error', {
+      alemele: rAleMele.error?.message,
+      pool: rPool.error?.message,
     })
+    return apiError(500, 'Database error')
+  }
 
-  return Response.json({ tickets: cuIntarziere, alemele, pool })
+  const aleMele = taiePagina(rAleMele.data ?? [], p)
+  const pool = taiePagina(rPool.data ?? [], p)
+
+  return Response.json({
+    tickets,
+    meta,
+    alemele: aleMele.pagina.map((t) => ({ ...t, intarziat: eIntarziat(t, acum) })),
+    alemele_meta: aleMele.meta,
+    pool: pool.pagina.map((t) => ({ ...t, intarziat: eIntarziat(t, acum) })),
+    pool_meta: pool.meta,
+  })
+}
+
+// Selectul comun celor trei liste. Un singur literal, fara concatenare: Supabase
+// deduce tipul randului din textul selectului, iar `a + b` il face `string`.
+function cerereTichete() {
+  return supabaseAdmin.from('tickets').select(CAMPURI_TICHET)
 }
 
 // POST /api/tickets — elevul deschide un tichet DIN fereastra lectiei.

@@ -6,6 +6,65 @@
 
 ---
 
+## 2026-09-04 — Andrei (paginare, și de ce am renunțat la cache)
+
+Sesiunea a pornit spre cache pe `/api/chapters` și s-a terminat altundeva. Merită scris de ce.
+
+**Cache-ul: amânat, nu uitat.** `use cache` cere `cacheComponents: true`, care nu e un flag
+local. Pornit, face PPR comportamentul implicit în tot App Router-ul și schimbă navigarea
+client-side — Next ține rutele precedente montate prin `<Activity>`, deci starea UI se
+păstrează la navigare înainte-înapoi. Adică o schimbare de randare peste tot frontendul lui
+Bogdan, exact în timp ce el are de reconectat UI-ul de tichete, pentru ~200ms pe un endpoint
+cu date care se schimbă săptămânal. Cealaltă cale, `unstable_cache`, e explicit înlocuită în
+Next 16 — cod nou pe un API deprecat e datorie cumpărată cu bani gheață.
+
+Am citit documentația din `node_modules` înainte, și bine am făcut: nimic din asta nu era în
+ce știam despre Next. A mai ieșit la iveală și o capcană pe care aș fi lovit-o oricum —
+`/api/chapters` întoarce **altceva pentru profesor** (capitolele draft). Cache pe rută ar fi
+scurs draft-uri către elevi sau le-ar fi ascuns profesorului, după cum nimerea prima cerere.
+
+**Paginarea, în loc.** Nicio rută de listă n-avea limită. Pe web nu se vede; pe telefon, pe
+date celulare, se plătește de două ori — transfer și baterie. `?limit=` (implicit 50, max
+100) + `?offset=`, cu `has_more` dintr-un rând cerut în plus. Un `count: 'exact'` ar fi
+însemnat încă o interogare peste tot tabelul la fiecare pagină, pentru un număr pe care
+interfața nu-l afișează.
+
+`limit`/`offset`, nu cursor: cursorul e mai corect sub inserări concurente, dar cere o cheie
+de ordonare stabilă expusă în răspuns. Câștigul apare la milioane de rânduri; noi avem mii.
+
+**Ce a forțat paginarea să scoată la iveală.** La `/api/tickets`, `pool` și `alemele` erau
+filtrate în JS peste rezultatul complet. Corect — cât timp răspunsul conținea *toate*
+tichetele. Odată paginat, un `pool` derivat din pagină ar fi însemnat „ce s-a nimerit în
+primele 50 după ultima activitate": o listă care arată ca o coadă și nu e. Ambele s-au mutat
+în SQL, fiecare cu paginarea ei.
+
+Tot atunci a ieșit că sortarea pe două chei pe care o scrisesem ieri pentru pool era
+**redundantă**: `intarziat` înseamnă exact „mai vechi de 24 de ore", deci e o funcție
+monotonă de `created_at`. Ordonarea FIFO pune întârziatele în cap de la sine. Și un mic bug:
+tichetele `closed` nepreluate apăreau în pool. Acum sunt excluse în interogare.
+
+**Am șters `eAlMeu`.** Rămăsese fără niciun apelant real după mutarea în SQL — două definiții
+ale aceleiași reguli, în două limbaje, dintre care una nefolosită. Alea nu rămân sincronizate.
+
+**`/api/questions/dificultate` NU e paginat**, deliberat. Ordonarea „cele mai greșite întâi"
+vine dintr-o a doua interogare, iar întrebările neîncercate de nimeni lipsesc din ea și
+trebuie totuși afișate. Paginarea peste tabelul de întrebări plus sortarea *paginii* ar fi
+produs primele 50 după `id`, sortate între ele — o ordine falsă, adică exact genul de listă
+care arată corect și minte. Se rezolvă cu o vedere care face `left join`; e rând în TASKS.
+
+**Discuție de arhitectură, notată ca sarcini.** Stiva e potrivită și cea mai bună decizie
+pentru mobil e deja luată din întâmplare fericită: tot accesul la date trece prin rutele
+Next cu `service_role`, zero politici RLS, clientul `anon` nefolosit. Aplicația mobilă
+refolosește aceeași suprafață; alternativa ar fi cerut autorizarea scrisă a doua oară, în
+politici RLS. Au rămas trei lucruri de făcut înainte de mobil — versionarea API-ului,
+autentificarea pe token, retenția pe tabelele care cresc — plus unul care nu e tehnic:
+**Apple ia 15-30% din abonamentele vândute într-o aplicație nativă**, ceea ce poate schimba
+răspunsul la „nativ sau PWA" înainte de a scrie prima linie.
+
+12 teste noi (296 în total), lint și typecheck curate.
+
+---
+
 ## 2026-09-04 — Andrei (alocarea tichetelor: backend)
 
 A doua bucată a zilei, luată pentru că nu depinde nici de domeniu, nici de Bogdan.

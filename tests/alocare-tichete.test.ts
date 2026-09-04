@@ -53,7 +53,6 @@ vi.mock('@/lib/current-user', async () => {
 import { POST as preia } from '@/app/api/tickets/[id]/preia/route'
 import {
   ePool,
-  eAlMeu,
   eIntarziat,
   expirareRezervare,
   ORE_REZERVARE,
@@ -122,31 +121,6 @@ describe('ePool', () => {
       preluat_la: new Date(ACUM.getTime() - 100 * ORA).toISOString(),
     })
     expect(ePool(t, ACUM)).toBe(false)
-  })
-})
-
-describe('eAlMeu', () => {
-  it('rezervat pentru mine, valabil -> al meu', () => {
-    const t = tichet({
-      mentor_rezervat_id: 'm1',
-      rezervat_pana: new Date(ACUM.getTime() + ORA).toISOString(),
-    })
-    expect(eAlMeu(t, 'm1', ACUM)).toBe(true)
-    expect(eAlMeu(t, 'm2', ACUM)).toBe(false)
-  })
-
-  it('rezervarea mea expirata -> nu mai e a mea, e a oricui', () => {
-    const t = tichet({
-      mentor_rezervat_id: 'm1',
-      rezervat_pana: new Date(ACUM.getTime() - ORA).toISOString(),
-    })
-    expect(eAlMeu(t, 'm1', ACUM)).toBe(false)
-    expect(ePool(t, ACUM)).toBe(true)
-  })
-
-  it('preluat de mine -> al meu, indiferent de termen', () => {
-    const t = tichet({ mentor_rezervat_id: 'm1', preluat_la: ACUM.toISOString() })
-    expect(eAlMeu(t, 'm1', ACUM)).toBe(true)
   })
 })
 

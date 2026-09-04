@@ -33,7 +33,8 @@
 - **Email tranzacțional:** cod gata (Resend), **suspendat conștient** — nu avem domeniu propriu și nu se cumpără acum. Vezi „Email tranzacțional"
 - **Trial 14 zile:** **implementat** (`trial-14-zile`) — Stripe ține ceasul, dreptul la trial se leagă de emailul normalizat. Rămâne **aplicarea migrării în producție**
 - **Alocarea tichetelor:** **backend complet** (`alocare-tichete`) — rezervare lipicioasă, cădere în pool prin trecerea timpului, preluare atomică. UI-ul lui Bogdan rămâne blocat de reconectarea tichetelor
-- **Ultima actualizare:** 2026-09-04 — alocarea tichetelor (backend); trial 14 zile implementat cap-coadă (normalizare email + domenii temporare + `trialuri_consumate`), 15 teste noi
+- **Pregătire pentru mobil:** paginarea e făcută; rămân versionarea API-ului, autentificarea pe token și retenția. Vezi secțiunea de întreținere. **De lămurit înainte de orice cod mobil: Apple ia 15-30% din abonamentele vândute în aplicație nativă** — poate schimba răspunsul la „nativ sau PWA"
+- **Ultima actualizare:** 2026-09-04 — paginare pe rutele de listă; alocarea tichetelor (backend); trial 14 zile implementat cap-coadă (normalizare email + domenii temporare + `trialuri_consumate`), 15 teste noi
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -249,7 +250,12 @@
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
 | 🟡 | **LanguageTool** self-hostat pentru ortografie/punctuație | Andrei | `barem-date` | **Clientul e scris** ([`lib/languagetool.ts`](lib/languagetool.ts)) și legat de barem prin `parametri.categorie` (`ortografie` / `punctuatie` / `gramatica` / `toate`) și `praguri[].max_greseli`. **Rămâne doar găzduirea:** pornești instanța și pui `LANGUAGETOOL_URL` în env — zero cod. Local: `docker run -d -p 8010:8010 erikvl87/languagetool`. Fără variabilă, criteriile de limbă ies `indisponibil`, nu 0 |
-| ⬜ | Cache pe `/api/chapters` (`use cache`, Next 16) | Andrei | `cache-continut` | ~200ms per cerere pentru date care se schimbă săptămânal |
+| ❌ | ~~Cache pe `/api/chapters` (`use cache`, Next 16)~~ | Andrei | `cache-continut` | **Amânat (2026-09-04).** `use cache` cere `cacheComponents: true`, care nu e un flag local: face PPR comportamentul implicit în tot App Router-ul și schimbă navigarea client-side (rutele rămân montate prin `<Activity>`, starea UI se păstrează). O schimbare de randare peste tot frontendul lui Bogdan, pentru ~200ms pe un endpoint. Cealaltă cale, `unstable_cache`, e explicit înlocuită în Next 16. **De reluat ca adoptare deliberată a Cache Components, cu Bogdan la curent.** Atenție: ruta întoarce altceva pentru profesor (capitole draft) — cache pe rută ar scurge draft-uri; corect e cache pe citirea din DB, cu cheia pe „include draft-uri", cu `auth()` în afara scopului cacheuit |
+| ✅ | **Paginare pe rutele de listă** | Andrei | `paginare` | `?limit=` (implicit 50, max 100) + `?offset=`, `meta.has_more` dintr-un rând cerut în plus, fără `COUNT`. Aplicat pe `/api/tickets` (cele trei liste, fiecare separat) și `/api/greseli`. La tichete, `pool` și `alemele` s-au mutat din JS în SQL — filtrarea în memorie devenea o listă falsă odată paginată |
+| ⬜ | **Vedere SQL pentru dificultate**, ca `/api/questions/dificultate` să poată fi paginat | Andrei | `paginare` | Ordonarea „cele mai greșite întâi" vine dintr-o a doua interogare, iar întrebările neîncercate lipsesc din ea și trebuie totuși afișate. Paginarea peste `questions` + sortarea paginii ar da o ordine falsă. Cere `left join` într-o vedere |
+| ⬜ | **Decizie de versionare a API-ului**, înainte de primul build mobil | Andrei | — | O aplicație publicată nu poate fi forțată să se actualizeze: o versiune veche lovește `/api/*` luni de zile. `/api/v1/` sau disciplină strict aditivă — dar decis explicit, nu implicit. Contractele s-au schimbat de două ori doar în săptămâna asta |
+| ⬜ | **Retenție pe tabelele care cresc la nesfârșit** | Andrei | — | `error_logs`, `processed_events`, `answer_events` — fără cron, fără limită. `processed_events` se poate tăia după 30 de zile fără pierdere (idempotența Stripe n-are nevoie de istoric vechi). Devine urgent tăcut, la limita de stocare |
+| ⬜ | **Autentificare pe token pentru mobil** | Andrei | — | Tot ce există merge pe cookie de sesiune Clerk (`auth.protect()` în `proxy.ts`). Mobilul trimite Bearer token. Clerk suportă nativ, dar cere și `authorizedParties` — altfel se deschide o ușă |
 | ⬜ | Nivel intermediar în ierarhie (`chapters → units → lessons`) | Andrei | — | Doar dacă un capitol ajunge la ~30 de lecții. Momentan nu e nevoie |
 
 ### G. Structura materiei — **structura decisă, ordinea nu**

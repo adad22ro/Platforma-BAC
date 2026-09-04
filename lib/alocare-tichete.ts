@@ -33,6 +33,10 @@ export function expirareRezervare(acum: Date = new Date()): string {
 /**
  * E tichetul in pool-ul comun?
  *
+ * Foloseste-o pentru UN tichet deja citit (vezi ruta de preluare). Pentru LISTA
+ * tichetelor din pool, conditia e scrisa direct in interogare, in `GET /api/tickets` —
+ * o lista nu se poate filtra in memorie odata ce e paginata.
+ *
  * Da, daca nu l-a revendicat nimeni ferm SI (n-are rezervare, sau rezervarea a
  * expirat). Expirarea se citeste, nu se scrie: niciun proces nu trebuie sa "elibereze"
  * nimic, deci nu exista proces care sa poata sa nu ruleze.
@@ -42,13 +46,6 @@ export function ePool(t: AlocareTichet, acum: Date = new Date()): boolean {
   if (!t.mentor_rezervat_id) return true
   if (!t.rezervat_pana) return true
   return new Date(t.rezervat_pana) <= acum
-}
-
-/** Tichetele "ale mele": rezervate pentru mine si inca valabile, sau preluate de mine. */
-export function eAlMeu(t: AlocareTichet, userId: string, acum: Date = new Date()): boolean {
-  if (t.mentor_rezervat_id !== userId) return false
-  if (t.preluat_la) return true
-  return !ePool(t, acum)
 }
 
 /**
