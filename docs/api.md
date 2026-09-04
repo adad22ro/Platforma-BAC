@@ -225,6 +225,7 @@ Date placeholder: `npm run seed:questions` (6 întrebări × 4 variante per capi
 | `/api/tickets/[id]` | GET | tichetul **cu firul de mesaje** | autorul sau profesor |
 | `/api/tickets/[id]` | PATCH | închide / redeschide (`{ status }`) | autorul sau profesor |
 | `/api/tickets/[id]/messages` | POST | adaugă un mesaj în fir | autorul sau profesor |
+| `/api/tickets/[id]/preia` | POST | corectorul ia tichetul din pool | profesor sau mentor (`403` pentru elev) |
 
 **Corp cerere (creare):** `{ lesson_id, message, selection?, scroll_percent? }` —
 `lesson_id` și `message` obligatorii (max 2000 caractere), `selection` max 1000,
@@ -261,6 +262,52 @@ profesor, mesajele lui vechi nu devin retroactiv răspunsuri oficiale.
 prin `PATCH`. Prin PATCH se pot seta **doar** `closed` și `open` — `answered` nu e o stare
 pe care o alege cineva manual, ea rezultă din faptul că profesorul a scris în fir. Altfel
 un tichet ar putea apărea „răspuns" fără niciun răspuns.
+
+
+### Alocarea tichetelor — lipicioasă, cu revenire în pool
+
+Tichetul nou se **rezervă** pentru ultimul om care i-a răspuns elevului (autorul ultimului
+mesaj non-elev din firele lui). Rezervarea are termen: **8 ore**. La expirare tichetul cade
+singur în pool-ul comun și îl poate lua orice corector. După **24 de ore** nepreluat e
+marcat `intarziat` și urcă în capul cozii.
+
+Trei coloane pe `tickets` (`mentor_rezervat_id`, `rezervat_pana`, `preluat_la`), fără tabel
+de alocări și **fără job de fundal**: expirarea e o comparație de timp la citire. Un job
+care „eliberează" rezervări ar fi a doua sursă de adevăr peste ceas — dacă nu rulează,
+tichetele rămân blocate tăcut.
+
+**`GET /api/tickets` pentru corectori** întoarce, pe lângă `tickets` (neschimbat), două
+liste derivate:
+
+| Cheie | Conținut |
+|---|---|
+| `alemele` | rezervate pentru mine și încă valabile, sau preluate de mine |
+| `pool` | nerevendicate — **întârziatele în cap**, apoi cel mai vechi primul (FIFO) |
+
+Fiecare tichet primește și `intarziat: boolean`. Pentru elev răspunsul e neschimbat: doar
+`tickets`. `tickets` a rămas intenționat cum era — câmpurile noi se adaugă lângă el, nu în
+locul lui.
+
+**`POST /api/tickets/[id]/preia`** e o singură scriere condiționată:
+
+```sql
+update tickets set mentor_rezervat_id = :eu, preluat_la = now(), rezervat_pana = null
+where id = :id and preluat_la is null
+```
+
+Doi mentori care apasă în aceeași secundă: al doilea `UPDATE` atinge zero rânduri și
+primește **`409`**. Nu există fereastră între verificare și scriere, fiindcă nu există
+verificare separată. Citirea de dinainte servește doar mesajului de eroare.
+
+Codurile: `403` elev · `404` inexistent · `409` închis, luat de altcineva, sau cursă
+pierdută · `200` preluat. **Propria rezervare se poate prelua** — asta *este* exercitarea
+dreptului de prim refuz, și o transformă din termen care curge în revendicare fermă.
+
+> **Praguri de calibrat pe date reale.** Decizia spunea „8 ore lucrătoare"; implementarea
+> folosește 8 ore de ceas. Orele lucrătoare ar fi cerut un calendar (weekenduri, sărbători,
+> fusul fiecărui mentor) pentru un câștig inexistent: expirarea nu ia nimic nimănui, doar
+> face tichetul vizibil și pentru alții. Un tichet care cade în pool sâmbătă dimineața e
+> exact ce vrem — elevul nu așteaptă până luni.
 
 > **Neimplementat încă:** notificarea pe email a elevului la primirea răspunsului —
 > nu există serviciu de email configurat. Când va exista, se trimite din

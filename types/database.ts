@@ -600,6 +600,9 @@ export type Database = {
         Row: {
           chapter_id: string | null
           created_at: string
+          mentor_rezervat_id: string | null
+          preluat_la: string | null
+          rezervat_pana: string | null
           id: string
           last_message_at: string | null
           lesson_id: string | null
@@ -617,6 +620,9 @@ export type Database = {
         Insert: {
           chapter_id?: string | null
           created_at?: string
+          mentor_rezervat_id?: string | null
+          preluat_la?: string | null
+          rezervat_pana?: string | null
           id?: string
           last_message_at?: string | null
           lesson_id?: string | null
@@ -638,6 +644,9 @@ export type Database = {
           last_message_at?: string | null
           lesson_id?: string | null
           lesson_title?: string | null
+          mentor_rezervat_id?: string | null
+          preluat_la?: string | null
+          rezervat_pana?: string | null
           message?: string
           progress_attempts?: number | null
           progress_score?: number | null
