@@ -30,7 +30,8 @@
 - **Faza 2 (direcție de produs):** planificată — vezi secțiunea de la finalul fișierului. Decis în ședința din 12 august: jurnal de evenimente acum, repetiție spațiată cu **FSRS**, structura materiei în patru secțiuni, corectare stratificată (auto pe ce e fix, pre-notare pe text liber, mentor integral pe testele mari), public-țintă a XI-a + a XII-a
 - **Bottleneck:** reconectarea frontendului de tichete la contractul de mesaje (Bogdan)
 - **Model de abonament:** **trial 14 zile**, apoi plată. Anti-abuz fără card: email normalizat + domenii temporare + verificare SMS. Detalii în „Model de abonament și alocare"
-- **Ultima actualizare:** 2026-09-03 (trial decis, alocare decisă, `/api/checkout` respinge rolurile)
+- **Email tranzacțional:** cod gata (Resend), **suspendat conștient** — nu avem domeniu propriu și nu se cumpără acum. Vezi „Email tranzacțional"
+- **Ultima actualizare:** 2026-09-03 — sesiune lungă: trial 14 zile decis, alocare decisă, email scris și suspendat, `/api/checkout` respinge rolurile, lint curățat la zero avertismente
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
