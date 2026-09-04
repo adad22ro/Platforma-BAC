@@ -2,6 +2,7 @@ import { verifyWebhook } from '@clerk/nextjs/webhooks'
 import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/log-error'
+import { normalizeazaEmail } from '@/lib/email-normalizat'
 
 export async function POST(req: NextRequest) {
   let evt
@@ -20,10 +21,13 @@ export async function POST(req: NextRequest) {
     const email = email_addresses[0]?.email_address
     const full_name = `${first_name ?? ''} ${last_name ?? ''}`.trim() || null
 
+    // Forma canonica a adresei, calculata o singura data, la scriere. De ea se
+    // leaga dreptul la trial (lib/trial.ts) — vezi `trialuri_consumate`.
     const { error } = await supabaseAdmin.from('users').insert({
       id: crypto.randomUUID(),
       clerk_id: id,
       email,
+      email_normalizat: normalizeazaEmail(email),
       full_name,
     })
 
@@ -46,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     const { error } = await supabaseAdmin
       .from('users')
-      .update({ email, full_name })
+      .update({ email, email_normalizat: normalizeazaEmail(email), full_name })
       .eq('clerk_id', id)
 
     if (error) console.error('Supabase update error:', error)

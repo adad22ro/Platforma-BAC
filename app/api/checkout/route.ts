@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe'
 import { getCurrentAppUser } from '@/lib/current-user'
 import { logError } from '@/lib/log-error'
 import { apiError } from '@/lib/api-error'
+import { decideTrial, ZILE_TRIAL } from '@/lib/trial'
 
 // Creeaza o sesiune Stripe Checkout pentru abonamentul lunar premium.
 // Frontend-ul apeleaza POST /api/checkout si redirectioneaza userul la `url`.
@@ -34,6 +35,11 @@ export async function POST() {
   const user = await currentUser()
   const email = user?.emailAddresses[0]?.emailAddress
 
+  // Trial-ul se decide aici, nu in UI: pretul si conditiile ofertei sunt
+  // intotdeauna ale serverului. `metadata.trial` spune webhook-ului daca are ce
+  // marca drept consumat cand plata reuseste.
+  const trial = await decideTrial(email)
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -41,8 +47,17 @@ export async function POST() {
       customer_email: email,
       // Leaga sesiunea de userul Clerk; folosit de webhook ca sa stie pe cine sa actualizeze.
       client_reference_id: userId,
-      metadata: { clerk_id: userId },
-      subscription_data: { metadata: { clerk_id: userId } },
+      metadata: {
+        clerk_id: userId,
+        trial: trial.acordat ? 'da' : 'nu',
+        ...(trial.emailNormalizat ? { email_normalizat: trial.emailNormalizat } : {}),
+      },
+      subscription_data: {
+        metadata: { clerk_id: userId },
+        // Ceasul e al lui Stripe: el trimite `customer.subscription.trial_will_end`
+        // si trece singur la plata. Noi nu tinem nicio data de trial in DB.
+        ...(trial.acordat ? { trial_period_days: ZILE_TRIAL } : {}),
+      },
       success_url: `${appUrl}/dashboard?checkout=success`,
       cancel_url: `${appUrl}/dashboard?checkout=cancel`,
     })

@@ -422,6 +422,42 @@ DDL: [`20260825200000_barem_criterii.sql`](../supabase/migrations/20260825200000
 
 ---
 
+### trialuri_consumate
+
+Casuțele care și-au folosit deja trial-ul de 14 zile. Cheia primară e **emailul
+normalizat**, nu `user_id`.
+
+```sql
+create table if not exists public.trialuri_consumate (
+  email_normalizat text primary key,
+  clerk_id text,
+  stripe_subscription_id text,
+  consumat_la timestamptz not null default now()
+);
+```
+
+> **De ce tabel separat și nu o coloană pe `users`:** webhook-ul Clerk **șterge** rândul din
+> `users` la `user.deleted`. Dacă dreptul la trial ar fi trăit pe acel rând, orice elev și-ar
+> fi resetat trial-ul ștergându-și contul și făcându-și altul — exact atacul pe care îl
+> închidem. Aici rândul rămâne.
+>
+> **Ceasul trial-ului nu e la noi**, ci la Stripe (`subscription_data.trial_period_days`).
+> Coloane proprii `trial_start`/`trial_end` ar fi însemnat a doua sursă de adevăr lângă
+> `subscription_status`, care se desincronizează de Stripe la primul webhook pierdut.
+> `trialing` e deja tratat ca acces activ în webhook.
+
+Legat de `users.email_normalizat` (forma canonică a adresei, scrisă de webhook-ul Clerk:
+domeniu în litere mici, `+etichetă` tăiată, puncte scoase **doar** la Gmail/googlemail,
+`googlemail.com` → `gmail.com`). Coloana **nu** e unică: doi frați pe același Gmail cu
+`+tag` au dreptul la două conturi — le refuzăm doar al doilea trial, nu contul.
+
+Cod: [`lib/trial.ts`](../lib/trial.ts), [`lib/email-normalizat.ts`](../lib/email-normalizat.ts),
+[`lib/domenii-temporare.ts`](../lib/domenii-temporare.ts).
+
+DDL: [`20260904120000_trial_14_zile.sql`](../supabase/migrations/20260904120000_trial_14_zile.sql)
+
+---
+
 ## Conexiunea la Supabase
 
 Fișier: `lib/supabase.ts`
@@ -439,6 +475,7 @@ Pentru operațiuni de server (webhook, panou admin) se folosește clientul admin
 
 ---
 
-> Actualizat la: 2026-08-25 — adăugat baremul ca date (`barem_versions` / `barem_rubrici` / `barem_criterii`).
+> Actualizat la: 2026-09-04 — trial de 14 zile (`trialuri_consumate` + `users.email_normalizat`).
+> Anterior: 2026-08-25 — adăugat baremul ca date (`barem_versions` / `barem_rubrici` / `barem_criterii`).
 > Anterior: 2026-07-01 — `processed_events` (idempotență webhook Stripe).
 > Schema mutată în migrări versionate (`supabase/migrations/`) + tipuri generate (`types/database.ts`).

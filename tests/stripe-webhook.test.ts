@@ -23,8 +23,10 @@ const h = vi.hoisted(() => {
     items: { data: [{ current_period_end: state.subEndTs }] },
   }))
   const logError = vi.fn(async () => {})
+  const marcheazaTrialConsumat = vi.fn(async () => {})
 
   return {
+    marcheazaTrialConsumat,
     state,
     supa: { from, insert, update, updateEq, del, deleteEq },
     stripe: { constructEventAsync, subRetrieve },
@@ -40,6 +42,7 @@ vi.mock('@/lib/stripe', () => ({
   },
 }))
 vi.mock('@/lib/log-error', () => ({ logError: h.logError }))
+vi.mock('@/lib/trial', () => ({ marcheazaTrialConsumat: h.marcheazaTrialConsumat }))
 
 import { POST } from '@/app/api/webhooks/stripe/route'
 
@@ -195,5 +198,48 @@ describe('POST /api/webhooks/stripe', () => {
       expect.anything(),
       'critical'
     )
+  })
+})
+
+// Trial-ul se marcheaza consumat AICI, nu la crearea sesiunii: intre "Upgrade" si
+// Stripe elevul poate renunta, iar un trial ars pe un checkout abandonat nu se
+// repara singur.
+describe('POST /api/webhooks/stripe — consumarea trial-ului', () => {
+  function sesiune(metadata: Record<string, string>) {
+    return {
+      id: 'evt_trial',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          client_reference_id: 'user_1',
+          customer: 'cus_1',
+          subscription: 'sub_1',
+          metadata,
+        },
+      },
+    }
+  }
+
+  it('sesiune cu trial -> casuta e marcata', async () => {
+    const res = await POST(req(sesiune({ trial: 'da', email_normalizat: 'elev@gmail.com' })))
+    expect(res.status).toBe(200)
+    expect(h.marcheazaTrialConsumat).toHaveBeenCalledWith({
+      emailNormalizat: 'elev@gmail.com',
+      clerkId: 'user_1',
+      stripeSubscriptionId: 'sub_1',
+    })
+  })
+
+  it('sesiune fara trial -> nu se marcheaza nimic', async () => {
+    await POST(req(sesiune({ trial: 'nu', email_normalizat: 'elev@gmail.com' })))
+    expect(h.marcheazaTrialConsumat).not.toHaveBeenCalled()
+  })
+
+  // Aparare in adancime: fara adresa normalizata n-avem cheie, iar un insert cu
+  // undefined ar arunca in mijlocul procesarii unei plati reusite.
+  it('trial marcat dar fara email normalizat -> nu se marcheaza, plata trece', async () => {
+    const res = await POST(req(sesiune({ trial: 'da' })))
+    expect(res.status).toBe(200)
+    expect(h.marcheazaTrialConsumat).not.toHaveBeenCalled()
   })
 })
