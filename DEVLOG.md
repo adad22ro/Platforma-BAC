@@ -6,6 +6,33 @@
 
 ---
 
+## 2026-09-03 — Andrei (curățenie de sesiune: zgomotul din unelte)
+
+Închiderea sesiunii. Două fire lăsate în urmă, amândouă mici și amândouă cu cost zilnic.
+
+**`doc/` ieșit din calea uneltelor.** Artefacte docdash generate — `doc-filelist.js` cu un
+`var tree={};` gol, plus script și stil. Nu le scriem și nu le citim, dar produceau **două
+avertismente la fiecare rulare de lint**, de săptămâni. Adăugate în `globalIgnores` și în
+`.gitignore`. `npm run lint` e acum **complet curat, zero avertismente** — ceea ce
+înseamnă că următorul avertisment care apare va fi unul adevărat, și se va vedea.
+
+**`.github/instructions/` — decizia care aștepta din 12 august.** Commitul bc746a3 îl
+scosese dintr-un PR de securitate, unde intrase din greșeală printr-un `git add -A`, și
+lăsase explicit „de decis separat dacă îl comitem ca fișier de echipă". A stat nedecis trei
+săptămâni și apărea la fiecare `git status`.
+
+**Decis: nu se comite.** Fișierul e generat de extensia SonarQube din VS Code a fiecăruia,
+iar Bogdan poate să nici nu o folosească — un fișier de echipă e ceva scris de mână, nu
+ceva scuipat de o unealtă locală. În `.gitignore`, cu motivul scris acolo, inclusiv
+trimiterea la greșeala originală, ca regula să fie de înțeles fără arheologie prin istoric.
+
+**Tiparul comun al ambelor:** zgomotul constant din unelte nu costă nimic într-o zi și
+costă mult într-o lună — un lint care avertizează mereu e un lint pe care nu-l mai citește
+nimeni, iar un `git status` care arată mereu ceva netracked e unul în care nu mai observi
+ce e nou.
+
+---
+
 ## 2026-09-03 — Andrei (notificarea pe email, prin Resend)
 
 Ultimul blocaj din grupul de decizii. Codul e gata; ce lipsește nu se rezolvă cu un commit.

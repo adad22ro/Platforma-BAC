@@ -54,3 +54,13 @@ next-env.d.ts
 .githooks/last-run.log
 .githooks/last-failure.log
 .githooks/.last-status
+
+# documentatie generata (docdash) — artefact local, nu sursa
+/doc/
+
+# Instructiuni generate de extensia SonarQube din VS Code. Nu sunt fisier de
+# echipa: le genereaza extensia fiecaruia, si nu toti o folosim. Au intrat o data
+# din greseala printr-un `git add -A` (bc746a3) — de aici regula, ca sa nu se
+# repete. Daca vreodata vrem instructiuni comune de analiza, se scriu de mana si
+# se comit explicit.
+/.github/instructions/

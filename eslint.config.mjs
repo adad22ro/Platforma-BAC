@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Artefacte de documentatie generata (docdash). Nu e codul nostru: nu-l
+    // scriem, nu-l citim, si producea doua avertismente la fiecare rulare de
+    // lint — zgomot constant care ascunde avertismentele adevarate.
+    "doc/**",
   ]),
 ]);
 
