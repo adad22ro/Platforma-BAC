@@ -56,6 +56,18 @@ if (!/^postgres(ql)?:\/\//.test(url)) {
   iesiCuInstructiuni(`${NUME} nu arata a adresa de baza de date (trebuie sa inceapa cu postgresql://).`)
 }
 
+// Adresa e completata dinainte, cu un cuvant in loc de parola. Fara verificarea
+// asta, unealta ar incerca sa se conecteze cu parola „PAROLA_AICI" si ar raspunde
+// cu o eroare de autentificare — adevarata, dar care nu spune ce ai de facut.
+if (/PAROLA_AICI|\[YOUR-PASSWORD\]/.test(url)) {
+  console.error('\n  ✖ Parola nu a fost inca pusa in adresa.\n')
+  console.error('  Deschide .env.local, gaseste randul SUPABASE_DB_URL si inlocuieste')
+  console.error('  cuvantul PAROLA_AICI cu parola bazei de date. Restul adresei e corect.\n')
+  console.error('  Daca parola contine caractere speciale (@ : / ? # & %), trebuie')
+  console.error('  codate procentual — vezi tabelul din docs/onboarding-secrets.md.\n')
+  process.exit(1)
+}
+
 // Parola, ca s-o putem sterge din tot ce se afiseaza.
 const parola = (() => {
   const m = /^postgres(?:ql)?:\/\/[^:]+:([^@]+)@/.exec(url)

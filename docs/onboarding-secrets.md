@@ -99,9 +99,31 @@ merged fără migrarea aplicată e o rută care citește coloane inexistente.
 SUPABASE_DB_URL="postgresql://postgres.<ref>:<parola>@aws-...pooler.supabase.com:5432/postgres"
 ```
 
-De unde: panoul Supabase → **Connect** → *Connection string* → **Session pooler**
-(„Direct connection" cere IPv6). Înlocuiește `[YOUR-PASSWORD]` cu parola bazei. Dacă
-parola conține caractere speciale, trebuie codate procentual în adresă.
+De unde: panoul Supabase → **Connect** → fila *Connection string* → **Shared pooler**
+(nu fila „App Frameworks", care arată altceva: ghidul de pornire pentru un proiect nou).
+Adresa începe cu `postgresql://` și conține `pooler` — dacă începe cu `https://`, e fila
+greșită.
+
+Înlocuiește `[YOUR-PASSWORD]` cu parola bazei.
+
+**Dacă parola conține caractere speciale, ele trebuie codate procentual**, altfel adresa
+se rupe exact acolo — semnul `@`, de pildă, e cel care desparte parola de adresa serverului,
+deci un `@` în parolă face ca restul să fie citit ca nume de server:
+
+| Caracter | Se scrie |
+|---|---|
+| `@` | `%40` |
+| `:` | `%3A` |
+| `/` | `%2F` |
+| `?` | `%3F` |
+| `#` | `%23` |
+| `&` | `%26` |
+| `%` | `%25` |
+| spațiu | `%20` |
+
+Literele, cifrele și `- _ . ~` se scriu ca atare. Dacă parola are multe astfel de semne,
+cel mai simplu e o parolă nouă, doar din litere și cifre (Project Settings → Database →
+Reset database password) — dar atenție, resetarea strică orice altceva o folosește.
 
 Apoi:
 
