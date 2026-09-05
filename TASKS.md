@@ -34,7 +34,8 @@
 - **Trial 14 zile:** **implementat** (`trial-14-zile`) — Stripe ține ceasul, dreptul la trial se leagă de emailul normalizat. Rămâne **aplicarea migrării în producție**
 - **Alocarea tichetelor:** **backend complet** (`alocare-tichete`) — rezervare lipicioasă, cădere în pool prin trecerea timpului, preluare atomică. UI-ul lui Bogdan rămâne blocat de reconectarea tichetelor
 - **Pregătire pentru mobil:** paginarea e făcută; rămân versionarea API-ului, autentificarea pe token și retenția. Vezi secțiunea de întreținere. **De lămurit înainte de orice cod mobil: Apple ia 15-30% din abonamentele vândute în aplicație nativă** — poate schimba răspunsul la „nativ sau PWA"
-- **Ultima actualizare:** 2026-09-04 — paginare pe rutele de listă; alocarea tichetelor (backend); trial 14 zile implementat cap-coadă (normalizare email + domenii temporare + `trialuri_consumate`), 15 teste noi
+- **Corectarea lucrărilor:** **baza e pusă** (`lucrari-corectare`) — lucrarea ca entitate, notele per criteriu și per autor, stratul determinist legat de o rută reală. Migrarea e aplicată. Rămâne ruta de notă pentru mentor, apoi UI-ul lui Bogdan
+- **Ultima actualizare:** 2026-09-05 — lucrări + corectare automată; paginare pe rutele de listă; alocarea tichetelor (backend); trial 14 zile implementat cap-coadă (normalizare email + domenii temporare + `trialuri_consumate`), 15 teste noi
 - **Roluri:** Andrei = backend · Bogdan = frontend
 
 ---
@@ -292,11 +293,12 @@ Patru secțiuni, fiecare cu **materie + exerciții**: **Gramatică**, **Subiectu
 
 | Status | Sarcină | Cine | Branch | Note |
 |---|---|---|---|---|
-| ⬜ | Autocorectare completă pe cerințele cu răspuns fix / structură fixă | Andrei | `corectare-straturi` | Grile, potriviri, cerințe cu răspuns unic. Extinde ce există deja la `POST /api/chapters/[id]/submit` |
-| ⬜ | **Pre-notare deterministă** pe text liber (număr de cuvinte, părți componente, conectori, prezența citatului) | Andrei | `corectare-straturi` | Vezi și C. **Limitat la criteriile cu prag verificabil fără interpretare** — restul rămân sugestii, nu verdicte |
+| 🟡 | Autocorectare completă pe cerințele cu răspuns fix / structură fixă | Andrei | `lucrari-corectare` | **Baza există:** `lucrari` + `note_criterii` + `POST /api/lucrari` rulează stratul 1 pe text liber. Rămâne extinderea la cerințele cu răspuns unic din subiectele I-II, care nu sunt text liber și nu trec prin rubrica de redactare |
+| ✅ | **Pre-notare deterministă** pe text liber (număr de cuvinte, părți componente, conectori, prezența citatului) | Andrei | `lucrari-corectare` | `POST /api/lucrari` → rulează `corectare-strat1` și scrie notele cu `sursa='auto'`. Criteriile cu unealta indisponibilă rămân **nenotate, nu pe 0**. Migrarea e aplicată în producție |
 | ⬜ | **Pre-notare AI pe barem**, criteriu cu criteriu — **doar pentru mentor**, niciodată notă finală | Andrei | `corectare-straturi` | Baremul dă chiar vocabularul de notare („adecvată și nuanțată" = 2p). Nu-i cerem să „noteze eseul", ci să aplice un criteriu cu praguri |
-| ⬜ | Interfața mentorului pentru corectarea testelor mari | Bogdan | `corectare-straturi` | Lucrarea + pre-notările + autoevaluarea elevului, pe aceeași grilă oficială |
-| ⬜ | Autoevaluarea elevului ca **strat 0** pe text liber | Bogdan | `barem-date` | Elevul se notează pe grila oficială înainte să ajungă la mentor. Cost zero, scalează, și predă exact competența care aduce punctele pe formă. Diferența dintre autoevaluare și nota reală e cea mai bună lecție |
+| ⬜ | Interfața mentorului pentru corectarea testelor mari | Bogdan | `corectare-straturi` | **Backendul dă tot ce trebuie:** `GET /api/lucrari/[id]` întoarce textul, notele grupate pe criteriu cu toate sursele una lângă alta, și `total: { puncte, din, in_asteptare }`. Rămâne scrierea notei de mentor (`sursa='mentor'`) — rută separată, încă nefăcută |
+| ⬜ | **Rută pentru nota mentorului** pe un criteriu | Andrei | `lucrari-corectare` | `PUT /api/lucrari/[id]/note` — scrie cu `sursa='mentor'`, doar corector, cu `puncte <= din` garantat deja de bază. Ultimul pas ca fluxul să fie complet cap-coadă |
+| 🟡 | Autoevaluarea elevului ca **strat 0** pe text liber | Bogdan | `barem-date` | **Backendul acceptă deja:** `note_criterii` cu `sursa='elev'` coexistă cu nota automată și cu cea a mentorului, pe același criteriu. Nu intră în total — e exercițiu, nu notă. Rămâne UI-ul: grila oficială, completată de elev înainte să trimită |
 | ⬜ | **Capacitatea de corectare** — câte lucrări pe săptămână duce un mentor | ❓ | — | Testul la 3 capitole + simulările, corectate integral de om, sunt articolul cu cel mai mare volum din sistem. La 20 de elevi merge; plafonul trebuie **calculat**, nu descoperit |
 
 ### J. Secțiune remedială — greșelile frecvente
