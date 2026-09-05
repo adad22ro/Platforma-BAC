@@ -66,6 +66,32 @@ era scris pe contractul vechi — `POST /api/tickets/[id]/answer`, câmpuri
 aceea era periculos: `GET /api/tickets` răspundea, dar UI-ul citea câmpuri inexistente,
 deci toate tichetele apăreau „În așteptare", inclusiv cele la care profesorul răspunsese.
 
+# Explică simplu, și ține dicționarele la zi
+
+> **Regulă obligatorie.** Andrei nu are pregătire tehnică, dar vrea să înțeleagă tot ce se
+> construiește aici și să învețe. Cerut explicit pe 2026-09-05.
+
+**Cum se scrie.** În limbaj obișnuit, cu analogii. Termenul tehnic vine **după** explicație,
+ca etichetă — nu în locul ei. „Doi mentori apasă în aceeași secundă și se calcă pe picioare
+(asta se numește *cursă*)", nu „e o race condition".
+
+**Ce NU înseamnă asta.** Nu simplifica *decizia* ca să simplifici limbajul. Compromisurile,
+riscurile și motivele rămân spuse pe față, complet. Se schimbă vocabularul, nu conținutul.
+Un om care nu poate verifica ce i se spune nu poate decide, iar aici el decide.
+
+**Cele două dicționare — documente vii:**
+
+| Fișier | Ce conține | Când se actualizează |
+|---|---|---|
+| [`docs/dictionar.md`](docs/dictionar.md) | termeni tehnici, explicați în cuvinte obișnuite | orice termen nou folosit în discuție, DEVLOG sau PR |
+| [`docs/dictionar-functii.md`](docs/dictionar-functii.md) | ce face fiecare funcție mare: ce face · de ce există · ce s-ar strica fără ea | orice funcție nouă mare sau complexă |
+
+Se actualizează **în același PR cu codul**, nu după. Un dicționar rămas în urmă e mai rău
+decât niciunul, fiindcă te face să crezi că e complet.
+
+În `dictionar-functii.md` nu intră tot — funcțiile mici și evidente ar îneca lista și ar
+face-o inutilă. Intră ce e mare, ce e subtil, și ce ascunde o decizie.
+
 # Jurnalul de erori (ERRORS.md)
 
 - **Înainte** de a investiga o eroare nouă, citește `ERRORS.md` — verifică dacă eroarea (sau una similară) a mai apărut și cum a fost rezolvată.
