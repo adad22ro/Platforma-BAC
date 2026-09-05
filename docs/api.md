@@ -298,7 +298,71 @@ de nimeni lipsesc din ea și trebuie totuși afișate. Paginarea peste tabelul d
 ele — adică exact genul de listă care arată corect și minte. Corect se rezolvă cu o vedere
 care face `left join` în SQL; e rând separat în TASKS.
 
-### Alocarea tichetelor — lipicioasă, cu revenire în pool
+#
+## Lucrări și corectare
+
+| Rută | Verb | Ce face | Cine |
+|---|---|---|---|
+| `/api/lucrari` | GET | lista lucrărilor (paginată, **fără text**) | elev: ale lui · corector: toate |
+| `/api/lucrari` | POST | trimite o lucrare și primește corectarea automată | orice user logat |
+| `/api/lucrari/[id]` | GET | lucrarea cu textul și toate notele | autorul sau un corector |
+
+**Corp cerere (creare):** `{ rubrica_slug, text, text_suport?, chapter_id? }`. `text` max
+20.000 de caractere, la fel `text_suport`.
+
+### Versiunea de barem se îngheață pe lucrare
+
+Baremul e versionat. La creare se reține `barem_version_id` — versiunea **activă** în acel
+moment — plus `barem_rubrica_id` și `rubrica_slug`. Fără asta, o lucrare notată azi s-ar
+raporta tăcut la criterii schimbate sub ea la următorul import de barem, iar notele vechi
+ar deveni de neînțeles fără să se plângă nimeni.
+
+`rubrica_slug` e copiat separat pentru că e stabil între versiuni: statistici pe el
+traversează versiunile fără join prin trei tabele.
+
+### O notă per criteriu ȘI per autor
+
+`note_criterii` are index unic pe `(lucrare_id, criteriu_slug, sursa)`, unde `sursa` e
+`auto` · `ai` · `mentor` · `elev` (autoevaluare).
+
+Același criteriu poate avea deci mai multe note, care coexistă: elevul își dă 2, verificarea
+automată zice 1, mentorul dă 2. **Diferența dintre ele e lucrul care îl învață pe elev să se
+autoevalueze** — de aceea nu se suprascriu.
+
+Indexul face și reluarea corectării automate idempotentă: se rescrie rândul lui `auto`, fără
+să atingă nota mentorului.
+
+### Ce intră în total și ce nu
+
+`GET /api/lucrari/[id]` întoarce `total: { puncte, din, in_asteptare }`.
+
+Totalul se calculează **doar** din `auto` și `mentor`. Autoevaluarea elevului e un exercițiu,
+nu o notă — dacă ar intra în total, elevul și-ar putea da singur punctajul. Pre-notarea AI e
+acolo ca să scurteze munca mentorului, nu ca să i-o ia.
+
+`in_asteptare` numără punctele criteriilor încă nenotate (unealta n-a răspuns, sau e treaba
+mentorului), afișate **separat**, ca elevul să nu creadă că le-a pierdut.
+
+### `puncte = null` nu înseamnă zero
+
+O notă are `stare`: `acordat` (are punctaj), `indisponibil` (criteriu automatizabil, dar
+unealta n-a răspuns), `nenotat` (așteaptă AI sau mentor). Doar `acordat` are `puncte`; o
+constrângere în bază garantează că cele două nu se pot despărți.
+
+> **Regula care guvernează toată corectarea automată:** mai bine „nu pot verifica" decât 0.
+> Un 0 nemeritat, dat tăcut fiindcă o unealtă lipsea, e mai rău decât un criteriu lăsat
+> nenotat — elevul crede că a greșit ceva ce de fapt nu s-a măsurat. De aceea, când
+> LanguageTool nu răspunde, criteriile de limbă rămân `indisponibil`.
+
+### Corectarea nu poate pierde textul elevului
+
+Salvarea lucrării și corectarea sunt **pași separați**. Dacă notarea eșuează, lucrarea rămâne
+și ruta întoarce `201` cu `corectare: null` și un `avertisment`. Textul scris de un elev e
+munca lui; o unealtă care nu răspunde n-are voie s-o arunce.
+
+---
+
+## Alocarea tichetelor — lipicioasă, cu revenire în pool
 
 Tichetul nou se **rezervă** pentru ultimul om care i-a răspuns elevului (autorul ultimului
 mesaj non-elev din firele lui). Rezervarea are termen: **8 ore**. La expirare tichetul cade

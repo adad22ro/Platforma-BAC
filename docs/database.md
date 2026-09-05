@@ -484,6 +484,37 @@ DDL: [`20260904140000_alocare_tichete.sql`](../supabase/migrations/2026090414000
 
 ---
 
+### lucrari · note_criterii
+
+Textele scrise de elevi și notele pe criterii de barem. Până acum baremul exista ca date și
+`lib/corectare-strat1.ts` știa să acorde criteriile deterministe, dar **n-avea ce nota**:
+niciun tabel nu ținea un text scris de elev.
+
+**De ce nu peste `answer_events`:** acolo un rând înseamnă „a bifat varianta X, verdictul e
+adevărat/fals" — o valoare, înghețată. O lucrare e text liber, notat pe mai multe criterii,
+de mai multe ori, de autori diferiți. Aceeași masă ar fi făcut prost amândouă treburile.
+
+`lucrari` reține `barem_version_id` (**ON DELETE RESTRICT** — o versiune la care există
+lucrări nu are voie să dispară și să ia notele cu ea), `barem_rubrica_id` și `rubrica_slug`.
+
+`note_criterii` are index unic pe `(lucrare_id, criteriu_slug, sursa)`, cu `sursa` ∈
+`auto` · `ai` · `mentor` · `elev`. Mai multe note per criteriu, câte una per autor.
+
+Trei constrângeri care merită știute, toate în bază, nu doar în cod:
+
+| Constrângere | Ce oprește |
+|---|---|
+| `puncte <= din` | un mentor care tastează 12 în loc de 2 |
+| `(stare = 'acordat') = (puncte is not null)` | „acordat" fără punctaj, sau invers |
+| `status = 'ciorna' or trimisa_la is not null` | o lucrare trimisă fără moment de trimitere, care ar strica ordinea cozii |
+
+Cod: [`lib/lucrari.ts`](../lib/lucrari.ts), [`lib/corectare-strat1.ts`](../lib/corectare-strat1.ts).
+Rutele: [`docs/api.md`](api.md).
+
+DDL: [`20260905120000_lucrari.sql`](../supabase/migrations/20260905120000_lucrari.sql)
+
+---
+
 ## Conexiunea la Supabase
 
 Fișier: `lib/supabase.ts`
@@ -501,7 +532,8 @@ Pentru operațiuni de server (webhook, panou admin) se folosește clientul admin
 
 ---
 
-> Actualizat la: 2026-09-04 — alocarea tichetelor (3 coloane pe `tickets`); trial de 14 zile (`trialuri_consumate` + `users.email_normalizat`).
+> Actualizat la: 2026-09-05 — lucrări + note pe criterii (`lucrari`, `note_criterii`).
+> Anterior: 2026-09-04 — alocarea tichetelor (3 coloane pe `tickets`); trial de 14 zile (`trialuri_consumate` + `users.email_normalizat`).
 > Anterior: 2026-08-25 — adăugat baremul ca date (`barem_versions` / `barem_rubrici` / `barem_criterii`).
 > Anterior: 2026-07-01 — `processed_events` (idempotență webhook Stripe).
 > Schema mutată în migrări versionate (`supabase/migrations/`) + tipuri generate (`types/database.ts`).

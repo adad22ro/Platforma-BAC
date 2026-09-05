@@ -6,6 +6,61 @@
 
 ---
 
+## 2026-09-05 — Andrei (lucrarea ca entitate, și stratul 1 legat de o rută)
+
+Piesa care lipsea de câteva săptămâni. Baremul era în bază ca date, `corectare-strat1` era
+scris și testat, dar nu exista **unde să stea o lucrare** — 20 de tabele și niciunul care să
+țină un text scris de elev. Baremul nota în gol.
+
+**Două tabele.** `lucrari` (textul) și `note_criterii` (punctajele, câte un rând per criteriu
+**și per autor**).
+
+**De ce nu peste `answer_events`.** Acolo un rând înseamnă „a bifat varianta X, verdictul e
+adevărat/fals" — o valoare, înghețată. O lucrare e text liber, notată pe mai multe criterii,
+de mai multe ori, de autori diferiți. Îndesate în aceeași masă, ar fi făcut prost amândouă
+treburile.
+
+**Versiunea de barem se îngheață pe lucrare.** Baremul e versionat la noi. Fără legătura
+asta, o lucrare notată azi s-ar raporta tăcut la criterii schimbate sub ea la următorul
+import — iar notele vechi ar deveni de neînțeles fără să se plângă nimeni. `ON DELETE
+RESTRICT`, ca o versiune la care există lucrări să nu poată dispărea și să ia notele cu ea.
+
+**O notă per criteriu și per autor** — asta e decizia din care decurge tot restul. Elevul își
+dă 2 puncte, verificarea automată zice 1, mentorul dă 2. Toate trei rămân. Diferența dintre
+ele e chiar lucrul care îl învață pe elev să se autoevalueze; nota finală singură nu învață
+pe nimeni nimic. Indexul unic pe `(lucrare, criteriu, sursă)` face și reluarea corectării
+automate idempotentă, fără să atingă nota mentorului.
+
+**Autoevaluarea nu intră în total.** E un exercițiu, nu o notă — altfel elevul și-ar da
+singur punctajul. Nici pre-notarea AI: ea există ca să scurteze munca mentorului, nu ca să
+i-o ia. Totalul se face doar din `auto` și `mentor`.
+
+**Punctele care așteaptă pe cineva se arată separat**, ca `in_asteptare`. Un elev care vede
+„2 din 2" și încă 7 puncte în așteptare înțelege altceva decât unul care vede „2 din 9".
+
+**Trei constrângeri au ajuns în bază, nu doar în cod:** punctajul nu poate depăși maximul
+criteriului (un mentor care tastează 12 în loc de 2 e o greșeală de om, iar baza e singurul
+loc care o oprește indiferent de unde vine scrierea); „acordat" și punctajul nu se pot
+despărți; o lucrare trimisă trebuie să aibă și momentul trimiterii, altfel coada de corectare
+s-ar ordona după o dată care lipsește.
+
+**Salvarea și corectarea sunt pași separați.** Dacă notarea eșuează, lucrarea rămâne și ruta
+întoarce `201` cu un avertisment. Textul scris de un elev e munca lui; o unealtă care nu
+răspunde n-are voie s-o arunce. La fel, când LanguageTool nu răspunde, criteriile de limbă
+rămân **nenotate, nu pe 0** — regula care guvernează tot fișierul de corectare.
+
+**Migrarea am aplicat-o eu**, prin `db:plan` apoi `db:push`, și am verificat cele două tabele
+direct în producție. Prima dată când o migrare nu așteaptă ca Andrei să ajungă la calculator
+— exact ce trebuia să rezolve uneltele de ieri.
+
+**Rămas deschis:** ruta prin care mentorul își scrie nota (`sursa='mentor'`). Fără ea fluxul
+nu e complet cap-coadă. Și, ca de obicei, interfața e a lui Bogdan — deci nu se vede nimic în
+aplicație deocamdată.
+
+18 teste noi (314 în total), lint și typecheck curate.
+
+---
+
 ## 2026-09-04 — Andrei (paginare, și de ce am renunțat la cache)
 
 Sesiunea a pornit spre cache pe `/api/chapters` și s-a terminat altundeva. Merită scris de ce.

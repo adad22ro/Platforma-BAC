@@ -396,6 +396,99 @@ export type Database = {
           },
         ]
       }
+      lucrari: {
+        Row: {
+          barem_rubrica_id: string | null
+          barem_version_id: string
+          chapter_id: string | null
+          created_at: string
+          id: string
+          rubrica_slug: string
+          status: string
+          text: string
+          text_suport: string | null
+          trimisa_la: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          barem_rubrica_id?: string | null
+          barem_version_id: string
+          chapter_id?: string | null
+          created_at?: string
+          id?: string
+          rubrica_slug: string
+          status?: string
+          text: string
+          text_suport?: string | null
+          trimisa_la?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          barem_rubrica_id?: string | null
+          barem_version_id?: string
+          chapter_id?: string | null
+          created_at?: string
+          id?: string
+          rubrica_slug?: string
+          status?: string
+          text?: string
+          text_suport?: string | null
+          trimisa_la?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      note_criterii: {
+        Row: {
+          autor_id: string | null
+          created_at: string
+          criteriu_id: string | null
+          criteriu_slug: string
+          denumire: string
+          din: number
+          explicatie: string | null
+          id: string
+          lucrare_id: string
+          puncte: number | null
+          stare: string
+          sursa: string
+          updated_at: string
+        }
+        Insert: {
+          autor_id?: string | null
+          created_at?: string
+          criteriu_id?: string | null
+          criteriu_slug: string
+          denumire: string
+          din: number
+          explicatie?: string | null
+          id?: string
+          lucrare_id: string
+          puncte?: number | null
+          stare: string
+          sursa: string
+          updated_at?: string
+        }
+        Update: {
+          autor_id?: string | null
+          created_at?: string
+          criteriu_id?: string | null
+          criteriu_slug?: string
+          denumire?: string
+          din?: number
+          explicatie?: string | null
+          id?: string
+          lucrare_id?: string
+          puncte?: number | null
+          stare?: string
+          sursa?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       processed_events: {
         Row: {
           event_id: string
