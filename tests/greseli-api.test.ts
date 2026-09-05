@@ -27,7 +27,7 @@ const h = vi.hoisted(() => {
         record.calls.push([name, ...args]);
         return b;
       };
-    for (const m of ["select", "order", "eq", "in", "insert", "update", "delete", "upsert", "is"]) {
+    for (const m of ["select", "order", "eq", "in", "range", "insert", "update", "delete", "upsert", "is"]) {
       b[m] = chain(m);
     }
     b.single = () => Promise.resolve(result);
@@ -106,6 +106,19 @@ describe("GET /api/greseli", () => {
     // Vederea da ultimul raspuns per intrebare; aici filtram doar cele gresite.
     // Impreuna: „ce stau prost ACUM", nu „ce am gresit vreodata".
     expect(call?.calls).toContainEqual(["eq", "is_correct", false]);
+  });
+
+  // Lista greselilor creste cu tot istoricul elevului, iar textele intrebarilor se
+  // cer cu un `in (...)` construit din ea — deci se pagineaza inainte, nu dupa.
+  it("pagineaza greselile inainte sa ceara textele", async () => {
+    h.state.user = student;
+    setResults({ latest_answer_per_question: [{ data: [], error: null }] });
+
+    const res = await greseliGET(req("http://localhost/api/greseli?limit=10&offset=5"));
+
+    const call = h.fromCalls.find((c) => c.table === "latest_answer_per_question");
+    expect(call?.calls).toContainEqual(["range", 5, 15]);
+    expect(await res.json()).toMatchObject({ meta: { limit: 10, offset: 5 } });
   });
 
   it("intoarce textul intrebarii si titlul capitolului", async () => {

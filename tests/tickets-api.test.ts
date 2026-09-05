@@ -31,7 +31,7 @@ const h = vi.hoisted(() => {
         record.calls.push([name, ...args]);
         return b;
       };
-    for (const m of ["select", "order", "eq", "neq", "in", "limit", "is", "insert", "update", "delete", "upsert"]) {
+    for (const m of ["select", "order", "eq", "neq", "in", "limit", "is", "or", "range", "insert", "update", "delete", "upsert"]) {
       b[m] = chain(m);
     }
     b.single = () => Promise.resolve(result);
@@ -143,6 +143,65 @@ describe("GET /api/tickets", () => {
     expect(calls).toContainEqual(["eq", "status", "open"]);
     expect(calls).toContainEqual(["eq", "chapter_id", "c1"]);
     expect(calls).toContainEqual(["eq", "lesson_id", "l1"]);
+  });
+
+  // Paginare — lista de tichete a unui corector creste cu fiecare intrebare pusa
+  // vreodata pe platforma, deci nu poate fi intoarsa intreaga.
+  it("aplica limita implicita si intoarce meta", async () => {
+    h.state.user = student;
+    h.state.results = { tickets: [{ data: [], error: null }] };
+    const res = await ticketsGET(getReq());
+    const calls = h.fromCalls.find((c) => c.table === "tickets")?.calls ?? [];
+    expect(calls).toContainEqual(["range", 0, 50]);
+    expect(await res.json()).toMatchObject({ meta: { limit: 50, offset: 0, has_more: false } });
+  });
+
+  it("respecta ?limit= si ?offset=, plafonate", async () => {
+    h.state.user = student;
+    h.state.results = { tickets: [{ data: [], error: null }] };
+    await ticketsGET(getReq("http://localhost/api/tickets?limit=10&offset=20"));
+    expect(h.fromCalls.find((c) => c.table === "tickets")?.calls).toContainEqual(["range", 20, 30]);
+
+    h.fromCalls.length = 0;
+    await ticketsGET(getReq("http://localhost/api/tickets?limit=9999"));
+    expect(h.fromCalls.find((c) => c.table === "tickets")?.calls).toContainEqual(["range", 0, 100]);
+  });
+
+  // Filtrarea in memorie era corecta doar cat timp raspunsul continea TOATE
+  // tichetele. Pe o pagina de 50, un `pool` derivat din ea ar fi fost "ce s-a
+  // nimerit in primele 50 dupa ultima activitate" — o lista falsa, nu o coada.
+  it("pool si alemele se cer din DB, nu se filtreaza in JS peste pagina", async () => {
+    h.state.user = teacher;
+    h.state.results = { tickets: [{ data: [], error: null }] };
+    const res = await ticketsGET(getReq());
+
+    const cereri = h.fromCalls.filter((c) => c.table === "tickets");
+    expect(cereri.length).toBe(3);
+
+    const toate = cereri.flatMap((c) => c.calls);
+    // "Ale mele" — rezervate pentru mine, valabile sau preluate.
+    expect(toate).toContainEqual(["eq", "mentor_rezervat_id", teacher.id]);
+    // Pool — nepreluate, neinchise.
+    expect(toate).toContainEqual(["is", "preluat_la", null]);
+    expect(toate).toContainEqual(["neq", "status", "closed"]);
+    // FIFO: cel mai vechi primul. Cum "intarziat" inseamna exact "mai vechi de 24h",
+    // ordonarea asta pune intarziatele in cap fara o a doua cheie de sortare.
+    expect(toate).toContainEqual(["order", "created_at", { ascending: true }]);
+
+    expect(await res.json()).toMatchObject({
+      meta: expect.any(Object),
+      alemele_meta: expect.any(Object),
+      pool_meta: expect.any(Object),
+    });
+  });
+
+  it("elevul nu primeste listele de corector", async () => {
+    h.state.user = student;
+    h.state.results = { tickets: [{ data: [], error: null }] };
+    const body = await (await ticketsGET(getReq())).json();
+    expect(body).not.toHaveProperty("pool");
+    expect(body).not.toHaveProperty("alemele");
+    expect(h.fromCalls.filter((c) => c.table === "tickets").length).toBe(1);
   });
 
   it("coada e ordonata dupa ultima activitate", async () => {

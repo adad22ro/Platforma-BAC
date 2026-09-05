@@ -264,6 +264,40 @@ pe care o alege cineva manual, ea rezultă din faptul că profesorul a scris în
 un tichet ar putea apărea „răspuns" fără niciun răspuns.
 
 
+
+### Paginare
+
+Rutele de listă care cresc cu folosirea aplicației acceptă `?limit=` (implicit **50**,
+maxim **100**) și `?offset=`, și întorc un obiect `meta` alături de listă:
+
+```json
+{ "mistakes": [...], "meta": { "limit": 50, "offset": 0, "has_more": true } }
+```
+
+`has_more` vine dintr-un rând cerut în plus, nu dintr-un `COUNT` separat — altfel
+fiecare pagină ar fi costat încă o interogare peste tot tabelul, pentru un număr pe care
+interfața nu-l afișează. Valorile invalide (`?limit=abc`, negative, zero) cad pe implicite
+în loc să dea `400`: e o greșeală de client, nu un motiv să refuzi datele.
+
+`limit` + `offset`, nu cursor. Cursorul e mai corect sub inserări concurente, dar cere o
+cheie de ordonare stabilă expusă în răspuns — un contract mai greu de consumat, pentru un
+câștig care apare la milioane de rânduri, nu la mii.
+
+**Rute paginate:** `/api/tickets` (fiecare din cele trei liste separat, cu `meta`,
+`alemele_meta`, `pool_meta`), `/api/greseli`.
+
+> **Contract aditiv.** `meta` se adaugă lângă listă; cine ignoră câmpul primește exact ce
+> primea înainte, dar cel mult 50 de rânduri. Asta contează dincolo de web: o aplicație
+> mobilă publicată nu poate fi forțată să se actualizeze, deci `/api/*` devine un contract
+> pe care nu-l mai poți schimba unilateral — vezi rândul de versionare din `TASKS.md`.
+
+**`/api/questions/dificultate` NU e paginat**, deliberat. Ordonarea „cele mai greșite
+întâi" vine dintr-o a doua interogare (`question_difficulty`), iar întrebările neîncercate
+de nimeni lipsesc din ea și trebuie totuși afișate. Paginarea peste tabelul de întrebări
+și sortarea *paginii* ar fi produs o ordine falsă — primele 50 după `id`, sortate între
+ele — adică exact genul de listă care arată corect și minte. Corect se rezolvă cu o vedere
+care face `left join` în SQL; e rând separat în TASKS.
+
 ### Alocarea tichetelor — lipicioasă, cu revenire în pool
 
 Tichetul nou se **rezervă** pentru ultimul om care i-a răspuns elevului (autorul ultimului
@@ -282,7 +316,15 @@ liste derivate:
 | Cheie | Conținut |
 |---|---|
 | `alemele` | rezervate pentru mine și încă valabile, sau preluate de mine |
-| `pool` | nerevendicate — **întârziatele în cap**, apoi cel mai vechi primul (FIFO) |
+| `pool` | nerevendicate și nedeschise — cel mai vechi primul (FIFO) |
+
+Cele trei liste se cer **separat din DB**, fiecare cu paginarea ei. Filtrarea în memorie
+ar fi fost corectă doar cât timp răspunsul conținea toate tichetele: pe o pagină de 50, un
+`pool` derivat din ea ar fi însemnat „ce s-a nimerit în primele 50 după ultima activitate".
+
+Ordonarea `pool`-ului după `created_at` crescător acoperă și cerința „întârziatele în cap":
+`intarziat` înseamnă exact „mai vechi de 24 de ore", deci e o funcție monotonă de
+`created_at`. O a doua cheie de sortare ar fi produs aceeași ordine cu mai multă muncă.
 
 Fiecare tichet primește și `intarziat: boolean`. Pentru elev răspunsul e neschimbat: doar
 `tickets`. `tickets` a rămas intenționat cum era — câmpurile noi se adaugă lângă el, nu în

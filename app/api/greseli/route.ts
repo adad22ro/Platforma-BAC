@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentAppUser } from '@/lib/current-user'
 import { apiError } from '@/lib/api-error'
 import { logError } from '@/lib/log-error'
+import { citestePaginarea, taiePagina } from '@/lib/paginare'
 
 // GET /api/greseli — intrebarile la care elevul sta prost ACUM.
 //
@@ -15,12 +16,14 @@ import { logError } from '@/lib/log-error'
 // Elevul isi vede DOAR propriile greseli: `user_id` vine din sesiune, nu din query.
 // Un profesor nu are ce cauta aici — el are statistica agregata, la /api/questions/dificultate.
 //
-// Filtru optional: ?chapter_id=
+// Filtru optional: ?chapter_id=. Paginare: ?limit= (implicit 50) si ?offset=.
 export async function GET(req: NextRequest) {
   const user = await getCurrentAppUser()
   if (!user) return apiError(401, 'Unauthorized')
 
-  const chapterId = new URL(req.url).searchParams.get('chapter_id')
+  const url = new URL(req.url)
+  const chapterId = url.searchParams.get('chapter_id')
+  const p = citestePaginarea(url)
 
   let query = supabaseAdmin
     .from('latest_answer_per_question')
@@ -31,13 +34,16 @@ export async function GET(req: NextRequest) {
 
   if (chapterId) query = query.eq('chapter_id', chapterId)
 
-  const { data: wrong, error } = await query
+  const { data: brut, error } = await query.range(p.offset, p.rangeTo)
   if (error) {
     await logError('greseli', 'GET error', { code: error.code, message: error.message })
     return apiError(500, 'Database error')
   }
 
-  if (!wrong?.length) return Response.json({ mistakes: [] })
+  // Paginam INTREBARILE gresite, apoi luam textele doar pentru pagina curenta —
+  // altfel `in (...)` de mai jos ar creste cu tot istoricul elevului.
+  const { pagina: wrong, meta } = taiePagina(brut ?? [], p)
+  if (!wrong.length) return Response.json({ mistakes: [], meta })
 
   // Textele se iau separat: vederea n-are chei straine, deci nu se pot imbrica.
   // Vederile nu pastreaza NOT NULL din tabelele de sub ele, deci tipurile generate
@@ -72,5 +78,5 @@ export async function GET(req: NextRequest) {
       }
     })
 
-  return Response.json({ mistakes })
+  return Response.json({ mistakes, meta })
 }
