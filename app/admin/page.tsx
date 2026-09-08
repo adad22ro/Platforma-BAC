@@ -33,6 +33,18 @@ export default async function AdminPage() {
               → Test API conținut (capitole/lecții)
             </a>
             <a
+              href="/admin/lucrari"
+              className="inline-block text-sm text-blue-600 underline"
+            >
+              → Banc de test corectare (lucrări)
+            </a>
+            <a
+              href="/admin/barem"
+              className="inline-block text-sm text-blue-600 underline"
+            >
+              → Baremul din sistem (doar citire)
+            </a>
+            <a
               href="/admin/curs"
               className="inline-block text-sm text-blue-600 underline"
             >

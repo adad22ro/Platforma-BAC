@@ -114,6 +114,7 @@ vi.mock('@/lib/barem-db', () => ({
 
 import { GET as lucrariGET, POST as lucrariPOST } from '@/app/api/lucrari/route'
 import { GET as lucrareGET } from '@/app/api/lucrari/[id]/route'
+import { PUT as notaPUT } from '@/app/api/lucrari/[id]/note/route'
 
 const elev: AppUser = { id: 'u-elev', clerk_id: 'c1', role: 'student', subscription_status: 'active', subscription_end_date: null }
 const altElev: AppUser = { id: 'u-alt', clerk_id: 'c2', role: 'student', subscription_status: 'active', subscription_end_date: null }
@@ -323,5 +324,114 @@ describe('GET /api/lucrari/[id]', () => {
     h.state.results = { lucrari: [{ data: lucrare, error: null }], note_criterii: [{ data: note, error: null }] }
     const body = await (await lucrareGET(req() as never, ctx())).json()
     expect(body.total.in_asteptare).toBe(7)
+  })
+})
+
+// ── PUT /api/lucrari/[id]/note ────────────────────────────────────────
+
+describe('PUT /api/lucrari/[id]/note', () => {
+  const lucrare = { id: 'l1', user_id: 'u-elev', rubrica_slug: 's3-redactare', status: 'trimisa' }
+
+  function notaReq(body: unknown) {
+    return new Request('http://localhost/api/lucrari/l1/note', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    }) as never
+  }
+
+  function pregateste(over: Partial<typeof lucrare> = {}) {
+    h.state.results = {
+      lucrari: [{ data: { ...lucrare, ...over }, error: null }],
+      barem_versions: [{ data: { id: 'v1' }, error: null }],
+      barem_rubrici: [{ data: { id: 'r1' }, error: null }],
+      barem_criterii: [{ data: [{ id: 'c-parti', slug: 'parti-componente' }], error: null }],
+      note_criterii: [{ data: { id: 'n1' }, error: null }],
+    }
+  }
+
+  it('401 fara sesiune', async () => {
+    h.state.user = null
+    expect((await notaPUT(notaReq({ criteriu_slug: 'x', puncte: 1 }), ctx())).status).toBe(401)
+  })
+
+  it('400 fara criteriu sau fara puncte', async () => {
+    pregateste()
+    expect((await notaPUT(notaReq({ puncte: 1 }), ctx())).status).toBe(400)
+    expect((await notaPUT(notaReq({ criteriu_slug: 'parti-componente' }), ctx())).status).toBe(400)
+  })
+
+  it('404 pentru lucrarea altcuiva, daca nu esti corector', async () => {
+    h.state.user = altElev
+    pregateste()
+    expect((await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: 1 }), ctx())).status).toBe(404)
+  })
+
+  // Testul cel mai important din fisier. Aceeasi ruta serveste si mentorul, si
+  // elevul; daca sursa ar veni din cerere, un elev si-ar da singur nota finala.
+  it('SURSA se deduce din rol, nu din ce trimite clientul', async () => {
+    // Elevul, pe propria lucrare, incearca sa treaca drept mentor.
+    pregateste()
+    await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: 2, sursa: 'mentor' }), ctx())
+    let upsert = h.fromCalls.find((c) => c.table === 'note_criterii')?.calls.find((x) => x[0] === 'upsert')
+    expect((upsert?.[1] as { sursa: string }).sursa).toBe('elev')
+
+    // Acelasi apel, de la un mentor.
+    h.fromCalls.length = 0
+    h.state.user = mentor
+    pregateste()
+    await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: 2 }), ctx())
+    upsert = h.fromCalls.find((c) => c.table === 'note_criterii')?.calls.find((x) => x[0] === 'upsert')
+    expect((upsert?.[1] as { sursa: string }).sursa).toBe('mentor')
+  })
+
+  it('refuza un criteriu care nu e in rubrica lucrarii', async () => {
+    h.state.user = mentor
+    pregateste()
+    const res = await notaPUT(notaReq({ criteriu_slug: 'inventat', puncte: 1 }), ctx())
+    expect(res.status).toBe(400)
+    expect(await res.text()).toContain('inventat')
+  })
+
+  // `din` vine din barem, nu de la client — altfel cel care noteaza si-ar alege
+  // singur plafonul.
+  it('refuza un punctaj peste maximul criteriului', async () => {
+    h.state.user = mentor
+    pregateste()
+    const res = await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: 12 }), ctx())
+    expect(res.status).toBe(400)
+    expect(await res.text()).toContain('2')
+  })
+
+  it('refuza punctaje negative sau nenumerice', async () => {
+    h.state.user = mentor
+    pregateste()
+    expect((await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: -1 }), ctx())).status).toBe(400)
+    expect((await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: 'doi' }), ctx())).status).toBe(400)
+  })
+
+  // Un mentor trebuie sa poata retrage o nota gresita fara sa fie obligat sa puna 0,
+  // care ar insemna cu totul altceva pentru elev.
+  it('puncte: null retrage nota — devine "nenotat", nu 0', async () => {
+    h.state.user = mentor
+    pregateste()
+    await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: null }), ctx())
+    const upsert = h.fromCalls.find((c) => c.table === 'note_criterii')?.calls.find((x) => x[0] === 'upsert')
+    expect(upsert?.[1]).toMatchObject({ puncte: null, stare: 'nenotat' })
+  })
+
+  it('nota mentorului trece lucrarea in "corectata"', async () => {
+    h.state.user = mentor
+    pregateste()
+    await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: 2 }), ctx())
+    const update = h.fromCalls.filter((c) => c.table === 'lucrari').flatMap((c) => c.calls).find((x) => x[0] === 'update')
+    expect(update?.[1]).toMatchObject({ status: 'corectata' })
+  })
+
+  it('autoevaluarea elevului NU schimba statusul lucrarii', async () => {
+    pregateste()
+    await notaPUT(notaReq({ criteriu_slug: 'parti-componente', puncte: 2 }), ctx())
+    const update = h.fromCalls.filter((c) => c.table === 'lucrari').flatMap((c) => c.calls).find((x) => x[0] === 'update')
+    expect(update).toBeUndefined()
   })
 })
