@@ -6,6 +6,36 @@
 
 ---
 
+## 2026-09-08 — Andrei (nota mentorului, banc de test, și o observație incomodă)
+
+Trei zile fără niciun commit de la nimeni. Am verificat toate branch-urile, nu doar `main`.
+
+**Observația care contează mai mult decât codul de azi:** Bogdan n-a mai comis nimic, nicăieri, din 11 august. 28 de zile. În ultimele 30 de zile: 83 de commituri de la mine, 8 de la el, toate din ziua aia. 32 de sarcini neterminate sunt ale lui, iar sistemul de tichete stă oprit în producție prin `TICHETE_UI_ACTIVE` de pe 12 august.
+
+Am notat-o în TASKS ca stare de proiect, nu ca reproș. Consecința practică e că teancul de backend terminat-și-nevăzut crește: alocarea tichetelor, corectarea lucrărilor, firul de mesaje — toate merg, niciuna nu ajunge la vreun elev. La un moment dat asta nu mai e productivitate.
+
+**Nota mentorului.** `PUT /api/lucrari/[id]/note`, care închide fluxul de corectare.
+
+Decizia din ea: **aceeași rută servește și mentorul, și elevul**, iar `sursa` se deduce pe server din rol — nu vine din cerere. Dacă ar fi fost un câmp trimis de client, un elev ar fi putut trimite `sursa: "mentor"` și și-ar fi dat singur nota finală. Nu e o scăpare ipotetică: e chiar fluxul în care ruta e folosită de amândoi, deci exact cazul în care cineva ar fi tentat să „simplifice" mai târziu punând sursa în corp. Are test dedicat, scris ca să pice zgomotos dacă se schimbă.
+
+Din același motiv, criteriul și maximul lui vin din baremul lucrării, nu din cerere: altfel cel care notează și-ar alege singur plafonul.
+
+**`puncte: null` retrage nota.** Un mentor trebuie să poată anula o notă dată din greșeală fără să fie obligat să pună 0 — care înseamnă cu totul altceva pentru elev. Criteriul redevine „nenotat".
+
+**Bancul de test din `/admin/lucrari`.** Sistemul de corectare era complet în backend și inatingabil cu mâna: singura verificare erau testele automate, care confirmă ce ne-am gândit *noi* să verificăm, nu ce se întâmplă cu date reale.
+
+Pagina face drumul întreg vizibil — text trimis, notat automat criteriu cu criteriu, completat ca mentor, total recalculat. Scrie în baza reală și spune asta pe față. Nu e UI de produs și nu încearcă să pară: când apare interfața lui Bogdan, se șterge fără să lipsească nimănui.
+
+A ieșit la iveală și că `/admin/barem` exista de două săptămâni fără niciun link din panou. Are acum.
+
+**Două lucruri prinse de lint, amândouă reale.** Ghilimelele românești în JSX trebuiau scrise ca entități. Și un `useEffect` care încărca detaliul la schimbarea id-ului: un ocol prin care ajungeam în același loc, cu o randare în plus. Îl încarc acum direct, după trimitere.
+
+**Corectat un rând învechit din TASKS:** spunea că migrarea trialului mai trebuie aplicată. Fusese aplicată pe 4 septembrie.
+
+10 teste noi (324 în total), lint, typecheck și build curate.
+
+---
+
 ## 2026-09-05 — Andrei (lucrarea ca entitate, și stratul 1 legat de o rută)
 
 Piesa care lipsea de câteva săptămâni. Baremul era în bază ca date, `corectare-strat1` era

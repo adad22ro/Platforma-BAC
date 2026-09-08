@@ -51,6 +51,26 @@ exercită API-ul de capitole/lecții cu sesiune Clerk reală: listare, creare/ed
 > Scrierea cere rol `teacher` — promovează-te întâi din cardul Supabase (buton de rol).
 > Detalii despre rute în `docs/api.md`.
 
+
+### Banc de test corectare (`/admin/lucrari`)
+Link din header-ul `/admin`. Trimite o lucrare pe o rubrică din baremul activ, vezi ce
+acordă corectarea automată (criteriu cu criteriu, cu explicație), apoi notează ca mentor și
+urmărește cum se schimbă totalul.
+
+**De ce există.** Sistemul de corectare e complet în backend, dar interfața pentru elev și
+pentru mentor ține de frontend și încă nu există. Până atunci, singura cale de a atinge
+fluxul cu mâna erau testele automate — care verifică ce ne-am gândit *noi* să verificăm, nu
+ce se întâmplă cu date reale.
+
+> **Scrie în baza de date reală.** Lucrările create de aici sunt lucrări adevărate, pe contul
+> tău de admin. Nu e o simulare.
+
+Nu e pagină de produs și nu încearcă să arate ca una: când apare interfața reală, se poate
+șterge fără să lipsească nimănui.
+
+### Baremul din sistem (`/admin/barem`)
+Doar citire. Pagina exista dinainte, dar n-avea link din panou — acum are.
+
 ---
 
 ## 2. Scriptul `npm run debug`

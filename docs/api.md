@@ -306,9 +306,36 @@ care face `left join` în SQL; e rând separat în TASKS.
 | `/api/lucrari` | GET | lista lucrărilor (paginată, **fără text**) | elev: ale lui · corector: toate |
 | `/api/lucrari` | POST | trimite o lucrare și primește corectarea automată | orice user logat |
 | `/api/lucrari/[id]` | GET | lucrarea cu textul și toate notele | autorul sau un corector |
+| `/api/lucrari/[id]/note` | PUT | scrie nota unui **om** pe un criteriu | autorul (autoevaluare) sau un corector |
 
 **Corp cerere (creare):** `{ rubrica_slug, text, text_suport?, chapter_id? }`. `text` max
 20.000 de caractere, la fel `text_suport`.
+
+
+### `PUT /api/lucrari/[id]/note` — nota omului
+
+**Corp:** `{ criteriu_slug, puncte, explicatie? }`. `puncte: null` e o valoare validă, nu o
+omisiune: înseamnă „lasă criteriul nenotat". Un mentor trebuie să poată **retrage** o notă
+dată din greșeală, fără să fie obligat să pună 0 — care ar însemna cu totul altceva pentru
+elev.
+
+**`sursa` NU vine de la client.** Se deduce pe server, din cine ești:
+
+| Cine ești | `sursa` scrisă | Intră în total? |
+|---|---|---|
+| profesor / mentor | `mentor` | **da** |
+| autorul lucrării | `elev` | nu — autoevaluare |
+
+Aceeași rută servește amândouă rolurile, deliberat. Dacă `sursa` ar fi fost un câmp trimis
+în cerere, un elev ar fi putut trimite `sursa: "mentor"` și și-ar fi dat singur nota finală.
+Nu e o scăpare ipotetică — e chiar fluxul în care ruta e folosită de amândoi.
+
+Două verificări în plus, din același motiv: criteriul trebuie să existe în **rubrica
+lucrării**, iar `din` (maximul) vine din barem, nu din cerere. Altfel cel care notează și-ar
+alege singur plafonul.
+
+Prima notă de mentor trece lucrarea în `corectata`. Autoevaluarea nu schimbă statusul:
+„corectată" înseamnă „a trecut pe la un om".
 
 ### Versiunea de barem se îngheață pe lucrare
 
